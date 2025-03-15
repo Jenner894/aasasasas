@@ -4,7 +4,7 @@ const app = express();
 require('dotenv').config();
 const router = express.Router();
 const PORT = process.env.PORT || 3000;
-const client = new net.Socket();
+
 
 // Middleware d'authentification par session
 const isAuthenticated = (req, res, next) => {
