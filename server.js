@@ -1,7 +1,6 @@
 const express = require('express');
 const path = require('path');
 const app = express();
-const { Server } = require('socket.io');
 require('dotenv').config();
 const router = express.Router();
 const PORT = process.env.PORT || 3000;
