@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (data.authenticated) {
                 // Utilisateur déjà connecté, rediriger vers le dashboard
-                window.location.href = data.user.role === 'admin' ? '/admin-dashboard.html' : '/dashboard.html';
+                window.location.href = data.user.role === 'admin' ? '/admin-dashboard.html' : '/dashboard';
             }
         } catch (error) {
             console.error('Erreur lors de la vérification du statut d\'authentification:', error);
