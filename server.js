@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const axios = require('axios');
 const helmet = require('helmet'); // Ajout de l'import helmet
 const cors = require('cors'); // Ajout de l'import cors
 const session = require('express-session'); // Ajout de l'import express-session
