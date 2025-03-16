@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allo Bedo - Dashboard</title>
+    <style>
+        :root {
+            --primary-blue: #45d3ff;
+            --dark-blue: #209cca;
+            --accent-green: #4eff8d;
+            --background: #f9f9f9;
+            --text-dark: #333;
+            --card-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            --sidebar-width: 250px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: white;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .light-beam {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(255,255,255,0.1) 20px, rgba(255,255,255,0.1) 40px);
+            transform: skewY(-20deg);
+            z-index: 0;
+        }
+        
+        .cloud {
+            position: absolute;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50px;
+        }
+        
+        .cloud-1 {
+            width: 100px;
+            height: 40px;
+            top: 20%;
+            left: 10%;
+        }
+        
+        .cloud-2 {
+            width: 70px;
+            height: 30px;
+            top: 40%;
+            right: 15%;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            margin-right: 10px;
+            font-family: 'Arial', cursive;
+        }
+        
+        .logo span {
+            font-size: 0.8rem;
+            vertical-align: super;
+        }
+        
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-button, .cart-button {
+            background-color: white;
+            color: var(--dark-blue);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s;
+        }
+        
+        .user-button:hover, .cart-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .cart-icon, .profile-icon, .orders-icon {
+            margin-right: 8px;
+            position: relative;
+        }
+        
+        .profile-icon {
+            font-size: 1.2rem;
+        }
+        
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--accent-green);
+            color: var(--text-dark);
+            font-size: 0.7rem;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: -var(--sidebar-width);
+            top: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: white;
+            box-shadow: var(--card-shadow);
+            transition: left 0.3s ease-in-out;
+            z-index: 1001;
+            overflow-y: auto;
+        }
+        
+        .sidebar.open {
+            left: 0;
+        }
+        
+        .sidebar-header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .close-sidebar {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .sidebar-content {
+            padding: 20px 0;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 15px;
+        }
+        
+        .sidebar-section-title {
+            padding: 10px 20px;
+            font-weight: bold;
+            color: var(--dark-blue);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        
+        .sidebar-item {
+            padding: 12px 20px 12px 30px;
+            display: flex;
+            align-items: center;
+            color: var(--text-dark);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .sidebar-item:hover {
+            background-color: #f0f0f0;
+            border-left: 3px solid var(--primary-blue);
+        }
+        
+        .sidebar-item.active {
+            background-color: rgba(69, 211, 255, 0.1);
+            border-left: 3px solid var(--primary-blue);
+            font-weight: bold;
+        }
+        
+        .sidebar-item-icon {
+            margin-right: 10px;
+        }
+        
+        .sidebar-toggle {
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            width: 40px;
+            height: 40px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: var(--card-shadow);
+        }
+        
+        /* Main content */
+        .main-content {
+            transition: margin-left 0.3s ease-in-out;
+            margin-left: var(--sidebar-width);
+        }
+        
+        .main-content.sidebar-open {
+            margin-left: var(--sidebar-width);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .category-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .category-tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            font-weight: bold;
+            color: var(--text-dark);
+        }
+        
+        .category-tab.active {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .product-card {
+            background-color: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .product-media {
+            height: 180px;
+            background-color: var(--primary-blue);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .product-media video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .product-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .product-info {
+            padding: 15px;
+        }
+        
+        .product-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            color: var(--text-dark);
+        }
+        
+        .product-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            height: 80px;
+            overflow: hidden;
+        }
+        
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .product-price {
+            font-weight: bold;
+            color: var(--dark-blue);
+            font-size: 1.2rem;
+        }
+        
+        .add-to-cart {
+            background-color: var(--accent-green);
+            color: var(--text-dark);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .add-to-cart:hover {
+            background-color: #3dd677;
+            transform: scale(1.05);
+        }
+        
+        /* Cart Modal */
+        .cart-modal {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            background-color: white;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: right 0.3s ease-in-out;
+            overflow-y: auto;
+        }
+        
+        .cart-modal.open {
+            right: 0;
+        }
+        
+        .cart-header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: white;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .close-cart {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .cart-items {
+            padding: 20px;
+        }
+        
+        .cart-item {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+        }
+        
+        .cart-item-info {
+            flex: 1;
+        }
+        
+        .cart-item-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .cart-item-price {
+            color: var(--dark-blue);
+        }
+        
+        .cart-item-actions {
+            display: flex;
+            align-items: center;
+        }
+        
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        
+        .quantity-btn {
+            width: 25px;
+            height: 25px;
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .quantity {
+            padding: 0 10px;
+            font-weight: bold;
+        }
+        
+        .remove-item {
+            color: #ff4d4d;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .cart-footer {
+            position: sticky;
+            bottom: 0;
+            background-color: white;
+            padding: 20px;
+            border-top: 1px solid #eee;
+            box-shadow: 0 -5px 10px rgba(0,0,0,0.05);
+        }
+        
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        
+        .checkout-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .checkout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* THC percentage indicator */
+        .thc-indicator {
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 5px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+    .sidebar {
+        width: 85%;
+        max-width: 300px;
+        left: -100%;
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+    
+    .main-content.sidebar-open {
+        margin-left: 0;
+    }
+    
+    .sidebar-toggle {
+        z-index: 1002;
+    }
+}
+        
+@media (max-width: 576px) {
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 10px;
+    }
+    
+    .product-card {
+        margin-bottom: 10px;
+    }
+    
+    .product-media {
+        height: 140px;
+    }
+    
+    .product-description {
+        height: 60px;
+        font-size: 0.8rem;
+        -webkit-line-clamp: 3;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .product-name {
+        font-size: 1rem;
+    }
+    
+    .product-price {
+        font-size: 1rem;
+    }
+    
+    .add-to-cart {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .header-content {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .user-actions {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .user-button, .cart-button {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+        flex: 1;
+        min-width: 100px;
+        justify-content: center;
+    }
+
+    .sidebar-toggle {
+        top: 10px;
+        left: 10px;
+        width: 35px;
+        height: 35px;
+    }
+    
+    .logo {
+        font-size: 1.6rem;
+    }
+
+    .category-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .category-tab {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+}
+        /* Leaf decorations */
+        .leaf {
+            position: absolute;
+            background-color: var(--accent-green);
+            border-radius: 50% 50% 0 50%;
+            opacity: 0.2;
+            z-index: 0;
+        }
+        
+        .leaf-1 {
+            width: 80px;
+            height: 120px;
+            bottom: -20px;
+            left: 5%;
+            transform: rotate(45deg);
+        }
+        
+        .leaf-2 {
+            width: 60px;
+            height: 100px;
+            top: 10%;
+            right: 10%;
+            transform: rotate(15deg);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" id="sidebar-toggle">☰</button>
+    
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">Allo<span>80</span>Bedo</div>
+            <button class="close-sidebar" id="close-sidebar">×</button>
+        </div>
+        <div class="sidebar-content">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Principal</div>
+                <div class="sidebar-item active">
+                    <span class="sidebar-item-icon">🛒</span>
+                    Produits
+                </div>
+
+                <div class="sidebar-item">
+                    <span class="sidebar-item-icon">👤</span>
+                    Mon Profil
+                </div>
+                <div class="sidebar-item">
+                    <span class="sidebar-item-icon">📦</span>
+                    Mes Commandes
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Programmes</div>
+                <div class="sidebar-item">
+                    <span class="sidebar-item-icon">👥</span>
+                    Parrainages
+                </div>
+                <div class="sidebar-item">
+                    <span class="sidebar-item-icon">🎁</span>
+                    Fidélité
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Aide</div>
+                <div class="sidebar-item">
+                    <span class="sidebar-item-icon">💬</span>
+                    Support Client
+                </div>
+                <div class="sidebar-item">
+                    <span class="sidebar-item-icon">📚</span>
+                    FAQ
+                </div>
+                <div class="sidebar-item">
+                    <span class="sidebar-item-icon">📞</span>
+                    Contact
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content" id="main-content">
+        <!-- Header -->
+        <header>
+            <div class="light-beam"></div>
+            <div class="cloud cloud-1"></div>
+            <div class="cloud cloud-2"></div>
+            <div class="leaf leaf-1"></div>
+            <div class="leaf leaf-2"></div>
+            
+            <div class="header-content">
+                <div class="logo-container">
+                    <div class="logo">Allo<span>80</span>Bedo</div>
+                </div>
+                
+                <div class="user-actions">
+                    <button class="user-button" id="profile-button">
+                        <div class="profile-icon">👤</div>
+                        Mon Profil
+                    </button>
+                    
+                    <button class="user-button" id="orders-button">
+                        <div class="orders-icon">📦</div>
+                        Mes Commandes
+                    </button>
+                    
+                    <button class="cart-button" id="open-cart">
+                        <div class="cart-icon">
+                            🛒
+                            <span class="cart-count" id="cart-count">0</span>
+                        </div>
+                        Mon Panier
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <div class="container">
+            <!-- Category Tabs -->
+            <div class="category-tabs">
+                <button class="category-tab active" data-category="all">Tous les produits</button>
+                <button class="category-tab" data-category="fleurs">Fleurs</button>
+                <button class="category-tab" data-category="resines">Résines</button>
+            </div>
+            
+            <!-- Products Grid -->
+            <div class="products-grid" id="products-container">
+                <!-- Products will be dynamically generated -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cart Modal -->
+    <div class="cart-modal" id="cart-modal">
+        <div class="cart-header">
+            <h2>Votre Panier</h2>
+            <button class="close-cart" id="close-cart">×</button>
+        </div>
+        
+        <div class="cart-items" id="cart-items">
+            <!-- Cart items will be dynamically generated -->
+            <div class="empty-cart" id="empty-cart">
+                Votre panier est vide
+            </div>
+        </div>
+        
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cart-total-price">0.00€</span>
+            </div>
+            <button class="checkout-btn">Commander maintenant</button>
+        </div>
+    </div>
+    
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+    
+    <script>
+        
+// Gestion améliorée de la sidebar sur mobile
+document.getElementById('sidebar-toggle').addEventListener('click', function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    
+    sidebar.classList.add('open');
+    overlay.classList.add('active');
+});
+document.getElementById('close-sidebar').addEventListener('click', function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+});
+        // Sample product data
+        const products = [
+            {
+                id: 1,
+                name: "Tropicana cherry",
+                description: "La Tropicana Cherry est l’une des variétés de cannabis phares de Relentless Genetics. Avec ses saveurs de mandarine et de cerise, son effet euphorisant et ses performances primées",
+                price: 12.99,
+                thc: "< 31%",
+                video: "/video/purple.mp4",
+                category: "fleurs"
+            },
+            {
+                id: 2,
+                name: "Frozen Sift Hash",
+                description: "Ce type est produit en utilisant des tamis dans un environnement froid, ce qui permet d’obtenir un hash de texture fine et de haute puissance. C’est la méthode la plus rapide, la moins chère et la plus simple, car il suffit d’avoir un tamis ou deux avec des micrages différents. Le produit final est similaire au célèbre Dry Hash mais avec une qualité et un rendement supérieurs.",
+                price: 11.50,
+                thc: "< 0.2%",
+                video: "/video/frozensift.mp4",
+                category: "resines"
+            },
+            {
+                id: 3,
+                name: "Amnesia Haze",
+                description: "Fleur sativa énergisante avec des arômes d'agrumes et un effet stimulant pour la journée.",
+                price: 13.99,
+                thc: "< 0.2%",
+                video: "/video/amnesia.mp4",
+                category: "fleurs"
+            },
+            {
+                id: 4,
+                name: "Beldia",
+                description: "Venu tous droit des terre marocaine 🇲🇦🇲🇦🇲🇦🇲🇦🇲🇦🇲🇦🇲🇦🇲🇦100% Le Beldia Gold, comme son nom lindique, arbore une couleur dorée éclatante, signe dune sélection rigoureuse des fleurs de cannabis résineuses et puissantes et dun processus de séchage et de tamisage minutieux. Le Beldia Gold est idéal pour ceux qui recherchent une expérience raffinée, avec un effet relaxant mais pas trop envahissant, parfait pour une dégustation en fin de journée.Dry prenium hash...",
+                price: 24.99,
+                thc: "< 0.2%",
+                video: "/video/beldia.mp4",
+                category: "resines"
+            },
+
+            {
+                id: 5,
+                name: "Dry sift",
+                description: "dry sift est la véritable méthode de base pour extraire le kief ou, en d’autres termes, les glandes résineuses du cannabis, les trichomes. Le matériel sec est brisé et passé à travers un tamis fin, de sorte que les glandes de résine se séparent de la plante.",
+                price: 29.99,
+                thc: "< 0.2%",
+                video: "/video/drysift.mp4",
+                category: "resines"
+            },
+            {
+                id: 6,
+                name: "Tiramisu cookies",
+                description: "Tiramisu (alias Tiramisu Cookies) offre une gamme de saveurs et d'arômes délicieux avec des touches généreuses de tons fruités de cerise, de prune et d'abricot combinées à une note de café caramel crémeuse",
+                price: 14.50,
+                thc: "< 29%",
+                video: "/video/tiramisu.mp4",
+                category: "fleurs"
+            },
+            {
+                id: 7,
+                name: "3xfiltre",
+                description: "Une résine 3x filtrée est une résine soumise à un processus de filtration répété (3 fois au minimum) à l’aide d’un filtre de 60 à 90 microns. Cette méthode garantit une qualité supérieure, éliminant toute trace d’impureté. Grâce à cela, ce hash est considéré comme un véritable joyau et même comme le caviar des résines.",
+                price: 22.50,
+                thc: "< 0.2%",
+                video: "/video/filtre.mp4",
+                category: "resines"
+            }
+        ];
+        
+        
+        // Initialize cart
+        let cart = [];
+        
+        // DOM elements
+        const productsContainer = document.getElementById('products-container');
+        const cartModal = document.getElementById('cart-modal');
+        const overlay = document.getElementById('overlay');
+        const cartItemsContainer = document.getElementById('cart-items');
+        const emptyCartMessage = document.getElementById('empty-cart');
+        const cartTotalPrice = document.getElementById('cart-total-price');
+        const cartCountElement = document.getElementById('cart-count');
+        const categoryTabs = document.querySelectorAll('.category-tab');
+        
+      // Render products
+function renderProducts(category = 'all') {
+    productsContainer.innerHTML = '';
+    
+    const filteredProducts = category === 'all' ? 
+        products : 
+        products.filter(product => product.category === category);
+    
+    filteredProducts.forEach(product => {
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card';
+        
+        // Détermine si c'est une vidéo ou une image basée sur le chemin
+        const isVideo = product.video && product.video.includes('.mp4');
+        
+        productCard.innerHTML = `
+            <div class="product-media">
+                ${isVideo ? 
+                    `<video src="${product.video}" muted loop></video>` : 
+                    `<img src="${product.video || '/api/placeholder/300/200'}" alt="${product.name}">`
+                }
+                <div class="thc-indicator">THC: ${product.thc}</div>
+            </div>
+            <div class="product-info">
+                <h3 class="product-name">${product.name}</h3>
+                <p class="product-description">${product.description}</p>
+                <div class="product-footer">
+                    <div class="product-price">${product.price.toFixed(2)}€</div>
+                    <button class="add-to-cart" data-id="${product.id}">Ajouter</button>
+                </div>
+            </div>
+        `;
+        
+        productsContainer.appendChild(productCard);
+    });
+    
+    // Ajouter un comportement de survol pour lire les vidéos
+    document.querySelectorAll('.product-card').forEach(card => {
+        const video = card.querySelector('video');
+        if (video) {
+            card.addEventListener('mouseenter', () => {
+                video.play();
+            });
+            card.addEventListener('mouseleave', () => {
+                video.pause();
+                video.currentTime = 0;
+            });
+        }
+    });
+    
+    // Add event listeners for "Add to cart" buttons
+    document.querySelectorAll('.add-to-cart').forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = parseInt(this.getAttribute('data-id'));
+            addToCart(productId);
+        });
+    });
+}
+        
+        // Add product to cart
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const existingItem = cart.find(item => item.id === productId);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    ...product,
+                    quantity: 1
+                });
+            }
+            
+            updateCart();
+        }
+        
+        // Update cart display
+        function updateCart() {
+            // Update cart items display
+            if (cart.length === 0) {
+                emptyCartMessage.style.display = 'block';
+                cartItemsContainer.innerHTML = '<div class="empty-cart" id="empty-cart">Votre panier est vide</div>';
+            } else {
+                emptyCartMessage.style.display = 'none';
+                
+                let cartHTML = '';
+                cart.forEach(item => {
+                    cartHTML += `
+                        <div class="cart-item">
+                            <div class="cart-item-info">
+                                <div class="cart-item-name">${item.name}</div>
+                                <div class="cart-item-price">${item.price.toFixed(2)}€</div>
+                            </div>
+                            <div class="cart-item-actions">
+                                <div class="quantity-control">
+                                    <button class="quantity-btn decrease" data-id="${item.id}">-</button>
+                                    <span class="quantity">${item.quantity}</span>
+                                    <button class="quantity-btn increase" data-id="${item.id}">+</button>
+                                </div>
+                                <button class="remove-item" data-id="${item.id}">×</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                cartItemsContainer.innerHTML = cartHTML;
+                
+                // Add event listeners for cart item controls
+                document.querySelectorAll('.decrease').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        decreaseQuantity(id);
+                    });
+                });
+                
+                document.querySelectorAll('.increase').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        increaseQuantity(id);
+                    });
+                });
+                
+                document.querySelectorAll('.remove-item').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        removeFromCart(id);
+                    });
+                });
+            }
+            
+            // Update total price
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            cartTotalPrice.textContent = `${total.toFixed(2)}€`;
+            
+            // Update cart count
+            const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCountElement.textContent = itemCount;
+        }
+        
+        // Cart item controls
+        function decreaseQuantity(id) {
+            const item = cart.find(item => item.id === id);
+            if (item.quantity > 1) {
+                item.quantity -= 1;
+            } else {
+                removeFromCart(id);
+                return;
+            }
+            updateCart();
+        }
+        
+        function increaseQuantity(id) {
+            const item = cart.find(item => item.id === id);
+            item.quantity += 1;
+            updateCart();
+        }
+        
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            updateCart();
+        }
+        
+        // Open and close cart modal
+        document.getElementById('open-cart').addEventListener('click', function() {
+            cartModal.classList.add('open');
+            overlay.classList.add('active');
+        });
+        
+        document.getElementById('close-cart').addEventListener('click', function() {
+            cartModal.classList.remove('open');
+            overlay.classList.remove('active');
+        });
+        
+        overlay.addEventListener('click', function() {
+            cartModal.classList.remove('open');
+            overlay.classList.remove('active');
+        });
+        
+        // Category tabs
+        categoryTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                categoryTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                const category = this.getAttribute('data-category');
+                renderProducts(category);
+            });
+        });
+        
+        // Initialize
+        renderProducts();
+    </script>
+</body>
+</html>
