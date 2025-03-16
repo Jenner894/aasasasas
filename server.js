@@ -199,6 +199,9 @@ app.get('/api/auth/status', (req, res) => {
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
+app.get('/dashboard', isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Création du serveur HTTP
 const server = require('http').createServer(app);
