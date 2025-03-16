@@ -69,6 +69,13 @@ app.use(session({
   }
 }));
 
+axios.get('https://api.ipify.org?format=json')
+  .then(response => {
+    console.log('Adresse IP de Render :', response.data.ip);
+  })
+  .catch(error => {
+    console.error('Erreur lors de la récupération de l\'IP:', error);
+  });
 // Connexion à MongoDB
 mongoose.connect(process.env.MONGO_URL, {
   useNewUrlParser: true,
