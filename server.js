@@ -9,6 +9,14 @@ require('dotenv').config();
 const router = express.Router();
 const PORT = process.env.PORT || 3000;
 
+
+const UserSchema = new mongoose.Schema({
+    username: { type: String, unique: true, required: true },
+    keys: { type: String, required: true },
+    role: { type: String, enum: ['client', 'admin'], default: 'client' },
+});
+const User = mongoose.model('User', UserSchema);
+
 // Middleware d'authentification par session
 const isAuthenticated = (req, res, next) => {
   if (req.session && req.session.user) {
