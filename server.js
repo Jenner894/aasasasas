@@ -77,6 +77,65 @@ mongoose.connect(process.env.MONGO_URL, {
 .then(() => console.log('Connecté à MongoDB'))
 .catch(err => console.error('Erreur de connexion à MongoDB:', err));
 
+
+
+
+// Route d'authentification pour vérifier la clé Telegram
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { key } = req.body;
+        
+        if (!key) {
+            return res.status(400).json({ message: 'Clé Telegram requise' });
+        }
+        
+        // Recherche de l'utilisateur par clé dans la base de données
+        const user = await User.findOne({ keys: key });
+        
+        if (!user) {
+            return res.status(401).json({ message: 'Clé Telegram invalide' });
+        }
+        
+        // Création d'une session pour l'utilisateur
+        req.session.user = {
+            id: user._id,
+            username: user.username,
+            role: user.role
+        };
+        
+        // Déterminer l'URL de redirection en fonction du rôle
+        let redirectUrl = '/dashboard';
+        if (user.role === 'admin') {
+            redirectUrl = '/admin-dashboard';
+        }
+        
+        // Retourner les informations de l'utilisateur et l'URL de redirection
+        return res.status(200).json({ 
+            message: 'Connexion réussie',
+            user: {
+                username: user.username,
+                role: user.role
+            },
+            redirectUrl
+        });
+    } catch (error) {
+        console.error('Erreur d\'authentification:', error);
+        return res.status(500).json({ message: 'Erreur serveur. Veuillez réessayer plus tard.' });
+    }
+});
+app.get('/api/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).json({ message: 'Erreur lors de la déconnexion' });
+        }
+        res.redirect('/login');
+    });
+});
+
+app.get('/dashboard', isAuthenticated, (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
+
 // Routes publiques
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'login.html'));
