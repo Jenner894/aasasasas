@@ -176,6 +176,119 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+     Fonction pour passer une commande
+async function checkout() {
+    // Vérifier si l'utilisateur est connecté
+    try {
+        const authResponse = await fetch('/api/auth/status');
+        const authData = await authResponse.json();
+        
+        if (!authData.authenticated) {
+            alert('Veuillez vous connecter pour passer une commande.');
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        // Vérifier si le panier n'est pas vide
+        if (cart.length === 0) {
+            alert('Votre panier est vide.');
+            return;
+        }
+        
+        // Créer une commande pour chaque article du panier
+        const orderPromises = cart.map(async (item) => {
+            const orderData = {
+                productName: item.name,
+                quantity: item.quantity,
+                totalPrice: item.price * item.quantity
+            };
+            
+            const response = await fetch('/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(orderData)
+            });
+            
+            return response.json();
+        });
+        
+        // Attendre que toutes les commandes soient passées
+        const results = await Promise.all(orderPromises);
+        
+        // Vérifier si toutes les commandes ont été créées avec succès
+        const allSuccessful = results.every(result => result.success);
+        
+        if (allSuccessful) {
+            alert('Vos commandes ont été passées avec succès !');
+            // Vider le panier
+            cart = [];
+            updateCart();
+            // Fermer le modal du panier
+            cartModal.classList.remove('open');
+            overlay.classList.remove('active');
+            
+            // Mettre à jour les commandes
+            fetchUserOrders();
+        } else {
+            alert('Une erreur est survenue lors de la création de vos commandes. Veuillez réessayer.');
+        }
+    } catch (error) {
+        console.error('Erreur lors du passage des commandes:', error);
+        alert('Une erreur est survenue. Veuillez réessayer plus tard.');
+    }
+}
+
+// Ajouter l'événement au bouton de paiement
+document.addEventListener('DOMContentLoaded', function() {
+    const checkoutButton = document.querySelector('.checkout-btn');
+    if (checkoutButton) {
+        checkoutButton.addEventListener('click', checkout);
+    }
+    
+    // Assurez-vous d'ajouter fetchUserOrders à la portée globale
+    // si cette fonction n'est pas définie ailleurs
+    window.fetchUserOrders = async function() {
+        try {
+            const response = await fetch('/api/orders/user');
+            const data = await response.json();
+            
+            if (data.success) {
+                userOrders = data.orders;
+                updateOrdersCount();
+            } else {
+                console.error('Erreur lors de la récupération des commandes:', data.message);
+            }
+        } catch (error) {
+            console.error('Erreur lors de la récupération des commandes:', error);
+        }
+    };
+    
+    // Fonction pour mettre à jour le compteur de commandes
+    window.updateOrdersCount = function() {
+        const ordersButton = document.getElementById('orders-button');
+        if (ordersButton) {
+            const ordersIcon = ordersButton.querySelector('.orders-icon');
+            if (ordersIcon) {
+                // Supprimer l'ancien compteur s'il existe
+                const oldCount = ordersIcon.querySelector('.cart-count');
+                if (oldCount) {
+                    ordersIcon.removeChild(oldCount);
+                }
+                
+                // Créer le nouveau compteur
+                const ordersCountElement = document.createElement('span');
+                ordersCountElement.className = 'cart-count';
+                ordersCountElement.id = 'orders-count';
+                ordersCountElement.textContent = userOrders.length;
+                
+                // Ajouter le nouveau compteur
+                ordersIcon.appendChild(ordersCountElement);
+            }
+        }
+    };
+});
 
     // Fonction d'initialisation
     function init() {
