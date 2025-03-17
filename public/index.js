@@ -5,27 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let userOrders = [];
     let products = [];
 
-    // Vérification de l'authentification
-    async function checkAuthStatus() {
-        try {
-            const response = await fetch('/api/auth/status');
-            const data = await response.json();
-            
-            console.log('Réponse auth status:', data); // Déboguer la réponse
-            
-            if (data.authenticated) {
-                currentUser = data.user;
-                displayUsername();
-                fetchUserOrders();
-                fetchProducts();
-            } else {
-                console.error('Non authentifié, redirection vers login');
-                window.location.href = '/login.html';
-            }
-        } catch (error) {
-            console.error('Erreur d\'authentification:', error);
-        }
-    }
+
 
     // Afficher le nom d'utilisateur
     function displayUsername() {
@@ -320,7 +300,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialisation
     function init() {
-        checkAuthStatus();
+       
         setupLogout();
         setupCategoryFilters();
         setupEventListeners();
