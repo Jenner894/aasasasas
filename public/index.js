@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variables globales
     let currentUser = null;
     let userOrders = [];
-    let cart = [];
     let products = [];
 
     // Vérification de l'authentification
@@ -12,12 +11,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch('/api/auth/status');
             const data = await response.json();
             
+            console.log('Réponse auth status:', data); // Déboguer la réponse
+            
             if (data.authenticated) {
                 currentUser = data.user;
                 displayUsername();
                 fetchUserOrders();
                 fetchProducts();
             } else {
+                console.error('Non authentifié, redirection vers login');
                 window.location.href = '/login.html';
             }
         } catch (error) {
@@ -107,99 +109,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="product-price">${product.pricePerGram.toFixed(2)}€/g</div>
                     ${stockBadge}
                 </div>
-                <div class="product-actions">
-                    <div class="quantity-controls">
-                        <button class="quantity-btn decrease-btn">-</button>
-                        <input type="number" class="quantity-input" value="1" min="1" max="100">
-                        <button class="quantity-btn increase-btn">+</button>
-                    </div>
-                    <button class="add-to-cart-btn" ${!product.inStock ? 'disabled' : ''}>
-                        ${product.inStock ? 'Ajouter au panier' : 'Indisponible'}
-                    </button>
-                </div>
             `;
             
             productsContainer.appendChild(productCard);
-            
-            setupProductControls(productCard, product);
         });
-    }
-    
-    // Configuration des contrôles de produit
-    function setupProductControls(productCard, product) {
-        const quantityInput = productCard.querySelector('.quantity-input');
-        const decreaseBtn = productCard.querySelector('.decrease-btn');
-        const increaseBtn = productCard.querySelector('.increase-btn');
-        const addToCartBtn = productCard.querySelector('.add-to-cart-btn');
-        
-        decreaseBtn.addEventListener('click', () => {
-            let value = parseInt(quantityInput.value);
-            if (value > 1) quantityInput.value = value - 1;
-        });
-        
-        increaseBtn.addEventListener('click', () => {
-            let value = parseInt(quantityInput.value);
-            if (value < 100) quantityInput.value = value + 1;
-        });
-        
-        quantityInput.addEventListener('change', function() {
-            let value = parseInt(this.value);
-            if (isNaN(value) || value < 1) this.value = 1;
-            else if (value > 100) this.value = 100;
-        });
-        
-        if (product.inStock) {
-            addToCartBtn.addEventListener('click', () => {
-                addToCart(product, parseInt(quantityInput.value));
-            });
-        }
-    }
-
-    // Ajout au panier
-    function addToCart(product, quantity) {
-        const existingItem = cart.find(item => item.id === product._id);
-        
-        if (existingItem) {
-            existingItem.quantity += quantity;
-        } else {
-            cart.push({
-                id: product._id,
-                name: product.name,
-                price: product.pricePerGram,
-                quantity: quantity,
-                category: product.category
-            });
-        }
-        
-        updateCartCount();
-        showNotification(`${quantity}g de ${product.name} ajouté au panier`);
-    }
-
-    // Mise à jour du compteur panier
-    function updateCartCount() {
-        const cartCountElement = document.getElementById('cart-count');
-        if (cartCountElement) {
-            const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
-            cartCountElement.textContent = totalItems;
-            cartCountElement.style.display = totalItems > 0 ? 'block' : 'none';
-        }
-    }
-// Affichage notification
-    function showNotification(message) {
-        let notification = document.querySelector('.notification');
-        
-        if (!notification) {
-            notification = document.createElement('div');
-            notification.className = 'notification';
-            document.body.appendChild(notification);
-        }
-        
-        notification.textContent = message;
-        notification.classList.add('show');
-        
-        setTimeout(() => {
-            notification.classList.remove('show');
-        }, 3000);
     }
 
     // Mise à jour compteur commandes
@@ -225,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Création modal commandes
+    // Création modal commandes (comme le panier)
     function createOrdersModal() {
         let ordersModal = document.getElementById('orders-modal');
         if (!ordersModal) {
@@ -248,43 +161,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             document.body.appendChild(ordersModal);
             
-            document.getElementById('close-orders').addEventListener('click', () => {
-                ordersModal.classList.remove('open');
-                document.getElementById('overlay').classList.remove('active');
-            });
-        }
-        
-        return ordersModal;
-    }
-
-    // Création modal panier
-    function createCartModal() {
-        let cartModal = document.getElementById('cart-modal');
-        if (!cartModal) {
-            cartModal = document.createElement('div');
-            cartModal.className = 'cart-modal';
-            cartModal.id = 'cart-modal';
-            
-            cartModal.innerHTML = `
-                <div class="cart-header">
-                    <h2>Votre Panier</h2>
-                    <button class="close-cart" id="close-cart">×</button>
-                </div>
-                
-                <div class="cart-items" id="cart-items">
-                    <div class="empty-cart" id="empty-cart">
-                        Votre panier est vide
-                    </div>
-                </div>
-                
-                <div class="cart-footer">
-                    <div class="cart-total">Total: <span id="cart-total-price">0.00</span>€</div>
-                    <button class="checkout-btn" id="checkout-btn">Payer</button>
-                </div>
-            `;
-            
-            document.body.appendChild(cartModal);
-            
             let overlay = document.getElementById('overlay');
             if (!overlay) {
                 overlay = document.createElement('div');
@@ -293,75 +169,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.body.appendChild(overlay);
             }
             
-            document.getElementById('close-cart').addEventListener('click', () => {
-                cartModal.classList.remove('open');
+            document.getElementById('close-orders').addEventListener('click', () => {
+                ordersModal.classList.remove('open');
                 document.getElementById('overlay').classList.remove('active');
             });
-            
-            document.getElementById('checkout-btn').addEventListener('click', checkout);
         }
         
-        return cartModal;
-    }
-
-    // Affichage panier
-    function displayCart() {
-        const cartModal = createCartModal();
-        const cartItemsContainer = document.getElementById('cart-items');
-        const emptyCartMessage = document.getElementById('empty-cart');
-        const totalPriceElement = document.getElementById('cart-total-price');
-        const overlay = document.getElementById('overlay');
-        
-        if (cart.length === 0) {
-            emptyCartMessage.style.display = 'block';
-            cartItemsContainer.innerHTML = '<div class="empty-cart" id="empty-cart">Votre panier est vide</div>';
-            totalPriceElement.textContent = '0.00';
-        } else {
-            emptyCartMessage.style.display = 'none';
-            
-            let cartHTML = '';
-            let totalPrice = 0;
-            
-            cart.forEach((item, index) => {
-                const itemTotal = item.price * item.quantity;
-                totalPrice += itemTotal;
-                
-                cartHTML += `
-                    <div class="cart-item" data-id="${item.id}">
-                        <div class="cart-item-info">
-                            <div class="cart-item-name">${item.name}</div>
-                            <div class="cart-item-category">${item.category}</div>
-                            <div class="cart-item-price">${item.price.toFixed(2)}€/g × ${item.quantity}g = ${itemTotal.toFixed(2)}€</div>
-                        </div>
-                        <div class="cart-item-actions">
-                            <button class="remove-item-btn" data-index="${index}">×</button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            cartItemsContainer.innerHTML = cartHTML;
-            totalPriceElement.textContent = totalPrice.toFixed(2);
-            
-            const removeButtons = cartItemsContainer.querySelectorAll('.remove-item-btn');
-            removeButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    removeFromCart(parseInt(this.dataset.index));
-                });
-            });
-        }
-        
-        cartModal.classList.add('open');
-        overlay.classList.add('active');
-    }
-
-    // Suppression du panier
-    function removeFromCart(index) {
-        if (index >= 0 && index < cart.length) {
-            cart.splice(index, 1);
-            updateCartCount();
-            displayCart();
-        }
+        return ordersModal;
     }
 
     // Affichage commandes
@@ -397,56 +211,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         ordersModal.classList.add('open');
         overlay.classList.add('active');
-    }
-
-
-// Passer une commande
-    async function checkout() {
-        if (cart.length === 0) {
-            showNotification('Votre panier est vide.');
-            return;
-        }
-        
-        try {
-            const orderPromises = cart.map(async (item) => {
-                const orderData = {
-                    productName: item.name,
-                    quantity: item.quantity,
-                    totalPrice: item.price * item.quantity
-                };
-                
-                const response = await fetch('/api/orders', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(orderData)
-                });
-                
-                return response.json();
-            });
-            
-            const results = await Promise.all(orderPromises);
-            const allSuccessful = results.every(result => result.success);
-            
-            if (allSuccessful) {
-                showNotification('Vos commandes ont été passées avec succès !');
-                cart = [];
-                updateCartCount();
-                
-                const cartModal = document.getElementById('cart-modal');
-                const overlay = document.getElementById('overlay');
-                if (cartModal) cartModal.classList.remove('open');
-                if (overlay) overlay.classList.remove('active');
-                
-                fetchUserOrders();
-            } else {
-                showNotification('Une erreur est survenue lors de la création de vos commandes.');
-            }
-        } catch (error) {
-            console.error('Erreur lors du passage des commandes:', error);
-            showNotification('Une erreur est survenue. Veuillez réessayer plus tard.');
-        }
     }
 
     // Filtrage des produits par catégorie
@@ -489,20 +253,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="product-price">${product.pricePerGram.toFixed(2)}€/g</div>
                     ${stockBadge}
                 </div>
-                <div class="product-actions">
-                    <div class="quantity-controls">
-                        <button class="quantity-btn decrease-btn">-</button>
-                        <input type="number" class="quantity-input" value="1" min="1" max="100">
-                        <button class="quantity-btn increase-btn">+</button>
-                    </div>
-                    <button class="add-to-cart-btn" ${!product.inStock ? 'disabled' : ''}>
-                        ${product.inStock ? 'Ajouter au panier' : 'Indisponible'}
-                    </button>
-                </div>
             `;
             
             productsContainer.appendChild(productCard);
-            setupProductControls(productCard, product);
         });
     }
 
@@ -562,11 +315,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const ordersButton = document.getElementById('orders-button');
         if (ordersButton) {
             ordersButton.addEventListener('click', displayOrders);
-        }
-
-        const cartButton = document.getElementById('cart-button');
-        if (cartButton) {
-            cartButton.addEventListener('click', displayCart);
         }
     }
 
