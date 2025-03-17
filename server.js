@@ -215,7 +215,16 @@ app.post('/api/products', isAuthenticated, async (req, res) => {
         res.status(500).json({ success: false, message: 'Erreur lors de la création du produit' });
     }
 });
-
+// Route pour récupérer les commandes de l'utilisateur connecté
+app.get('/api/orders/user', isAuthenticated, async (req, res) => {
+    try {
+        const orders = await Order.find({ username: req.session.user.username });
+        res.status(200).json({ success: true, orders });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des commandes:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des commandes' });
+    }
+});
 // Route pour mettre à jour un produit (protégée, admin seulement)
 app.put('/api/products/:id', isAuthenticated, async (req, res) => {
     // Vérifier si l'utilisateur est admin
