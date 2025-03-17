@@ -138,11 +138,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (response.ok) {
                 // Connexion réussie
-                showNotification(`Connexion réussie! Bienvenue ${data.user.username}`, 'success');
+                showNotification(`Connexion réussie!`, 'success');
                 
                 // Rediriger après un court délai pour que l'utilisateur puisse voir la notification
                 setTimeout(() => {
-                    window.location.href = data.redirectUrl || '/dashboard.html';
+                    window.location.href = data.redirectUrl || '/dashboard';
                 }, 1500);
             } else {
                 // Erreur de connexion
