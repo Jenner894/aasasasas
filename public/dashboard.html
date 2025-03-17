@@ -447,6 +447,69 @@
             cursor: pointer;
         }
         
+/* Style pour les détails des commandes */
+.cart-item-detail {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 2px 0;
+}
+
+.cart-item-status {
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+/* Couleurs pour les différents statuts de commande */
+.status-en-attente {
+    color: #FFA500; /* Orange */
+}
+
+.status-en-preparation {
+    color: #4169E1; /* RoyalBlue */
+}
+
+.status-expedie {
+    color: #9370DB; /* MediumPurple */
+}
+
+.status-livre {
+    color: #32CD32; /* LimeGreen */
+}
+
+.status-annule {
+    color: #DC143C; /* Crimson */
+}
+
+/* Amélioration du style des modals pour les commandes */
+#orders-modal .cart-item {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding: 15px;
+}
+
+#orders-modal .cart-item:hover {
+    background-color: #f0f0f0;
+}
+
+/* Notification pour les nouvelles commandes */
+.new-order-badge {
+    background-color: var(--accent-green);
+    color: var(--text-dark);
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    font-weight: bold;
+}
+
+/* Style pour la date de commande */
+.order-date {
+    font-size: 0.8rem;
+    color: #777;
+    margin-top: 5px;
+    font-style: italic;
+}
         .quantity {
             padding: 0 10px;
             font-weight: bold;
@@ -525,6 +588,7 @@
             right: 10px;
             z-index: 10;
         }
+        
         
         /* Responsive styles */
         @media (max-width: 768px) {
