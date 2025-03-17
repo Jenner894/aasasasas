@@ -199,7 +199,7 @@ app.get('/', (req, res) => {
   }
 });
 app.get('/dashboard', isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
 // Création du serveur HTTP
