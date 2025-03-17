@@ -302,6 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function init() {
        
         setupLogout();
+    fetchUserOrders();
         setupCategoryFilters();
         setupEventListeners();
     }
