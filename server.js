@@ -9,6 +9,23 @@ const app = express();
 require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 
+
+
+const OrderSchema = new mongoose.Schema({
+    username: { type: String, required: true }, // Nom d'utilisateur du client
+    productName: { type: String, required: true }, // Nom du produit
+    quantity: { type: Number, required: true }, // Quantité en grammes
+    totalPrice: { type: Number, required: true }, // Prix total
+    status: { 
+        type: String, 
+        enum: ['En attente', 'En préparation', 'Expédié', 'Livré', 'Annulé'],
+        default: 'En attente'
+    },
+    createdAt: { type: Date, default: Date.now } // Date de création de la commande
+});
+
+// Création du modèle Order
+const Order = mongoose.model('Order', OrderSchema);
 // Définition du schéma utilisateur
 const UserSchema = new mongoose.Schema({
     username: { type: String, unique: true, required: true },
