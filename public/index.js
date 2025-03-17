@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<span class="stock-badge in-stock">En stock</span>' : 
                 '<span class="stock-badge out-of-stock">Rupture de stock</span>';
             
-            productCard.innerHTML = `
+productCard.innerHTML = `
                 <div class="product-video-container">
                     <video class="product-video" controls preload="none" poster="/images/video-placeholder.jpg">
                         <source src="${product.videoUrl}" type="video/mp4">
