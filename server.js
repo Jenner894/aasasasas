@@ -165,11 +165,6 @@ app.get('/api/auth/logout', (req, res) => {
     });
 });
 
-// Route pour le dashboard (protégée)
-app.get('/dashboard.html', isAuthenticated, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
-});
-
 // Route pour le dashboard admin (protégée)
 app.get('/admin-dashboard.html', isAuthenticated, (req, res, next) => {
     // Vérification du rôle admin
@@ -197,7 +192,11 @@ app.get('/api/auth/status', (req, res) => {
 
 // Routes publiques - redirection vers la page de login
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  if (req.session && req.session.user) {
+    res.redirect(req.session.user.role === 'admin' ? '/admin-dashboard.html' : '/dashboard.html');
+  } else {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  }
 });
 app.get('/dashboard', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
