@@ -303,6 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
        
         setupLogout();
     fetchUserOrders();
+        fetchProducts()
         setupCategoryFilters();
         setupEventListeners();
     }
