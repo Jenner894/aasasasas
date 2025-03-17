@@ -11,6 +11,58 @@ const PORT = process.env.PORT || 3000;
 
 
 
+const ProductSchema = new mongoose.Schema({
+    name: { 
+        type: String, 
+        required: true,
+        trim: true
+    },
+    description: { 
+        type: String, 
+        required: true 
+    },
+    category: { 
+        type: String, 
+        required: true,
+        enum: ['Indica', 'Sativa', 'Hybride', 'CBD', 'Concentré', 'Comestible'] 
+    },
+    pricePerGram: { 
+        type: Number, 
+        required: true,
+        min: 0
+    },
+    thcContent: { 
+        type: Number, 
+        required: true,
+        min: 0,
+        max: 100
+    },
+    videoUrl: { 
+        type: String,
+        required: true
+    },
+    inStock: { 
+        type: Boolean, 
+        default: true 
+    },
+    createdAt: { 
+        type: Date, 
+        default: Date.now 
+    },
+    updatedAt: { 
+        type: Date, 
+        default: Date.now 
+    }
+});
+
+// Middleware pour mettre à jour la date de modification
+ProductSchema.pre('save', function(next) {
+    this.updatedAt = Date.now();
+    next();
+});
+
+// Création du modèle Product
+const Product = mongoose.model('Product', ProductSchema);
 const OrderSchema = new mongoose.Schema({
     username: { type: String, required: true }, // Nom d'utilisateur du client
     productName: { type: String, required: true }, // Nom du produit
@@ -99,6 +151,126 @@ app.use(session({
     maxAge: 24 * 60 * 60 * 1000 // 24 heures
   }
 }));
+
+
+
+////////////    Dashboard ////////////////
+
+
+// Route pour récupérer tous les produits
+app.get('/api/products', async (req, res) => {
+    try {
+        const products = await Product.find({});
+        res.status(200).json({ success: true, products });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des produits:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des produits' });
+    }
+});
+
+// Route pour récupérer un produit par son ID
+app.get('/api/products/:id', async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'Produit non trouvé' });
+        }
+        res.status(200).json({ success: true, product });
+    } catch (error) {
+        console.error('Erreur lors de la récupération du produit:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération du produit' });
+    }
+});
+
+// Route pour ajouter un produit (protégée, admin seulement)
+app.post('/api/products', isAuthenticated, async (req, res) => {
+    // Vérifier si l'utilisateur est admin
+    if (req.session.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+    }
+    
+    try {
+        const { name, description, category, pricePerGram, thcContent, videoUrl, inStock } = req.body;
+        
+        // Validation des données
+        if (!name || !description || !category || !pricePerGram || thcContent === undefined || !videoUrl) {
+            return res.status(400).json({ success: false, message: 'Tous les champs sont requis' });
+        }
+        
+        const newProduct = new Product({
+            name,
+            description,
+            category,
+            pricePerGram,
+            thcContent,
+            videoUrl,
+            inStock: inStock !== undefined ? inStock : true
+        });
+        
+        await newProduct.save();
+        
+        res.status(201).json({ success: true, product: newProduct });
+    } catch (error) {
+        console.error('Erreur lors de la création du produit:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la création du produit' });
+    }
+});
+
+// Route pour mettre à jour un produit (protégée, admin seulement)
+app.put('/api/products/:id', isAuthenticated, async (req, res) => {
+    // Vérifier si l'utilisateur est admin
+    if (req.session.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+    }
+    
+    try {
+        const { name, description, category, pricePerGram, thcContent, videoUrl, inStock } = req.body;
+        
+        const updatedProduct = await Product.findByIdAndUpdate(
+            req.params.id,
+            {
+                name,
+                description,
+                category,
+                pricePerGram,
+                thcContent,
+                videoUrl,
+                inStock
+            },
+            { new: true, runValidators: true }
+        );
+        
+        if (!updatedProduct) {
+            return res.status(404).json({ success: false, message: 'Produit non trouvé' });
+        }
+        
+        res.status(200).json({ success: true, product: updatedProduct });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du produit:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la mise à jour du produit' });
+    }
+});
+
+// Route pour supprimer un produit (protégée, admin seulement)
+app.delete('/api/products/:id', isAuthenticated, async (req, res) => {
+    // Vérifier si l'utilisateur est admin
+    if (req.session.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+    }
+    
+    try {
+        const deletedProduct = await Product.findByIdAndDelete(req.params.id);
+        
+        if (!deletedProduct) {
+            return res.status(404).json({ success: false, message: 'Produit non trouvé' });
+        }
+        
+        res.status(200).json({ success: true, message: 'Produit supprimé avec succès' });
+    } catch (error) {
+        console.error('Erreur lors de la suppression du produit:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la suppression du produit' });
+    }
+});
 
 // Vérifie l'adresse IP du serveur
 axios.get('https://api.ipify.org?format=json')
