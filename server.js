@@ -193,7 +193,7 @@ app.get('/api/auth/status', (req, res) => {
 // Routes publiques - redirection vers la page de login
 app.get('/', (req, res) => {
   if (req.session && req.session.user) {
-    res.redirect(req.session.user.role === 'admin' ? '/admin-dashboard.html' : '/dashboard.html');
+    res.redirect(req.session.user.role === 'admin' ? '/admin-dashboard.html' : '/dashboard');
   } else {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
   }
