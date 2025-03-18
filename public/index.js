@@ -77,63 +77,109 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Affichage des produits
-    function displayProducts() {
-        const productsContainer = document.getElementById('products-container');
-        
-        if (!productsContainer) {
-            console.error('Conteneur de produits non trouvé');
-            return;
-        }
-        
-        productsContainer.innerHTML = '';
-        
-        if (!products || products.length === 0) {
-            productsContainer.innerHTML = '<div class="no-products">Aucun produit disponible</div>';
-            return;
-        }
-        
-        products.forEach(product => {
-            console.log('Processing product:', product); // Déboguer chaque produit
-            
-            const productCard = document.createElement('div');
-            productCard.className = 'product-card';
-            productCard.dataset.id = product._id;
-            
-            // Vérifier si inStock existe, sinon utiliser true par défaut
-            const isInStock = product.inStock !== undefined ? product.inStock : true;
-            
-            const stockBadge = isInStock ? 
-                '<span class="stock-badge in-stock">En stock</span>' : 
-                '<span class="stock-badge out-of-stock">Rupture de stock</span>';
-            
-            // Vérifier chaque propriété et utiliser des valeurs par défaut si nécessaire
-            const price = product.pricePerGram !== undefined ? Number(product.pricePerGram).toFixed(2) : "N/A";
-            const videoUrl = product.videoUrl || "/images/default-video.mp4";
-            const name = product.name || "Produit sans nom";
-            const category = product.category || "Non catégorisé";
-            const thcContent = product.thcContent !== undefined ? product.thcContent : "N/A";
-            const description = product.description || "Aucune description disponible";
-            
-            productCard.innerHTML = `
-                <div class="product-video-container">
-                    <video class="product-video" controls preload="none" poster="/images/video-placeholder.jpg">
-                        <source src="${videoUrl}" type="video/mp4">
-                        Votre navigateur ne supporte pas les vidéos HTML5.
-                    </video>
-                </div>
-                <div class="product-info">
-                    <h3 class="product-name">${name}</h3>
-                    <div class="product-category">${category}</div>
-                    <div class="product-thc">THC: ${thcContent}%</div>
-                    <p class="product-description">${description}</p>
-                    <div class="product-price">${price}€/g</div>
-                    ${stockBadge}
-                </div>
-            `;
-            
-            productsContainer.appendChild(productCard);
-        });
+  function displayProducts() {
+    const productsContainer = document.getElementById('products-container');
+    
+    if (!productsContainer) {
+        console.error('Conteneur de produits non trouvé');
+        return;
     }
+    
+    productsContainer.innerHTML = '';
+    
+    if (!products || products.length === 0) {
+        productsContainer.innerHTML = '<div class="no-products">Aucun produit disponible</div>';
+        return;
+    }
+    
+    products.forEach(product => {
+        console.log('Processing product:', product); // Déboguer chaque produit
+        
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card';
+        productCard.dataset.id = product._id;
+        
+        // Vérifier si inStock existe, sinon utiliser true par défaut
+        const isInStock = product.inStock !== undefined ? product.inStock : true;
+        
+        const stockBadge = isInStock ? 
+            '<span class="stock-badge in-stock">En stock</span>' : 
+            '<span class="stock-badge out-of-stock">Rupture de stock</span>';
+        
+        // Vérifier chaque propriété et utiliser des valeurs par défaut si nécessaire
+        const basePrice = product.pricePerGram !== undefined ? Number(product.pricePerGram) : 0;
+        const videoUrl = product.videoUrl || "/images/default-video.mp4";
+        const name = product.name || "Produit sans nom";
+        const category = product.category || "Non catégorisé";
+        const thcContent = product.thcContent !== undefined ? product.thcContent : "N/A";
+        const description = product.description || "Aucune description disponible";
+        
+        // Créer les options pour le menu déroulant de quantité
+        const quantityOptions = [
+            { grams: 1, price: basePrice },
+            { grams: 3, price: basePrice * 3 * 0.95 }, // 5% de réduction pour 3g
+            { grams: 5, price: basePrice * 5 * 0.9 }, // 10% de réduction pour 5g
+            { grams: 10, price: basePrice * 10 * 0.85 }, // 15% de réduction pour 10g
+            { grams: 20, price: basePrice * 20 * 0.8 }, // 20% de réduction pour 20g
+        ];
+        
+        const quantityOptionsHTML = quantityOptions.map(option => {
+            return `<option value="${option.grams}" data-price="${option.price.toFixed(2)}">
+                ${option.grams}g - ${option.price.toFixed(2)}€
+            </option>`;
+        }).join('');
+        
+        productCard.innerHTML = `
+            <div class="product-video-container">
+                <video class="product-video" controls preload="none" poster="/images/video-placeholder.jpg">
+                    <source src="${videoUrl}" type="video/mp4">
+                    Votre navigateur ne supporte pas les vidéos HTML5.
+                </video>
+            </div>
+            <div class="product-info">
+                <h3 class="product-name">${name}</h3>
+                <div class="product-category">${category}</div>
+                <div class="product-thc">THC: ${thcContent}%</div>
+                <p class="product-description">${description}</p>
+                <div class="product-price-container">
+                    <div class="product-price" data-base-price="${basePrice.toFixed(2)}">
+                        ${basePrice.toFixed(2)}€/g
+                    </div>
+                    <div class="quantity-selector">
+                        <select class="quantity-dropdown" data-product-id="${product._id}">
+                            ${quantityOptionsHTML}
+                        </select>
+                    </div>
+                </div>
+                ${stockBadge}
+                <button class="add-to-cart-btn" data-product-id="${product._id}">
+                    Ajouter au panier
+                </button>
+            </div>
+        `;
+        
+        productsContainer.appendChild(productCard);
+        
+        // Ajouter un écouteur d'événement pour le changement de quantité
+        const quantityDropdown = productCard.querySelector('.quantity-dropdown');
+        quantityDropdown.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const price = selectedOption.getAttribute('data-price');
+            const grams = selectedOption.value;
+            
+            const priceDisplay = productCard.querySelector('.product-price');
+            priceDisplay.textContent = `${price}€ pour ${grams}g`;
+        });
+    });
+    
+    // Initialiser l'affichage du prix pour la première option de chaque produit
+    document.querySelectorAll('.quantity-dropdown').forEach(dropdown => {
+        // Simuler un événement de changement pour mettre à jour l'affichage initial
+        const event = new Event('change');
+        dropdown.dispatchEvent(event);
+    });
+}
+
 
     // Mise à jour compteur commandes
     function updateOrdersCount() {
@@ -245,62 +291,106 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Filtrage des produits par catégorie
-    function displayFilteredProducts(filteredProducts) {
-        const productsContainer = document.getElementById('products-container');
-        
-        if (!productsContainer) {
-            console.error('Conteneur de produits non trouvé');
-            return;
-        }
-        
-        productsContainer.innerHTML = '';
-        
-        if (!filteredProducts || filteredProducts.length === 0) {
-            productsContainer.innerHTML = '<div class="no-products">Aucun produit dans cette catégorie</div>';
-            return;
-        }
-        
-        filteredProducts.forEach(product => {
-            const productCard = document.createElement('div');
-            productCard.className = 'product-card';
-            productCard.dataset.id = product._id;
-            
-            // Vérifier si inStock existe, sinon utiliser true par défaut
-            const isInStock = product.inStock !== undefined ? product.inStock : true;
-            
-            const stockBadge = isInStock ? 
-                '<span class="stock-badge in-stock">En stock</span>' : 
-                '<span class="stock-badge out-of-stock">Rupture de stock</span>';
-            
-            // Vérifier chaque propriété et utiliser des valeurs par défaut si nécessaire
-            const price = product.pricePerGram !== undefined ? Number(product.pricePerGram).toFixed(2) : "N/A";
-            const videoUrl = product.videoUrl || "/images/default-video.mp4";
-            const name = product.name || "Produit sans nom";
-            const category = product.category || "Non catégorisé";
-            const thcContent = product.thcContent !== undefined ? product.thcContent : "N/A";
-            const description = product.description || "Aucune description disponible";
-            
-            productCard.innerHTML = `
-                <div class="product-video-container">
-                    <video class="product-video" controls preload="none" poster="/images/video-placeholder.jpg">
-                        <source src="${videoUrl}" type="video/mp4">
-                        Votre navigateur ne supporte pas les vidéos HTML5.
-                    </video>
-                </div>
-                <div class="product-info">
-                    <h3 class="product-name">${name}</h3>
-                    <div class="product-category">${category}</div>
-                    <div class="product-thc">THC: ${thcContent}%</div>
-                    <p class="product-description">${description}</p>
-                    <div class="product-price">${price}€/g</div>
-                    ${stockBadge}
-                </div>
-            `;
-            
-            productsContainer.appendChild(productCard);
-        });
+   function displayFilteredProducts(filteredProducts) {
+    const productsContainer = document.getElementById('products-container');
+    
+    if (!productsContainer) {
+        console.error('Conteneur de produits non trouvé');
+        return;
     }
-
+    
+    productsContainer.innerHTML = '';
+    
+    if (!filteredProducts || filteredProducts.length === 0) {
+        productsContainer.innerHTML = '<div class="no-products">Aucun produit dans cette catégorie</div>';
+        return;
+    }
+    
+    filteredProducts.forEach(product => {
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card';
+        productCard.dataset.id = product._id;
+        
+        // Vérifier si inStock existe, sinon utiliser true par défaut
+        const isInStock = product.inStock !== undefined ? product.inStock : true;
+        
+        const stockBadge = isInStock ? 
+            '<span class="stock-badge in-stock">En stock</span>' : 
+            '<span class="stock-badge out-of-stock">Rupture de stock</span>';
+        
+        // Vérifier chaque propriété et utiliser des valeurs par défaut si nécessaire
+        const basePrice = product.pricePerGram !== undefined ? Number(product.pricePerGram) : 0;
+        const videoUrl = product.videoUrl || "/images/default-video.mp4";
+        const name = product.name || "Produit sans nom";
+        const category = product.category || "Non catégorisé";
+        const thcContent = product.thcContent !== undefined ? product.thcContent : "N/A";
+        const description = product.description || "Aucune description disponible";
+        
+        // Créer les options pour le menu déroulant de quantité
+        const quantityOptions = [
+            { grams: 1, price: basePrice },
+            { grams: 3, price: basePrice * 3 * 0.95 }, // 5% de réduction pour 3g
+            { grams: 5, price: basePrice * 5 * 0.9 }, // 10% de réduction pour 5g
+            { grams: 10, price: basePrice * 10 * 0.85 }, // 15% de réduction pour 10g
+            { grams: 20, price: basePrice * 20 * 0.8 }, // 20% de réduction pour 20g
+        ];
+        
+        const quantityOptionsHTML = quantityOptions.map(option => {
+            return `<option value="${option.grams}" data-price="${option.price.toFixed(2)}">
+                ${option.grams}g - ${option.price.toFixed(2)}€
+            </option>`;
+        }).join('');
+        
+        productCard.innerHTML = `
+            <div class="product-video-container">
+                <video class="product-video" controls preload="none" poster="/images/video-placeholder.jpg">
+                    <source src="${videoUrl}" type="video/mp4">
+                    Votre navigateur ne supporte pas les vidéos HTML5.
+                </video>
+            </div>
+            <div class="product-info">
+                <h3 class="product-name">${name}</h3>
+                <div class="product-category">${category}</div>
+                <div class="product-thc">THC: ${thcContent}%</div>
+                <p class="product-description">${description}</p>
+                <div class="product-price-container">
+                    <div class="product-price" data-base-price="${basePrice.toFixed(2)}">
+                        ${basePrice.toFixed(2)}€/g
+                    </div>
+                    <div class="quantity-selector">
+                        <select class="quantity-dropdown" data-product-id="${product._id}">
+                            ${quantityOptionsHTML}
+                        </select>
+                    </div>
+                </div>
+                ${stockBadge}
+                <button class="add-to-cart-btn" data-product-id="${product._id}">
+                    Ajouter au panier
+                </button>
+            </div>
+        `;
+        
+        productsContainer.appendChild(productCard);
+        
+        // Ajouter un écouteur d'événement pour le changement de quantité
+        const quantityDropdown = productCard.querySelector('.quantity-dropdown');
+        quantityDropdown.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const price = selectedOption.getAttribute('data-price');
+            const grams = selectedOption.value;
+            
+            const priceDisplay = productCard.querySelector('.product-price');
+            priceDisplay.textContent = `${price}€ pour ${grams}g`;
+        });
+    });
+    
+    // Initialiser l'affichage du prix pour la première option de chaque produit
+    document.querySelectorAll('.quantity-dropdown').forEach(dropdown => {
+        // Simuler un événement de changement pour mettre à jour l'affichage initial
+        const event = new Event('change');
+        dropdown.dispatchEvent(event);
+    });
+}
     // Configuration des filtres par catégorie
     function setupCategoryFilters() {
         const categoryFilters = document.querySelectorAll('.category-filter');
