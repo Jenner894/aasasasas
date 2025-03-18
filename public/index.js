@@ -5,8 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let userOrders = [];
     let products = [];
 
-
-
     // Afficher le nom d'utilisateur
     function displayUsername() {
         const profileButton = document.getElementById('profile-button');
@@ -19,7 +17,19 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fetchUserOrders() {
         try {
             const response = await fetch('/api/orders/user');
-            const data = await response.json();
+            
+            // Déboguer la réponse brute
+            const text = await response.text();
+            console.log('Réponse brute de l\'API commandes:', text);
+            
+            // Essayer de parser le JSON
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error('Erreur de parsing JSON pour les commandes:', e);
+                return;
+            }
             
             if (data.success) {
                 userOrders = data.orders;
@@ -36,10 +46,27 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fetchProducts() {
         try {
             const response = await fetch('/api/products');
-            const data = await response.json();
+            
+            // Déboguer la réponse brute
+            const text = await response.text();
+            console.log('Réponse brute de l\'API produits:', text);
+            
+            // Essayer de parser le JSON
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error('Erreur de parsing JSON pour les produits:', e);
+                return;
+            }
             
             if (data.success) {
-                products = data.products;
+                // Vérifier la structure des données
+                if (data.products && data.products.length > 0) {
+                    console.log('Premier produit:', data.products[0]);
+                }
+                
+                products = data.products || [];
                 displayProducts();
             } else {
                 console.error('Erreur récupération produits:', data.message);
@@ -60,33 +87,46 @@ document.addEventListener('DOMContentLoaded', function() {
         
         productsContainer.innerHTML = '';
         
-        if (products.length === 0) {
+        if (!products || products.length === 0) {
             productsContainer.innerHTML = '<div class="no-products">Aucun produit disponible</div>';
             return;
         }
         
         products.forEach(product => {
+            console.log('Processing product:', product); // Déboguer chaque produit
+            
             const productCard = document.createElement('div');
             productCard.className = 'product-card';
             productCard.dataset.id = product._id;
             
-            const stockBadge = product.inStock ? 
+            // Vérifier si inStock existe, sinon utiliser true par défaut
+            const isInStock = product.inStock !== undefined ? product.inStock : true;
+            
+            const stockBadge = isInStock ? 
                 '<span class="stock-badge in-stock">En stock</span>' : 
                 '<span class="stock-badge out-of-stock">Rupture de stock</span>';
+            
+            // Vérifier chaque propriété et utiliser des valeurs par défaut si nécessaire
+            const price = product.pricePerGram !== undefined ? Number(product.pricePerGram).toFixed(2) : "N/A";
+            const videoUrl = product.videoUrl || "/images/default-video.mp4";
+            const name = product.name || "Produit sans nom";
+            const category = product.category || "Non catégorisé";
+            const thcContent = product.thcContent !== undefined ? product.thcContent : "N/A";
+            const description = product.description || "Aucune description disponible";
             
             productCard.innerHTML = `
                 <div class="product-video-container">
                     <video class="product-video" controls preload="none" poster="/images/video-placeholder.jpg">
-                        <source src="${product.videoUrl}" type="video/mp4">
+                        <source src="${videoUrl}" type="video/mp4">
                         Votre navigateur ne supporte pas les vidéos HTML5.
                     </video>
                 </div>
                 <div class="product-info">
-                    <h3 class="product-name">${product.name}</h3>
-                    <div class="product-category">${product.category}</div>
-                    <div class="product-thc">THC: ${product.thcContent}%</div>
-                    <p class="product-description">${product.description}</p>
-                    <div class="product-price">${product.pricePerGram.toFixed(2)}€/g</div>
+                    <h3 class="product-name">${name}</h3>
+                    <div class="product-category">${category}</div>
+                    <div class="product-thc">THC: ${thcContent}%</div>
+                    <p class="product-description">${description}</p>
+                    <div class="product-price">${price}€/g</div>
                     ${stockBadge}
                 </div>
             `;
@@ -165,22 +205,33 @@ document.addEventListener('DOMContentLoaded', function() {
         const emptyOrdersMessage = document.getElementById('empty-orders');
         const overlay = document.getElementById('overlay');
         
-        if (userOrders.length === 0) {
-            emptyOrdersMessage.style.display = 'block';
+        if (!userOrders || userOrders.length === 0) {
+            if (emptyOrdersMessage) {
+                emptyOrdersMessage.style.display = 'block';
+            }
             ordersItemsContainer.innerHTML = '<div class="empty-cart" id="empty-orders">Vous n\'avez pas encore de commandes</div>';
         } else {
-            emptyOrdersMessage.style.display = 'none';
+            if (emptyOrdersMessage) {
+                emptyOrdersMessage.style.display = 'none';
+            }
             
             let ordersHTML = '';
             userOrders.forEach((order, index) => {
+                // Vérifier et utiliser des valeurs par défaut si nécessaire
+                const orderId = order.orderId || order._id || `ORDRE-${index + 1}`;
+                const productName = order.productName || 'Produit non spécifié';
+                const quantity = order.quantity || 0;
+                const totalPrice = order.totalPrice !== undefined ? Number(order.totalPrice).toFixed(2) : '0.00';
+                const status = order.status || 'En cours de traitement';
+                
                 ordersHTML += `
                     <div class="cart-item">
                         <div class="cart-item-info">
-                            <div class="cart-item-name"><strong>Commande #${order.orderId || order._id || index + 1}</strong></div>
-                            <div class="cart-item-detail">Produit: ${order.productName}</div>
-                            <div class="cart-item-detail">Quantité: ${order.quantity} g</div>
-                            <div class="cart-item-price">Total: ${order.totalPrice.toFixed(2)}€</div>
-                            <div class="cart-item-status">Statut: ${order.status || 'En cours de traitement'}</div>
+                            <div class="cart-item-name"><strong>Commande #${orderId}</strong></div>
+                            <div class="cart-item-detail">Produit: ${productName}</div>
+                            <div class="cart-item-detail">Quantité: ${quantity} g</div>
+                            <div class="cart-item-price">Total: ${totalPrice}€</div>
+                            <div class="cart-item-status">Statut: ${status}</div>
                         </div>
                     </div>
                 `;
@@ -204,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         productsContainer.innerHTML = '';
         
-        if (filteredProducts.length === 0) {
+        if (!filteredProducts || filteredProducts.length === 0) {
             productsContainer.innerHTML = '<div class="no-products">Aucun produit dans cette catégorie</div>';
             return;
         }
@@ -214,23 +265,34 @@ document.addEventListener('DOMContentLoaded', function() {
             productCard.className = 'product-card';
             productCard.dataset.id = product._id;
             
-            const stockBadge = product.inStock ? 
+            // Vérifier si inStock existe, sinon utiliser true par défaut
+            const isInStock = product.inStock !== undefined ? product.inStock : true;
+            
+            const stockBadge = isInStock ? 
                 '<span class="stock-badge in-stock">En stock</span>' : 
                 '<span class="stock-badge out-of-stock">Rupture de stock</span>';
+            
+            // Vérifier chaque propriété et utiliser des valeurs par défaut si nécessaire
+            const price = product.pricePerGram !== undefined ? Number(product.pricePerGram).toFixed(2) : "N/A";
+            const videoUrl = product.videoUrl || "/images/default-video.mp4";
+            const name = product.name || "Produit sans nom";
+            const category = product.category || "Non catégorisé";
+            const thcContent = product.thcContent !== undefined ? product.thcContent : "N/A";
+            const description = product.description || "Aucune description disponible";
             
             productCard.innerHTML = `
                 <div class="product-video-container">
                     <video class="product-video" controls preload="none" poster="/images/video-placeholder.jpg">
-                        <source src="${product.videoUrl}" type="video/mp4">
+                        <source src="${videoUrl}" type="video/mp4">
                         Votre navigateur ne supporte pas les vidéos HTML5.
                     </video>
                 </div>
                 <div class="product-info">
-                    <h3 class="product-name">${product.name}</h3>
-                    <div class="product-category">${product.category}</div>
-                    <div class="product-thc">THC: ${product.thcContent}%</div>
-                    <p class="product-description">${product.description}</p>
-                    <div class="product-price">${product.pricePerGram.toFixed(2)}€/g</div>
+                    <h3 class="product-name">${name}</h3>
+                    <div class="product-category">${category}</div>
+                    <div class="product-thc">THC: ${thcContent}%</div>
+                    <p class="product-description">${description}</p>
+                    <div class="product-price">${price}€/g</div>
                     ${stockBadge}
                 </div>
             `;
@@ -281,7 +343,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             document.getElementById('logout-item').addEventListener('click', async function() {
                 try {
-                    await fetch('/api/auth/logout');
+                    const response = await fetch('/api/auth/logout');
+                    console.log('Réponse de déconnexion:', await response.text());
                     window.location.href = '/login.html';
                 } catch (error) {
                     console.error('Erreur lors de la déconnexion:', error);
@@ -300,10 +363,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialisation
     function init() {
-       
         setupLogout();
-    fetchUserOrders();
-        fetchProducts()
+        fetchUserOrders();
+        fetchProducts();
         setupCategoryFilters();
         setupEventListeners();
     }
