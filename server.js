@@ -64,28 +64,40 @@ ProductSchema.pre('save', function(next) {
 // Création du modèle Product
 const Product = mongoose.model('Product', ProductSchema);
 const OrderSchema = new mongoose.Schema({
-    username: { type: String, required: true }, // Nom d'utilisateur du client
-    productName: { type: String, required: true }, // Nom du produit
-    quantity: { type: Number, required: true }, // Quantité en grammes
-    totalPrice: { type: Number, required: true }, // Prix total
+    user: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User', 
+        required: true 
+    },  // Référence à l'utilisateur qui a passé la commande
+    productName: { type: String, required: true },
+    quantity: { type: Number, required: true },
+    totalPrice: { type: Number, required: true },
     status: { 
         type: String, 
         enum: ['En attente', 'En préparation', 'Expédié', 'Livré', 'Annulé'],
         default: 'En attente'
     },
-    createdAt: { type: Date, default: Date.now } // Date de création de la commande
+    createdAt: { type: Date, default: Date.now }
 });
 
-// Création du modèle Order
+// Middleware pour mettre à jour la liste des commandes de l'utilisateur
+OrderSchema.post('save', async function(doc) {
+    await User.findByIdAndUpdate(
+        doc.user,
+        { $addToSet: { orders: doc._id } }
+    );
+});
+
 const Order = mongoose.model('Order', OrderSchema);
 // Définition du schéma utilisateur
 const UserSchema = new mongoose.Schema({
     username: { type: String, unique: true, required: true },
     keys: { type: String, required: true },
     role: { type: String, enum: ['client', 'admin'], default: 'client' },
+    orders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }]  // Référence aux commandes de l'utilisateur
 });
-const User = mongoose.model('User', UserSchema);
 
+const User = mongoose.model('User', UserSchema);
 // Configuration pour servir les fichiers statiques depuis le dossier 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
