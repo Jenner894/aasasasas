@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Vérifier si la réponse est OK avant de tenter de parser le JSON
             if (!response.ok) {
                 console.error('Erreur HTTP:', response.status, response.statusText);
+                userOrders = []; // Initialiser comme tableau vide en cas d'erreur
+                updateOrdersCount();
                 return;
             }
             
@@ -44,6 +46,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateOrdersCount();
             } else {
                 console.error('Erreur récupération commandes:', data.message);
+                userOrders = []; // Initialiser comme tableau vide en cas d'erreur
+                updateOrdersCount();
             }
         } catch (error) {
             console.error('Erreur récupération commandes:', error);
@@ -122,12 +126,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<span class="stock-badge in-stock">En stock</span>' : 
                 '<span class="stock-badge out-of-stock">Rupture de stock</span>';
             
-            // Vérifier chaque propriété et utiliser des valeurs par défaut si nécessaire
-            const videoUrl = product.videoUrl || "/images/default-video.mp4";
+            // Normaliser les propriétés du produit - corriger les incohérences
+            const videoUrl = product.videoUrl || product.video || "/images/default-video.mp4";
             const name = product.name || "Produit sans nom";
             const category = product.category || "Non catégorisé";
-            const thcContent = product.thcContent !== undefined ? product.thcContent : "N/A";
+            const thcContent = product.thcContent || product.thc || "N/A";
             const description = product.description || "Aucune description disponible";
+            
+            // Correction: Vérifier et normaliser la propriété de prix
+            const pricePerGram = product.pricePerGram || 
+                                (product.pricepergramme ? product.pricepergramme.value || product.pricepergramme : null);
             
             // Vérifier si les options de prix existent et sont valides
             let quantityOptionsHTML = '';
@@ -140,9 +148,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${option.quantity}g - ${option.price.toFixed(2)}€
                     </option>`;
                 }).join('');
-            } else if (product.pricePerGram) {
+            } else if (pricePerGram) {
                 // Compatibilité avec l'ancien format
-                const basePrice = Number(product.pricePerGram);
+                const basePrice = Number(pricePerGram);
                 const quantityOptions = [
                     { quantity: 1, price: basePrice },
                     { quantity: 3, price: basePrice * 3 * 0.95 },
@@ -163,11 +171,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Définir le prix initial à afficher (première option)
             const basePrice = product.priceOptions && product.priceOptions.length > 0 
                 ? Number(product.priceOptions[0].price).toFixed(2) 
-                : (product.pricePerGram ? Number(product.pricePerGram).toFixed(2) : '0.00');
+                : (pricePerGram ? Number(pricePerGram).toFixed(2) : '0.00');
+            
+            // Assurez-vous d'utiliser un chemin relatif pour les images du placeholder
+            const placeholderPath = '/images/video-placeholder.jpg';
             
             productCard.innerHTML = `
                 <div class="product-video-container">
-                    <video class="product-video" controls preload="none" poster="/images/video-placeholder.jpg">
+                    <video class="product-video" controls preload="none" poster="${placeholderPath}">
                         <source src="${videoUrl}" type="video/mp4">
                         Votre navigateur ne supporte pas les vidéos HTML5.
                     </video>
@@ -175,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="product-info">
                     <h3 class="product-name">${name}</h3>
                     <div class="product-category">${category}</div>
-                    <div class="product-thc">THC: ${thcContent}%</div>
+                    <div class="product-thc">THC: ${thcContent}</div>
                     <p class="product-description">${description}</p>
                     <div class="product-price-container">
                         <div class="product-price">
@@ -341,6 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Réutiliser le code d'affichage des produits avec les produits filtrés
         filteredProducts.forEach(product => {
             const productCard = document.createElement('div');
             productCard.className = 'product-card';
@@ -353,12 +365,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<span class="stock-badge in-stock">En stock</span>' : 
                 '<span class="stock-badge out-of-stock">Rupture de stock</span>';
             
-            // Vérifier chaque propriété et utiliser des valeurs par défaut si nécessaire
-            const videoUrl = product.videoUrl || "/images/default-video.mp4";
+            // Normaliser les propriétés du produit - corriger les incohérences
+            const videoUrl = product.videoUrl || product.video || "/images/default-video.mp4";
             const name = product.name || "Produit sans nom";
             const category = product.category || "Non catégorisé";
-            const thcContent = product.thcContent !== undefined ? product.thcContent : "N/A";
+            const thcContent = product.thcContent || product.thc || "N/A";
             const description = product.description || "Aucune description disponible";
+            
+            // Correction: Vérifier et normaliser la propriété de prix
+            const pricePerGram = product.pricePerGram || 
+                                (product.pricepergramme ? product.pricepergramme.value || product.pricepergramme : null);
             
             // Vérifier si les options de prix existent et sont valides
             let quantityOptionsHTML = '';
@@ -371,9 +387,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${option.quantity}g - ${option.price.toFixed(2)}€
                     </option>`;
                 }).join('');
-            } else if (product.pricePerGram) {
+            } else if (pricePerGram) {
                 // Compatibilité avec l'ancien format
-                const basePrice = Number(product.pricePerGram);
+                const basePrice = Number(pricePerGram);
                 const quantityOptions = [
                     { quantity: 1, price: basePrice },
                     { quantity: 3, price: basePrice * 3 * 0.95 },
@@ -394,11 +410,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Définir le prix initial à afficher (première option)
             const basePrice = product.priceOptions && product.priceOptions.length > 0 
                 ? Number(product.priceOptions[0].price).toFixed(2) 
-                : (product.pricePerGram ? Number(product.pricePerGram).toFixed(2) : '0.00');
+                : (pricePerGram ? Number(pricePerGram).toFixed(2) : '0.00');
+            
+            // Assurez-vous d'utiliser un chemin relatif pour les images du placeholder
+            const placeholderPath = '/images/video-placeholder.jpg';
             
             productCard.innerHTML = `
                 <div class="product-video-container">
-                    <video class="product-video" controls preload="none" poster="/images/video-placeholder.jpg">
+                    <video class="product-video" controls preload="none" poster="${placeholderPath}">
                         <source src="${videoUrl}" type="video/mp4">
                         Votre navigateur ne supporte pas les vidéos HTML5.
                     </video>
@@ -406,7 +425,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="product-info">
                     <h3 class="product-name">${name}</h3>
                     <div class="product-category">${category}</div>
-                    <div class="product-thc">THC: ${thcContent}%</div>
+                    <div class="product-thc">THC: ${thcContent}</div>
                     <p class="product-description">${description}</p>
                     <div class="product-price-container">
                         <div class="product-price">
@@ -449,7 +468,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Configuration des filtres par catégorie
     function setupCategoryFilters() {
-        const categoryFilters = document.querySelectorAll('.category-filter');
+        // Essayer plusieurs sélecteurs possibles pour trouver les filtres
+        const categoryFilters = document.querySelectorAll('.category-filter, .sidebar-item[data-category], .filter-item[data-category]');
         
         if (categoryFilters.length > 0) {
             console.log('Filtres de catégorie trouvés:', categoryFilters.length);
@@ -481,7 +501,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
         } else {
-            console.warn('Aucun filtre de catégorie trouvé');
+            console.warn('Aucun filtre de catégorie trouvé, création dynamique des filtres');
+            
+            // Créer des filtres de catégorie dynamiquement en fonction des catégories disponibles
+            const uniqueCategories = [...new Set(products.map(product => product.category))].filter(category => category);
+            
+            if (uniqueCategories.length > 0) {
+                const sidebarContent = document.querySelector('.sidebar-content');
+                if (sidebarContent) {
+                    const categoriesSection = document.createElement('div');
+                    categoriesSection.className = 'sidebar-section';
+                    categoriesSection.innerHTML = '<div class="sidebar-section-title">Catégories</div>';
+                    
+                    // Ajouter un filtre "Tout"
+                    const allCategoryItem = document.createElement('div');
+                    allCategoryItem.className = 'sidebar-item category-filter active';
+                    allCategoryItem.dataset.category = 'all';
+                    allCategoryItem.innerHTML = '<span class="sidebar-item-icon">🔍</span> Tous les produits';
+                    categoriesSection.appendChild(allCategoryItem);
+                    
+                    // Ajouter un filtre pour chaque catégorie
+                    uniqueCategories.forEach(category => {
+                        const categoryItem = document.createElement('div');
+                        categoryItem.className = 'sidebar-item category-filter';
+                        categoryItem.dataset.category = category;
+                        categoryItem.innerHTML = `<span class="sidebar-item-icon">📦</span> ${category}`;
+                        categoriesSection.appendChild(categoryItem);
+                    });
+                    
+                    sidebarContent.appendChild(categoriesSection);
+                    
+                    // Réessayer la configuration des filtres
+                    setupCategoryFilters();
+                }
+            }
         }
     }
 
@@ -542,7 +595,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Attendre que les produits soient chargés avant de configurer les filtres
         setTimeout(() => {
             setupCategoryFilters();
-        }, 500);
+        }, 1000); // Augmenter le délai pour s'assurer que les produits sont chargés
     }
 
     // Démarrer l'application
