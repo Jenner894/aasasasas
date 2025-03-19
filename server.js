@@ -10,7 +10,6 @@ require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 
 
-
 const ProductSchema = new mongoose.Schema({
     name: { 
         type: String, 
@@ -24,13 +23,13 @@ const ProductSchema = new mongoose.Schema({
     category: { 
         type: String, 
         required: true,
-        enum: ['Indica', 'Sativa', 'Hybride', 'CBD', 'Concentré', 'Comestible'] 
+        enum: ['Fleur', 'Résine'] 
     },
-    pricePerGram: { 
-        type: Number, 
-        required: true,
-        min: 0
-    },
+    // Remplacer pricePerGram par un array de prix selon la quantité
+    priceOptions: [{
+        quantity: { type: Number, required: true }, // quantité en grammes
+        price: { type: Number, required: true } // prix pour cette quantité
+    }],
     thcContent: { 
         type: Number, 
         required: true,
