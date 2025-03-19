@@ -76,8 +76,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Affichage des produits
-  function displayProducts() {
+// Affichage des produits
+function displayProducts() {
     const productsContainer = document.getElementById('products-container');
     
     if (!productsContainer) {
@@ -107,27 +107,47 @@ document.addEventListener('DOMContentLoaded', function() {
             '<span class="stock-badge out-of-stock">Rupture de stock</span>';
         
         // Vérifier chaque propriété et utiliser des valeurs par défaut si nécessaire
-        const basePrice = product.pricePerGram !== undefined ? Number(product.pricePerGram) : 0;
         const videoUrl = product.videoUrl || "/images/default-video.mp4";
         const name = product.name || "Produit sans nom";
         const category = product.category || "Non catégorisé";
         const thcContent = product.thcContent !== undefined ? product.thcContent : "N/A";
         const description = product.description || "Aucune description disponible";
         
-        // Créer les options pour le menu déroulant de quantité
-        const quantityOptions = [
-            { grams: 1, price: basePrice },
-            { grams: 3, price: basePrice * 3 * 0.95 }, // 5% de réduction pour 3g
-            { grams: 5, price: basePrice * 5 * 0.9 }, // 10% de réduction pour 5g
-            { grams: 10, price: basePrice * 10 * 0.85 }, // 15% de réduction pour 10g
-            { grams: 20, price: basePrice * 20 * 0.8 }, // 20% de réduction pour 20g
-        ];
+        // Vérifier si les options de prix existent et sont valides
+        let quantityOptionsHTML = '';
+        if (product.priceOptions && Array.isArray(product.priceOptions) && product.priceOptions.length > 0) {
+            // Trier les options par quantité croissante
+            const sortedOptions = [...product.priceOptions].sort((a, b) => a.quantity - b.quantity);
+            
+            quantityOptionsHTML = sortedOptions.map(option => {
+                return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
+                    ${option.quantity}g - ${option.price.toFixed(2)}€
+                </option>`;
+            }).join('');
+        } else if (product.pricePerGram) {
+            // Compatibilité avec l'ancien format
+            const basePrice = Number(product.pricePerGram);
+            const quantityOptions = [
+                { quantity: 1, price: basePrice },
+                { quantity: 3, price: basePrice * 3 * 0.95 },
+                { quantity: 5, price: basePrice * 5 * 0.9 },
+                { quantity: 10, price: basePrice * 10 * 0.85 },
+                { quantity: 20, price: basePrice * 20 * 0.8 }
+            ];
+            
+            quantityOptionsHTML = quantityOptions.map(option => {
+                return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
+                    ${option.quantity}g - ${option.price.toFixed(2)}€
+                </option>`;
+            }).join('');
+        } else {
+            quantityOptionsHTML = '<option value="0" data-price="0.00">Prix non disponible</option>';
+        }
         
-        const quantityOptionsHTML = quantityOptions.map(option => {
-            return `<option value="${option.grams}" data-price="${option.price.toFixed(2)}">
-                ${option.grams}g - ${option.price.toFixed(2)}€
-            </option>`;
-        }).join('');
+        // Définir le prix initial à afficher (première option)
+        const basePrice = product.priceOptions && product.priceOptions.length > 0 
+            ? Number(product.priceOptions[0].price).toFixed(2) 
+            : (product.pricePerGram ? Number(product.pricePerGram).toFixed(2) : '0.00');
         
         productCard.innerHTML = `
             <div class="product-video-container">
@@ -142,8 +162,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="product-thc">THC: ${thcContent}%</div>
                 <p class="product-description">${description}</p>
                 <div class="product-price-container">
-                    <div class="product-price" data-base-price="${basePrice.toFixed(2)}">
-                        ${basePrice.toFixed(2)}€/g
+                    <div class="product-price">
+                        ${basePrice}€/g
                     </div>
                     <div class="quantity-selector">
                         <select class="quantity-dropdown" data-product-id="${product._id}">
@@ -291,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Filtrage des produits par catégorie
-   function displayFilteredProducts(filteredProducts) {
+function displayFilteredProducts(filteredProducts) {
     const productsContainer = document.getElementById('products-container');
     
     if (!productsContainer) {
@@ -319,27 +339,47 @@ document.addEventListener('DOMContentLoaded', function() {
             '<span class="stock-badge out-of-stock">Rupture de stock</span>';
         
         // Vérifier chaque propriété et utiliser des valeurs par défaut si nécessaire
-        const basePrice = product.pricePerGram !== undefined ? Number(product.pricePerGram) : 0;
         const videoUrl = product.videoUrl || "/images/default-video.mp4";
         const name = product.name || "Produit sans nom";
         const category = product.category || "Non catégorisé";
         const thcContent = product.thcContent !== undefined ? product.thcContent : "N/A";
         const description = product.description || "Aucune description disponible";
         
-        // Créer les options pour le menu déroulant de quantité
-        const quantityOptions = [
-            { grams: 1, price: basePrice },
-            { grams: 3, price: basePrice * 3 * 0.95 }, // 5% de réduction pour 3g
-            { grams: 5, price: basePrice * 5 * 0.9 }, // 10% de réduction pour 5g
-            { grams: 10, price: basePrice * 10 * 0.85 }, // 15% de réduction pour 10g
-            { grams: 20, price: basePrice * 20 * 0.8 }, // 20% de réduction pour 20g
-        ];
+        // Vérifier si les options de prix existent et sont valides
+        let quantityOptionsHTML = '';
+        if (product.priceOptions && Array.isArray(product.priceOptions) && product.priceOptions.length > 0) {
+            // Trier les options par quantité croissante
+            const sortedOptions = [...product.priceOptions].sort((a, b) => a.quantity - b.quantity);
+            
+            quantityOptionsHTML = sortedOptions.map(option => {
+                return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
+                    ${option.quantity}g - ${option.price.toFixed(2)}€
+                </option>`;
+            }).join('');
+        } else if (product.pricePerGram) {
+            // Compatibilité avec l'ancien format
+            const basePrice = Number(product.pricePerGram);
+            const quantityOptions = [
+                { quantity: 1, price: basePrice },
+                { quantity: 3, price: basePrice * 3 * 0.95 },
+                { quantity: 5, price: basePrice * 5 * 0.9 },
+                { quantity: 10, price: basePrice * 10 * 0.85 },
+                { quantity: 20, price: basePrice * 20 * 0.8 }
+            ];
+            
+            quantityOptionsHTML = quantityOptions.map(option => {
+                return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
+                    ${option.quantity}g - ${option.price.toFixed(2)}€
+                </option>`;
+            }).join('');
+        } else {
+            quantityOptionsHTML = '<option value="0" data-price="0.00">Prix non disponible</option>';
+        }
         
-        const quantityOptionsHTML = quantityOptions.map(option => {
-            return `<option value="${option.grams}" data-price="${option.price.toFixed(2)}">
-                ${option.grams}g - ${option.price.toFixed(2)}€
-            </option>`;
-        }).join('');
+        // Définir le prix initial à afficher (première option)
+        const basePrice = product.priceOptions && product.priceOptions.length > 0 
+            ? Number(product.priceOptions[0].price).toFixed(2) 
+            : (product.pricePerGram ? Number(product.pricePerGram).toFixed(2) : '0.00');
         
         productCard.innerHTML = `
             <div class="product-video-container">
@@ -354,8 +394,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="product-thc">THC: ${thcContent}%</div>
                 <p class="product-description">${description}</p>
                 <div class="product-price-container">
-                    <div class="product-price" data-base-price="${basePrice.toFixed(2)}">
-                        ${basePrice.toFixed(2)}€/g
+                    <div class="product-price">
+                        ${basePrice}€/g
                     </div>
                     <div class="quantity-selector">
                         <select class="quantity-dropdown" data-product-id="${product._id}">
