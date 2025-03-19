@@ -18,18 +18,26 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch('/api/orders/user');
             
-            // Déboguer la réponse brute
-            const text = await response.text();
-            console.log('Réponse brute de l\'API commandes:', text);
-            
-            // Essayer de parser le JSON
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                console.error('Erreur de parsing JSON pour les commandes:', e);
+            // Vérifier si la réponse est OK avant de tenter de parser le JSON
+            if (!response.ok) {
+                console.error('Erreur HTTP:', response.status, response.statusText);
                 return;
             }
+            
+            // Vérifier le type de contenu de la réponse
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                console.error('Réponse non-JSON reçue:', contentType);
+                const text = await response.text();
+                console.log('Contenu de la réponse:', text);
+                // Initialiser les commandes comme un tableau vide si la réponse n'est pas JSON
+                userOrders = [];
+                updateOrdersCount();
+                return;
+            }
+            
+            // Maintenant on peut parser le JSON en toute sécurité
+            const data = await response.json();
             
             if (data.success) {
                 userOrders = data.orders;
@@ -39,6 +47,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             console.error('Erreur récupération commandes:', error);
+            // Initialiser les commandes comme un tableau vide en cas d'erreur
+            userOrders = [];
+            updateOrdersCount();
         }
     }
 
@@ -47,18 +58,23 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch('/api/products');
             
-            // Déboguer la réponse brute
-            const text = await response.text();
-            console.log('Réponse brute de l\'API produits:', text);
-            
-            // Essayer de parser le JSON
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                console.error('Erreur de parsing JSON pour les produits:', e);
+            // Vérifier si la réponse est OK avant de tenter de parser le JSON
+            if (!response.ok) {
+                console.error('Erreur HTTP:', response.status, response.statusText);
                 return;
             }
+            
+            // Vérifier le type de contenu de la réponse
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                console.error('Réponse non-JSON reçue:', contentType);
+                const text = await response.text();
+                console.log('Contenu de la réponse:', text);
+                return;
+            }
+            
+            // Maintenant on peut parser le JSON en toute sécurité
+            const data = await response.json();
             
             if (data.success) {
                 // Vérifier la structure des données
@@ -76,130 +92,129 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-// Affichage des produits
-function displayProducts() {
-    const productsContainer = document.getElementById('products-container');
-    
-    if (!productsContainer) {
-        console.error('Conteneur de produits non trouvé');
-        return;
-    }
-    
-    productsContainer.innerHTML = '';
-    
-    if (!products || products.length === 0) {
-        productsContainer.innerHTML = '<div class="no-products">Aucun produit disponible</div>';
-        return;
-    }
-    
-    products.forEach(product => {
-        console.log('Processing product:', product); // Déboguer chaque produit
+    // Affichage des produits
+    function displayProducts() {
+        const productsContainer = document.getElementById('products-container');
         
-        const productCard = document.createElement('div');
-        productCard.className = 'product-card';
-        productCard.dataset.id = product._id;
-        
-        // Vérifier si inStock existe, sinon utiliser true par défaut
-        const isInStock = product.inStock !== undefined ? product.inStock : true;
-        
-        const stockBadge = isInStock ? 
-            '<span class="stock-badge in-stock">En stock</span>' : 
-            '<span class="stock-badge out-of-stock">Rupture de stock</span>';
-        
-        // Vérifier chaque propriété et utiliser des valeurs par défaut si nécessaire
-        const videoUrl = product.videoUrl || "/images/default-video.mp4";
-        const name = product.name || "Produit sans nom";
-        const category = product.category || "Non catégorisé";
-        const thcContent = product.thcContent !== undefined ? product.thcContent : "N/A";
-        const description = product.description || "Aucune description disponible";
-        
-        // Vérifier si les options de prix existent et sont valides
-        let quantityOptionsHTML = '';
-        if (product.priceOptions && Array.isArray(product.priceOptions) && product.priceOptions.length > 0) {
-            // Trier les options par quantité croissante
-            const sortedOptions = [...product.priceOptions].sort((a, b) => a.quantity - b.quantity);
-            
-            quantityOptionsHTML = sortedOptions.map(option => {
-                return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
-                    ${option.quantity}g - ${option.price.toFixed(2)}€
-                </option>`;
-            }).join('');
-        } else if (product.pricePerGram) {
-            // Compatibilité avec l'ancien format
-            const basePrice = Number(product.pricePerGram);
-            const quantityOptions = [
-                { quantity: 1, price: basePrice },
-                { quantity: 3, price: basePrice * 3 * 0.95 },
-                { quantity: 5, price: basePrice * 5 * 0.9 },
-                { quantity: 10, price: basePrice * 10 * 0.85 },
-                { quantity: 20, price: basePrice * 20 * 0.8 }
-            ];
-            
-            quantityOptionsHTML = quantityOptions.map(option => {
-                return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
-                    ${option.quantity}g - ${option.price.toFixed(2)}€
-                </option>`;
-            }).join('');
-        } else {
-            quantityOptionsHTML = '<option value="0" data-price="0.00">Prix non disponible</option>';
+        if (!productsContainer) {
+            console.error('Conteneur de produits non trouvé');
+            return;
         }
         
-        // Définir le prix initial à afficher (première option)
-        const basePrice = product.priceOptions && product.priceOptions.length > 0 
-            ? Number(product.priceOptions[0].price).toFixed(2) 
-            : (product.pricePerGram ? Number(product.pricePerGram).toFixed(2) : '0.00');
+        productsContainer.innerHTML = '';
         
-        productCard.innerHTML = `
-            <div class="product-video-container">
-                <video class="product-video" controls preload="none" poster="/images/video-placeholder.jpg">
-                    <source src="${videoUrl}" type="video/mp4">
-                    Votre navigateur ne supporte pas les vidéos HTML5.
-                </video>
-            </div>
-            <div class="product-info">
-                <h3 class="product-name">${name}</h3>
-                <div class="product-category">${category}</div>
-                <div class="product-thc">THC: ${thcContent}%</div>
-                <p class="product-description">${description}</p>
-                <div class="product-price-container">
-                    <div class="product-price">
-                        ${basePrice}€/g
-                    </div>
-                    <div class="quantity-selector">
-                        <select class="quantity-dropdown" data-product-id="${product._id}">
-                            ${quantityOptionsHTML}
-                        </select>
-                    </div>
-                </div>
-                ${stockBadge}
-                <button class="add-to-cart-btn" data-product-id="${product._id}">
-                    Ajouter au panier
-                </button>
-            </div>
-        `;
+        if (!products || products.length === 0) {
+            productsContainer.innerHTML = '<div class="no-products">Aucun produit disponible</div>';
+            return;
+        }
         
-        productsContainer.appendChild(productCard);
-        
-        // Ajouter un écouteur d'événement pour le changement de quantité
-        const quantityDropdown = productCard.querySelector('.quantity-dropdown');
-        quantityDropdown.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const price = selectedOption.getAttribute('data-price');
-            const grams = selectedOption.value;
+        products.forEach(product => {
+            console.log('Processing product:', product); // Déboguer chaque produit
             
-            const priceDisplay = productCard.querySelector('.product-price');
-            priceDisplay.textContent = `${price}€ pour ${grams}g`;
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card';
+            productCard.dataset.id = product._id;
+            
+            // Vérifier si inStock existe, sinon utiliser true par défaut
+            const isInStock = product.inStock !== undefined ? product.inStock : true;
+            
+            const stockBadge = isInStock ? 
+                '<span class="stock-badge in-stock">En stock</span>' : 
+                '<span class="stock-badge out-of-stock">Rupture de stock</span>';
+            
+            // Vérifier chaque propriété et utiliser des valeurs par défaut si nécessaire
+            const videoUrl = product.videoUrl || "/images/default-video.mp4";
+            const name = product.name || "Produit sans nom";
+            const category = product.category || "Non catégorisé";
+            const thcContent = product.thcContent !== undefined ? product.thcContent : "N/A";
+            const description = product.description || "Aucune description disponible";
+            
+            // Vérifier si les options de prix existent et sont valides
+            let quantityOptionsHTML = '';
+            if (product.priceOptions && Array.isArray(product.priceOptions) && product.priceOptions.length > 0) {
+                // Trier les options par quantité croissante
+                const sortedOptions = [...product.priceOptions].sort((a, b) => a.quantity - b.quantity);
+                
+                quantityOptionsHTML = sortedOptions.map(option => {
+                    return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
+                        ${option.quantity}g - ${option.price.toFixed(2)}€
+                    </option>`;
+                }).join('');
+            } else if (product.pricePerGram) {
+                // Compatibilité avec l'ancien format
+                const basePrice = Number(product.pricePerGram);
+                const quantityOptions = [
+                    { quantity: 1, price: basePrice },
+                    { quantity: 3, price: basePrice * 3 * 0.95 },
+                    { quantity: 5, price: basePrice * 5 * 0.9 },
+                    { quantity: 10, price: basePrice * 10 * 0.85 },
+                    { quantity: 20, price: basePrice * 20 * 0.8 }
+                ];
+                
+                quantityOptionsHTML = quantityOptions.map(option => {
+                    return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
+                        ${option.quantity}g - ${option.price.toFixed(2)}€
+                    </option>`;
+                }).join('');
+            } else {
+                quantityOptionsHTML = '<option value="0" data-price="0.00">Prix non disponible</option>';
+            }
+            
+            // Définir le prix initial à afficher (première option)
+            const basePrice = product.priceOptions && product.priceOptions.length > 0 
+                ? Number(product.priceOptions[0].price).toFixed(2) 
+                : (product.pricePerGram ? Number(product.pricePerGram).toFixed(2) : '0.00');
+            
+            productCard.innerHTML = `
+                <div class="product-video-container">
+                    <video class="product-video" controls preload="none" poster="/images/video-placeholder.jpg">
+                        <source src="${videoUrl}" type="video/mp4">
+                        Votre navigateur ne supporte pas les vidéos HTML5.
+                    </video>
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">${name}</h3>
+                    <div class="product-category">${category}</div>
+                    <div class="product-thc">THC: ${thcContent}%</div>
+                    <p class="product-description">${description}</p>
+                    <div class="product-price-container">
+                        <div class="product-price">
+                            ${basePrice}€/g
+                        </div>
+                        <div class="quantity-selector">
+                            <select class="quantity-dropdown" data-product-id="${product._id}">
+                                ${quantityOptionsHTML}
+                            </select>
+                        </div>
+                    </div>
+                    ${stockBadge}
+                    <button class="add-to-cart-btn" data-product-id="${product._id}">
+                        Ajouter au panier
+                    </button>
+                </div>
+            `;
+            
+            productsContainer.appendChild(productCard);
+            
+            // Ajouter un écouteur d'événement pour le changement de quantité
+            const quantityDropdown = productCard.querySelector('.quantity-dropdown');
+            quantityDropdown.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const price = selectedOption.getAttribute('data-price');
+                const grams = selectedOption.value;
+                
+                const priceDisplay = productCard.querySelector('.product-price');
+                priceDisplay.textContent = `${price}€ pour ${grams}g`;
+            });
         });
-    });
-    
-    // Initialiser l'affichage du prix pour la première option de chaque produit
-    document.querySelectorAll('.quantity-dropdown').forEach(dropdown => {
-        // Simuler un événement de changement pour mettre à jour l'affichage initial
-        const event = new Event('change');
-        dropdown.dispatchEvent(event);
-    });
-}
-
+        
+        // Initialiser l'affichage du prix pour la première option de chaque produit
+        document.querySelectorAll('.quantity-dropdown').forEach(dropdown => {
+            // Simuler un événement de changement pour mettre à jour l'affichage initial
+            const event = new Event('change');
+            dropdown.dispatchEvent(event);
+        });
+    }
 
     // Mise à jour compteur commandes
     function updateOrdersCount() {
@@ -311,145 +326,162 @@ function displayProducts() {
     }
 
     // Filtrage des produits par catégorie
-function displayFilteredProducts(filteredProducts) {
-    const productsContainer = document.getElementById('products-container');
-    
-    if (!productsContainer) {
-        console.error('Conteneur de produits non trouvé');
-        return;
-    }
-    
-    productsContainer.innerHTML = '';
-    
-    if (!filteredProducts || filteredProducts.length === 0) {
-        productsContainer.innerHTML = '<div class="no-products">Aucun produit dans cette catégorie</div>';
-        return;
-    }
-    
-    filteredProducts.forEach(product => {
-        const productCard = document.createElement('div');
-        productCard.className = 'product-card';
-        productCard.dataset.id = product._id;
+    function displayFilteredProducts(filteredProducts) {
+        const productsContainer = document.getElementById('products-container');
         
-        // Vérifier si inStock existe, sinon utiliser true par défaut
-        const isInStock = product.inStock !== undefined ? product.inStock : true;
-        
-        const stockBadge = isInStock ? 
-            '<span class="stock-badge in-stock">En stock</span>' : 
-            '<span class="stock-badge out-of-stock">Rupture de stock</span>';
-        
-        // Vérifier chaque propriété et utiliser des valeurs par défaut si nécessaire
-        const videoUrl = product.videoUrl || "/images/default-video.mp4";
-        const name = product.name || "Produit sans nom";
-        const category = product.category || "Non catégorisé";
-        const thcContent = product.thcContent !== undefined ? product.thcContent : "N/A";
-        const description = product.description || "Aucune description disponible";
-        
-        // Vérifier si les options de prix existent et sont valides
-        let quantityOptionsHTML = '';
-        if (product.priceOptions && Array.isArray(product.priceOptions) && product.priceOptions.length > 0) {
-            // Trier les options par quantité croissante
-            const sortedOptions = [...product.priceOptions].sort((a, b) => a.quantity - b.quantity);
-            
-            quantityOptionsHTML = sortedOptions.map(option => {
-                return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
-                    ${option.quantity}g - ${option.price.toFixed(2)}€
-                </option>`;
-            }).join('');
-        } else if (product.pricePerGram) {
-            // Compatibilité avec l'ancien format
-            const basePrice = Number(product.pricePerGram);
-            const quantityOptions = [
-                { quantity: 1, price: basePrice },
-                { quantity: 3, price: basePrice * 3 * 0.95 },
-                { quantity: 5, price: basePrice * 5 * 0.9 },
-                { quantity: 10, price: basePrice * 10 * 0.85 },
-                { quantity: 20, price: basePrice * 20 * 0.8 }
-            ];
-            
-            quantityOptionsHTML = quantityOptions.map(option => {
-                return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
-                    ${option.quantity}g - ${option.price.toFixed(2)}€
-                </option>`;
-            }).join('');
-        } else {
-            quantityOptionsHTML = '<option value="0" data-price="0.00">Prix non disponible</option>';
+        if (!productsContainer) {
+            console.error('Conteneur de produits non trouvé');
+            return;
         }
         
-        // Définir le prix initial à afficher (première option)
-        const basePrice = product.priceOptions && product.priceOptions.length > 0 
-            ? Number(product.priceOptions[0].price).toFixed(2) 
-            : (product.pricePerGram ? Number(product.pricePerGram).toFixed(2) : '0.00');
+        productsContainer.innerHTML = '';
         
-        productCard.innerHTML = `
-            <div class="product-video-container">
-                <video class="product-video" controls preload="none" poster="/images/video-placeholder.jpg">
-                    <source src="${videoUrl}" type="video/mp4">
-                    Votre navigateur ne supporte pas les vidéos HTML5.
-                </video>
-            </div>
-            <div class="product-info">
-                <h3 class="product-name">${name}</h3>
-                <div class="product-category">${category}</div>
-                <div class="product-thc">THC: ${thcContent}%</div>
-                <p class="product-description">${description}</p>
-                <div class="product-price-container">
-                    <div class="product-price">
-                        ${basePrice}€/g
-                    </div>
-                    <div class="quantity-selector">
-                        <select class="quantity-dropdown" data-product-id="${product._id}">
-                            ${quantityOptionsHTML}
-                        </select>
-                    </div>
-                </div>
-                ${stockBadge}
-                <button class="add-to-cart-btn" data-product-id="${product._id}">
-                    Ajouter au panier
-                </button>
-            </div>
-        `;
+        if (!filteredProducts || filteredProducts.length === 0) {
+            productsContainer.innerHTML = '<div class="no-products">Aucun produit dans cette catégorie</div>';
+            return;
+        }
         
-        productsContainer.appendChild(productCard);
-        
-        // Ajouter un écouteur d'événement pour le changement de quantité
-        const quantityDropdown = productCard.querySelector('.quantity-dropdown');
-        quantityDropdown.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const price = selectedOption.getAttribute('data-price');
-            const grams = selectedOption.value;
+        filteredProducts.forEach(product => {
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card';
+            productCard.dataset.id = product._id;
             
-            const priceDisplay = productCard.querySelector('.product-price');
-            priceDisplay.textContent = `${price}€ pour ${grams}g`;
+            // Vérifier si inStock existe, sinon utiliser true par défaut
+            const isInStock = product.inStock !== undefined ? product.inStock : true;
+            
+            const stockBadge = isInStock ? 
+                '<span class="stock-badge in-stock">En stock</span>' : 
+                '<span class="stock-badge out-of-stock">Rupture de stock</span>';
+            
+            // Vérifier chaque propriété et utiliser des valeurs par défaut si nécessaire
+            const videoUrl = product.videoUrl || "/images/default-video.mp4";
+            const name = product.name || "Produit sans nom";
+            const category = product.category || "Non catégorisé";
+            const thcContent = product.thcContent !== undefined ? product.thcContent : "N/A";
+            const description = product.description || "Aucune description disponible";
+            
+            // Vérifier si les options de prix existent et sont valides
+            let quantityOptionsHTML = '';
+            if (product.priceOptions && Array.isArray(product.priceOptions) && product.priceOptions.length > 0) {
+                // Trier les options par quantité croissante
+                const sortedOptions = [...product.priceOptions].sort((a, b) => a.quantity - b.quantity);
+                
+                quantityOptionsHTML = sortedOptions.map(option => {
+                    return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
+                        ${option.quantity}g - ${option.price.toFixed(2)}€
+                    </option>`;
+                }).join('');
+            } else if (product.pricePerGram) {
+                // Compatibilité avec l'ancien format
+                const basePrice = Number(product.pricePerGram);
+                const quantityOptions = [
+                    { quantity: 1, price: basePrice },
+                    { quantity: 3, price: basePrice * 3 * 0.95 },
+                    { quantity: 5, price: basePrice * 5 * 0.9 },
+                    { quantity: 10, price: basePrice * 10 * 0.85 },
+                    { quantity: 20, price: basePrice * 20 * 0.8 }
+                ];
+                
+                quantityOptionsHTML = quantityOptions.map(option => {
+                    return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
+                        ${option.quantity}g - ${option.price.toFixed(2)}€
+                    </option>`;
+                }).join('');
+            } else {
+                quantityOptionsHTML = '<option value="0" data-price="0.00">Prix non disponible</option>';
+            }
+            
+            // Définir le prix initial à afficher (première option)
+            const basePrice = product.priceOptions && product.priceOptions.length > 0 
+                ? Number(product.priceOptions[0].price).toFixed(2) 
+                : (product.pricePerGram ? Number(product.pricePerGram).toFixed(2) : '0.00');
+            
+            productCard.innerHTML = `
+                <div class="product-video-container">
+                    <video class="product-video" controls preload="none" poster="/images/video-placeholder.jpg">
+                        <source src="${videoUrl}" type="video/mp4">
+                        Votre navigateur ne supporte pas les vidéos HTML5.
+                    </video>
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">${name}</h3>
+                    <div class="product-category">${category}</div>
+                    <div class="product-thc">THC: ${thcContent}%</div>
+                    <p class="product-description">${description}</p>
+                    <div class="product-price-container">
+                        <div class="product-price">
+                            ${basePrice}€/g
+                        </div>
+                        <div class="quantity-selector">
+                            <select class="quantity-dropdown" data-product-id="${product._id}">
+                                ${quantityOptionsHTML}
+                            </select>
+                        </div>
+                    </div>
+                    ${stockBadge}
+                    <button class="add-to-cart-btn" data-product-id="${product._id}">
+                        Ajouter au panier
+                    </button>
+                </div>
+            `;
+            
+            productsContainer.appendChild(productCard);
+            
+            // Ajouter un écouteur d'événement pour le changement de quantité
+            const quantityDropdown = productCard.querySelector('.quantity-dropdown');
+            quantityDropdown.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const price = selectedOption.getAttribute('data-price');
+                const grams = selectedOption.value;
+                
+                const priceDisplay = productCard.querySelector('.product-price');
+                priceDisplay.textContent = `${price}€ pour ${grams}g`;
+            });
         });
-    });
-    
-    // Initialiser l'affichage du prix pour la première option de chaque produit
-    document.querySelectorAll('.quantity-dropdown').forEach(dropdown => {
-        // Simuler un événement de changement pour mettre à jour l'affichage initial
-        const event = new Event('change');
-        dropdown.dispatchEvent(event);
-    });
-}
+        
+        // Initialiser l'affichage du prix pour la première option de chaque produit
+        document.querySelectorAll('.quantity-dropdown').forEach(dropdown => {
+            // Simuler un événement de changement pour mettre à jour l'affichage initial
+            const event = new Event('change');
+            dropdown.dispatchEvent(event);
+        });
+    }
+
     // Configuration des filtres par catégorie
     function setupCategoryFilters() {
         const categoryFilters = document.querySelectorAll('.category-filter');
+        
         if (categoryFilters.length > 0) {
+            console.log('Filtres de catégorie trouvés:', categoryFilters.length);
+            
             categoryFilters.forEach(filter => {
-                filter.addEventListener('click', function() {
-                    const category = this.dataset.category;
+                filter.addEventListener('click', function(e) {
+                    e.preventDefault(); // Empêcher le comportement par défaut du lien
+                    console.log('Filtre cliqué:', this.dataset.category);
                     
+                    // Retirer la classe active de tous les filtres
                     categoryFilters.forEach(f => f.classList.remove('active'));
+                    
+                    // Ajouter la classe active au filtre cliqué
                     this.classList.add('active');
                     
+                    const category = this.dataset.category;
+                    
                     if (category === 'all') {
+                        console.log('Affichage de tous les produits');
                         displayProducts();
                     } else {
-                        const filteredProducts = products.filter(product => product.category === category);
+                        console.log('Filtrage par catégorie:', category);
+                        const filteredProducts = products.filter(product => {
+                            return product.category && product.category.toLowerCase() === category.toLowerCase();
+                        });
+                        console.log('Produits filtrés:', filteredProducts.length);
                         displayFilteredProducts(filteredProducts);
                     }
                 });
             });
+        } else {
+            console.warn('Aucun filtre de catégorie trouvé');
         }
     }
 
@@ -489,15 +521,28 @@ function displayFilteredProducts(filteredProducts) {
         if (ordersButton) {
             ordersButton.addEventListener('click', displayOrders);
         }
+        
+        // Ajouter des écouteurs d'événements pour le panier
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('add-to-cart-btn')) {
+                console.log('Bouton "Ajouter au panier" cliqué');
+                // Votre code pour ajouter au panier ici
+            }
+        });
     }
 
     // Initialisation
     function init() {
+        console.log('Initialisation du dashboard');
         setupLogout();
         fetchUserOrders();
         fetchProducts();
-        setupCategoryFilters();
         setupEventListeners();
+        
+        // Attendre que les produits soient chargés avant de configurer les filtres
+        setTimeout(() => {
+            setupCategoryFilters();
+        }, 500);
     }
 
     // Démarrer l'application
