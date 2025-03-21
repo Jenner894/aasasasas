@@ -23,9 +23,9 @@ const ProductSchema = new mongoose.Schema({
     category: { 
         type: String, 
         required: true,
-        enum: ['Fleur', 'Résine'] 
+        enum: ['Fleurs', 'Résines'] // Correction de "Fleur" à "Fleurs"
     },
-    // Remplacer pricePerGram par un array de prix selon la quantité
+    // Utilisation uniquement de priceOptions pour les prix
     priceOptions: [{
         quantity: { type: Number, required: true }, // quantité en grammes
         price: { type: Number, required: true } // prix pour cette quantité
