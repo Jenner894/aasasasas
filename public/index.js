@@ -88,6 +88,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 products = data.products || [];
                 displayProducts();
+                // Une fois les produits chargés, configurez les filtres de catégorie
+                setupCategoryFilters();
             } else {
                 console.error('Erreur récupération produits:', data.message);
             }
@@ -118,6 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const productCard = document.createElement('div');
             productCard.className = 'product-card';
             productCard.dataset.id = product._id;
+            productCard.dataset.category = product.category || ''; // Ajouter la catégorie comme attribut de données
             
             // Vérifier si inStock existe, sinon utiliser true par défaut
             const isInStock = product.inStock !== undefined ? product.inStock : true;
@@ -337,204 +340,61 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Filtrage des produits par catégorie
-    function displayFilteredProducts(filteredProducts) {
-        const productsContainer = document.getElementById('products-container');
-        
-        if (!productsContainer) {
-            console.error('Conteneur de produits non trouvé');
-            return;
-        }
-        
-        productsContainer.innerHTML = '';
-        
-        if (!filteredProducts || filteredProducts.length === 0) {
-            productsContainer.innerHTML = '<div class="no-products">Aucun produit dans cette catégorie</div>';
-            return;
-        }
-        
-        // Réutiliser le code d'affichage des produits avec les produits filtrés
-        filteredProducts.forEach(product => {
-            const productCard = document.createElement('div');
-            productCard.className = 'product-card';
-            productCard.dataset.id = product._id;
-            
-            // Vérifier si inStock existe, sinon utiliser true par défaut
-            const isInStock = product.inStock !== undefined ? product.inStock : true;
-            
-            const stockBadge = isInStock ? 
-                '<span class="stock-badge in-stock">En stock</span>' : 
-                '<span class="stock-badge out-of-stock">Rupture de stock</span>';
-            
-            // Normaliser les propriétés du produit - corriger les incohérences
-            const videoUrl = product.videoUrl || product.video || "/images/default-video.mp4";
-            const name = product.name || "Produit sans nom";
-            const category = product.category || "Non catégorisé";
-            const thcContent = product.thcContent || product.thc || "N/A";
-            const description = product.description || "Aucune description disponible";
-            
-            // Correction: Vérifier et normaliser la propriété de prix
-            const pricePerGram = product.pricePerGram || 
-                                (product.pricepergramme ? product.pricepergramme.value || product.pricepergramme : null);
-            
-            // Vérifier si les options de prix existent et sont valides
-            let quantityOptionsHTML = '';
-            if (product.priceOptions && Array.isArray(product.priceOptions) && product.priceOptions.length > 0) {
-                // Trier les options par quantité croissante
-                const sortedOptions = [...product.priceOptions].sort((a, b) => a.quantity - b.quantity);
-                
-                quantityOptionsHTML = sortedOptions.map(option => {
-                    return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
-                        ${option.quantity}g - ${option.price.toFixed(2)}€
-                    </option>`;
-                }).join('');
-            } else if (pricePerGram) {
-                // Compatibilité avec l'ancien format
-                const basePrice = Number(pricePerGram);
-                const quantityOptions = [
-                    { quantity: 1, price: basePrice },
-                    { quantity: 3, price: basePrice * 3 * 0.95 },
-                    { quantity: 5, price: basePrice * 5 * 0.9 },
-                    { quantity: 10, price: basePrice * 10 * 0.85 },
-                    { quantity: 20, price: basePrice * 20 * 0.8 }
-                ];
-                
-                quantityOptionsHTML = quantityOptions.map(option => {
-                    return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
-                        ${option.quantity}g - ${option.price.toFixed(2)}€
-                    </option>`;
-                }).join('');
-            } else {
-                quantityOptionsHTML = '<option value="0" data-price="0.00">Prix non disponible</option>';
-            }
-            
-            // Définir le prix initial à afficher (première option)
-            const basePrice = product.priceOptions && product.priceOptions.length > 0 
-                ? Number(product.priceOptions[0].price).toFixed(2) 
-                : (pricePerGram ? Number(pricePerGram).toFixed(2) : '0.00');
-            
-            // Assurez-vous d'utiliser un chemin relatif pour les images du placeholder
-            const placeholderPath = '/images/video-placeholder.jpg';
-            
-            productCard.innerHTML = `
-                <div class="product-video-container">
-                    <video class="product-video" controls preload="none" poster="${placeholderPath}">
-                        <source src="${videoUrl}" type="video/mp4">
-                        Votre navigateur ne supporte pas les vidéos HTML5.
-                    </video>
-                </div>
-                <div class="product-info">
-                    <h3 class="product-name">${name}</h3>
-                    <div class="product-category">${category}</div>
-                    <div class="product-thc">THC: ${thcContent}</div>
-                    <p class="product-description">${description}</p>
-                    <div class="product-price-container">
-                        <div class="product-price">
-                            ${basePrice}€/g
-                        </div>
-                        <div class="quantity-selector">
-                            <select class="quantity-dropdown" data-product-id="${product._id}">
-                                ${quantityOptionsHTML}
-                            </select>
-                        </div>
-                    </div>
-                    ${stockBadge}
-                    <button class="add-to-cart-btn" data-product-id="${product._id}">
-                        Ajouter au panier
-                    </button>
-                </div>
-            `;
-            
-            productsContainer.appendChild(productCard);
-            
-            // Ajouter un écouteur d'événement pour le changement de quantité
-            const quantityDropdown = productCard.querySelector('.quantity-dropdown');
-            quantityDropdown.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                const price = selectedOption.getAttribute('data-price');
-                const grams = selectedOption.value;
-                
-                const priceDisplay = productCard.querySelector('.product-price');
-                priceDisplay.textContent = `${price}€ pour ${grams}g`;
+    function filterProductsByCategory(category) {
+        if (category === 'all') {
+            // Afficher tous les produits
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.style.display = 'block';
             });
-        });
-        
-        // Initialiser l'affichage du prix pour la première option de chaque produit
-        document.querySelectorAll('.quantity-dropdown').forEach(dropdown => {
-            // Simuler un événement de changement pour mettre à jour l'affichage initial
-            const event = new Event('change');
-            dropdown.dispatchEvent(event);
-        });
+        } else {
+            // Normaliser la catégorie pour correspondre au schéma (Fleur/Fleurs, Résine/Résines)
+            const normalizedCategory = category.toLowerCase().endsWith('s')
+                ? category.slice(0, -1)  // Enlever le 's' final si présent
+                : category;
+            
+            // Filtrer les produits par catégorie
+            document.querySelectorAll('.product-card').forEach(card => {
+                const cardCategory = (card.dataset.category || '').toLowerCase();
+                
+                // Vérifier si la catégorie correspond (avec ou sans 's')
+                const categoryMatch = cardCategory === normalizedCategory.toLowerCase() ||
+                                     cardCategory === (normalizedCategory + 's').toLowerCase();
+                
+                card.style.display = categoryMatch ? 'block' : 'none';
+            });
+        }
     }
 
     // Configuration des filtres par catégorie
     function setupCategoryFilters() {
-        // Essayer plusieurs sélecteurs possibles pour trouver les filtres
-        const categoryFilters = document.querySelectorAll('.category-filter, .sidebar-item[data-category], .filter-item[data-category]');
+        // Utiliser les onglets de catégorie qui existent dans le HTML
+        const categoryTabs = document.querySelectorAll('.category-tab');
         
-        if (categoryFilters.length > 0) {
-            console.log('Filtres de catégorie trouvés:', categoryFilters.length);
+        if (categoryTabs.length > 0) {
+            console.log('Onglets de catégorie trouvés:', categoryTabs.length);
             
-            categoryFilters.forEach(filter => {
-                filter.addEventListener('click', function(e) {
-                    e.preventDefault(); // Empêcher le comportement par défaut du lien
-                    console.log('Filtre cliqué:', this.dataset.category);
+            categoryTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Retirer la classe active de tous les onglets
+                    categoryTabs.forEach(t => t.classList.remove('active'));
                     
-                    // Retirer la classe active de tous les filtres
-                    categoryFilters.forEach(f => f.classList.remove('active'));
-                    
-                    // Ajouter la classe active au filtre cliqué
+                    // Ajouter la classe active à l'onglet cliqué
                     this.classList.add('active');
                     
-                    const category = this.dataset.category;
+                    // Filtrer les produits par catégorie
+                    const category = this.getAttribute('data-category');
+                    console.log('Filtrage par catégorie:', category);
                     
                     if (category === 'all') {
-                        console.log('Affichage de tous les produits');
-                        displayProducts();
+                        displayProducts(); // Réafficher tous les produits
                     } else {
-                        console.log('Filtrage par catégorie:', category);
-                        const filteredProducts = products.filter(product => {
-                            return product.category && product.category.toLowerCase() === category.toLowerCase();
-                        });
-                        console.log('Produits filtrés:', filteredProducts.length);
-                        displayFilteredProducts(filteredProducts);
+                        // Filtrer les produits
+                        filterProductsByCategory(category);
                     }
                 });
             });
         } else {
-            console.warn('Aucun filtre de catégorie trouvé, création dynamique des filtres');
-            
-            // Créer des filtres de catégorie dynamiquement en fonction des catégories disponibles
-            const uniqueCategories = [...new Set(products.map(product => product.category))].filter(category => category);
-            
-            if (uniqueCategories.length > 0) {
-                const sidebarContent = document.querySelector('.sidebar-content');
-                if (sidebarContent) {
-                    const categoriesSection = document.createElement('div');
-                    categoriesSection.className = 'sidebar-section';
-                    categoriesSection.innerHTML = '<div class="sidebar-section-title">Catégories</div>';
-                    
-                    // Ajouter un filtre "Tout"
-                    const allCategoryItem = document.createElement('div');
-                    allCategoryItem.className = 'sidebar-item category-filter active';
-                    allCategoryItem.dataset.category = 'all';
-                    allCategoryItem.innerHTML = '<span class="sidebar-item-icon">🔍</span> Tous les produits';
-                    categoriesSection.appendChild(allCategoryItem);
-                    
-                    // Ajouter un filtre pour chaque catégorie
-                    uniqueCategories.forEach(category => {
-                        const categoryItem = document.createElement('div');
-                        categoryItem.className = 'sidebar-item category-filter';
-                        categoryItem.dataset.category = category;
-                        categoryItem.innerHTML = `<span class="sidebar-item-icon">📦</span> ${category}`;
-                        categoriesSection.appendChild(categoryItem);
-                    });
-                    
-                    sidebarContent.appendChild(categoriesSection);
-                    
-                    // Réessayer la configuration des filtres
-                    setupCategoryFilters();
-                }
-            }
+            console.warn('Aucun onglet de catégorie trouvé');
         }
     }
 
@@ -568,6 +428,85 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Configuration du panier
+    function setupCart() {
+        const openCartBtn = document.getElementById('open-cart');
+        const closeCartBtn = document.getElementById('close-cart');
+        const cartModal = document.getElementById('cart-modal');
+        const overlay = document.getElementById('overlay');
+        
+        if (openCartBtn && cartModal && overlay) {
+            openCartBtn.addEventListener('click', function() {
+                cartModal.classList.add('open');
+                overlay.classList.add('active');
+            });
+            
+            if (closeCartBtn) {
+                closeCartBtn.addEventListener('click', function() {
+                    cartModal.classList.remove('open');
+                    overlay.classList.remove('active');
+                });
+            }
+            
+            overlay.addEventListener('click', function() {
+                cartModal.classList.remove('open');
+                
+                const ordersModal = document.getElementById('orders-modal');
+                if (ordersModal) {
+                    ordersModal.classList.remove('open');
+                }
+                
+                this.classList.remove('active');
+            });
+        }
+    }
+
+    // Fonctionnalité de la barre latérale
+    function setupSidebar() {
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const closeSidebar = document.getElementById('close-sidebar');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        
+        if (sidebarToggle && sidebar) {
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.add('open');
+                if (overlay) overlay.classList.add('active');
+            });
+            
+            if (closeSidebar) {
+                closeSidebar.addEventListener('click', function() {
+                    sidebar.classList.remove('open');
+                    if (overlay) overlay.classList.remove('active');
+                });
+            }
+            
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('open');
+                    this.classList.remove('active');
+                });
+            }
+            
+            // Configuration des éléments de la barre latérale
+            const sidebarItems = document.querySelectorAll('.sidebar-item');
+            sidebarItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Retirer la classe active de tous les éléments
+                    sidebarItems.forEach(i => i.classList.remove('active'));
+                    // Ajouter la classe active à l'élément cliqué
+                    this.classList.add('active');
+                    
+                    // Fermer la barre latérale sur mobile
+                    if (window.innerWidth < 768) {
+                        sidebar.classList.remove('open');
+                        if (overlay) overlay.classList.remove('active');
+                    }
+                });
+            });
+        }
+    }
+
     // Configuration des événements
     function setupEventListeners() {
         const ordersButton = document.getElementById('orders-button');
@@ -575,11 +514,43 @@ document.addEventListener('DOMContentLoaded', function() {
             ordersButton.addEventListener('click', displayOrders);
         }
         
+        // Configurer le panier
+        setupCart();
+        
+        // Configurer la barre latérale
+        setupSidebar();
+        
         // Ajouter des écouteurs d'événements pour le panier
         document.addEventListener('click', function(event) {
             if (event.target.classList.contains('add-to-cart-btn')) {
-                console.log('Bouton "Ajouter au panier" cliqué');
-                // Votre code pour ajouter au panier ici
+                const productId = event.target.getAttribute('data-product-id');
+                const productCard = event.target.closest('.product-card');
+                
+                if (productCard) {
+                    const quantityDropdown = productCard.querySelector('.quantity-dropdown');
+                    const quantity = quantityDropdown ? quantityDropdown.value : 1;
+                    const selectedOption = quantityDropdown ? quantityDropdown.options[quantityDropdown.selectedIndex] : null;
+                    const price = selectedOption ? selectedOption.getAttribute('data-price') : 0;
+                    
+                    // Simuler l'ajout au panier (à compléter avec une API réelle)
+                    console.log('Ajout au panier:', {
+                        productId,
+                        quantity,
+                        price
+                    });
+                    
+                    // Mettre à jour le compteur du panier
+                    const cartCount = document.getElementById('cart-count');
+                    if (cartCount) {
+                        cartCount.textContent = parseInt(cartCount.textContent || '0') + 1;
+                    }
+                    
+                    // Animation ou feedback pour l'utilisateur
+                    event.target.textContent = 'Ajouté!';
+                    setTimeout(() => {
+                        event.target.textContent = 'Ajouter au panier';
+                    }, 1500);
+                }
             }
         });
     }
@@ -589,13 +560,8 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Initialisation du dashboard');
         setupLogout();
         fetchUserOrders();
-        fetchProducts();
+        fetchProducts(); // Cette fonction appellera setupCategoryFilters une fois les produits chargés
         setupEventListeners();
-        
-        // Attendre que les produits soient chargés avant de configurer les filtres
-        setTimeout(() => {
-            setupCategoryFilters();
-        }, 1000); // Augmenter le délai pour s'assurer que les produits sont chargés
     }
 
     // Démarrer l'application
