@@ -606,6 +606,99 @@ app.post('/api/user/regenerate-key', isAuthenticated, async (req, res) => {
     }
 });
 //////////////////////////////////////////////////////////////////////// Profil ////////////////////
+
+
+//////////////////// register ///////////////////////
+app.get('/register.html', (req, res) => {
+    // Si l'utilisateur est déjà connecté, le rediriger vers le dashboard
+    if (req.session && req.session.user) {
+        return res.redirect('/dashboard.html');
+    }
+    res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+// Route pour l'inscription d'un nouvel utilisateur
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { username, telegramId, referralCode } = req.body;
+        
+        // Validation du nom d'utilisateur
+        if (!username || username.length < 3) {
+            return res.status(400).json({ success: false, message: 'Le nom d\'utilisateur doit contenir au moins 3 caractères' });
+        }
+        
+        // Vérifier si le nom d'utilisateur existe déjà
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: 'Ce nom d\'utilisateur est déjà utilisé' });
+        }
+        
+        // Vérifier le code de parrainage si fourni
+        if (referralCode) {
+            const referrer = await User.findOne({ referralCode });
+            if (!referrer) {
+                return res.status(400).json({ success: false, message: 'Code de parrainage invalide' });
+            }
+            // On pourrait ajouter ici une logique pour récompenser le parrain
+        }
+        
+        // Générer une clé Telegram unique
+        const generateUniqueKey = () => {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let key = '';
+            for (let i = 0; i < 16; i++) {
+                key += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return key;
+        };
+        
+        // Générer un code de parrainage unique
+        const generateReferralCode = () => {
+            return 'BEDO' + Math.floor(1000 + Math.random() * 9000);
+        };
+        
+        // Vérifier si la clé ou le code de parrainage existe déjà et regénérer si nécessaire
+        let telegramKey = generateUniqueKey();
+        let newReferralCode = generateReferralCode();
+        
+        let keyExists = await User.findOne({ keys: telegramKey });
+        while (keyExists) {
+            telegramKey = generateUniqueKey();
+            keyExists = await User.findOne({ keys: telegramKey });
+        }
+        
+        let codeExists = await User.findOne({ referralCode: newReferralCode });
+        while (codeExists) {
+            newReferralCode = generateReferralCode();
+            codeExists = await User.findOne({ referralCode: newReferralCode });
+        }
+        
+        // Créer le nouvel utilisateur
+        const newUser = new User({
+            username,
+            keys: telegramKey,
+            telegramId: telegramId || '',
+            referralCode: newReferralCode,
+            role: 'client',  // Par défaut, tous les nouveaux utilisateurs sont des clients
+            totalSpent: 0,
+            lastOrderDate: null,
+            orders: []
+        });
+        
+        await newUser.save();
+        
+        // Retourner la réponse avec la clé Telegram
+        res.status(201).json({ 
+            success: true, 
+            message: 'Compte créé avec succès',
+            key: telegramKey
+        });
+        
+    } catch (error) {
+        console.error('Erreur lors de l\'inscription:', error);
+        res.status(500).json({ success: false, message: 'Erreur serveur. Veuillez réessayer plus tard.' });
+    }
+});
 // Routes publiques - redirection vers la page de login
 app.get('/', (req, res) => {
   if (req.session && req.session.user) {
