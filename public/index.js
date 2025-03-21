@@ -136,10 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const thcContent = product.thcContent || product.thc || "N/A";
             const description = product.description || "Aucune description disponible";
             
-            // Correction: Vérifier et normaliser la propriété de prix
-            const pricePerGram = product.pricePerGram || 
-                                (product.pricepergramme ? product.pricepergramme.value || product.pricepergramme : null);
-            
             // Vérifier si les options de prix existent et sont valides
             let quantityOptionsHTML = '';
             if (product.priceOptions && Array.isArray(product.priceOptions) && product.priceOptions.length > 0) {
@@ -151,30 +147,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${option.quantity}g - ${option.price.toFixed(2)}€
                     </option>`;
                 }).join('');
-            } else if (pricePerGram) {
-                // Compatibilité avec l'ancien format
-                const basePrice = Number(pricePerGram);
-                const quantityOptions = [
-                    { quantity: 1, price: basePrice },
-                    { quantity: 3, price: basePrice * 3 * 0.95 },
-                    { quantity: 5, price: basePrice * 5 * 0.9 },
-                    { quantity: 10, price: basePrice * 10 * 0.85 },
-                    { quantity: 20, price: basePrice * 20 * 0.8 }
-                ];
-                
-                quantityOptionsHTML = quantityOptions.map(option => {
-                    return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
-                        ${option.quantity}g - ${option.price.toFixed(2)}€
-                    </option>`;
-                }).join('');
             } else {
+                // Si aucune option de prix n'est disponible, afficher un message
                 quantityOptionsHTML = '<option value="0" data-price="0.00">Prix non disponible</option>';
             }
             
             // Définir le prix initial à afficher (première option)
             const basePrice = product.priceOptions && product.priceOptions.length > 0 
                 ? Number(product.priceOptions[0].price).toFixed(2) 
-                : (pricePerGram ? Number(pricePerGram).toFixed(2) : '0.00');
+                : '0.00';
             
             // Assurez-vous d'utiliser un chemin relatif pour les images du placeholder
             const placeholderPath = '/images/video-placeholder.jpg';
@@ -347,20 +328,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.style.display = 'block';
             });
         } else {
-            // Normaliser la catégorie pour correspondre au schéma (Fleur/Fleurs, Résine/Résines)
-            const normalizedCategory = category.toLowerCase().endsWith('s')
-                ? category.slice(0, -1)  // Enlever le 's' final si présent
-                : category;
-            
-            // Filtrer les produits par catégorie
+            // Filtrer les produits par catégorie exacte (Fleurs, Résines)
             document.querySelectorAll('.product-card').forEach(card => {
                 const cardCategory = (card.dataset.category || '').toLowerCase();
+                const selectedCategory = category.toLowerCase();
                 
-                // Vérifier si la catégorie correspond (avec ou sans 's')
-                const categoryMatch = cardCategory === normalizedCategory.toLowerCase() ||
-                                     cardCategory === (normalizedCategory + 's').toLowerCase();
-                
-                card.style.display = categoryMatch ? 'block' : 'none';
+                // Vérifier si la catégorie correspond exactement
+                card.style.display = cardCategory === selectedCategory ? 'block' : 'none';
             });
         }
     }
