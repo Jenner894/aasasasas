@@ -5,6 +5,20 @@ let currentUser = null;
 async function getUserProfile() {
     try {
         const response = await fetch('/api/user/profile');
+        
+        // Vérifier d'abord si la réponse est OK
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        
+        // Vérifier le type de contenu
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const errorText = await response.text();
+            console.error('Réponse non-JSON reçue:', errorText);
+            throw new Error('Réponse invalide du serveur (non-JSON)');
+        }
+        
         const data = await response.json();
         
         if (!data.success) {
@@ -22,28 +36,38 @@ async function getUserProfile() {
 // Fonction pour mettre à jour l'interface utilisateur avec les données du profil
 function updateProfileUI(user) {
     // Mettre à jour les informations principales du profil
-    document.getElementById('profile-username').textContent = user.username;
-    document.getElementById('profile-join-date').textContent = user.joinDate;
-    document.getElementById('profile-account-type').textContent = user.accountType;
+    document.getElementById('profile-username').textContent = user.username || 'Non défini';
+    document.getElementById('profile-join-date').textContent = user.joinDate || 'Non défini';
+    document.getElementById('profile-account-type').textContent = user.accountType || 'Client';
     document.getElementById('profile-telegram-key').textContent = '•••••••••••••';
     
     // Mettre à jour les statistiques
-    document.getElementById('stat-total-orders').textContent = user.stats.totalOrders;
-    document.getElementById('stat-total-spent').textContent = user.stats.totalSpent;
-    document.getElementById('stat-last-order').textContent = user.stats.lastOrder;
+    if (user.stats) {
+        document.getElementById('stat-total-orders').textContent = user.stats.totalOrders || '0';
+        document.getElementById('stat-total-spent').textContent = user.stats.totalSpent || '0€';
+        document.getElementById('stat-last-order').textContent = user.stats.lastOrder || 'N/A';
+        
+        // Gestion du programme de parrainage
+        const referralCodeElement = document.querySelector('.referral-code');
+        if (referralCodeElement && user.stats.referralCode) {
+            referralCodeElement.textContent = user.stats.referralCode;
+            // Ajouter le bouton de copie s'il n'existe pas déjà
+            if (!referralCodeElement.querySelector('.copy-btn')) {
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-btn';
+                copyBtn.title = 'Copier';
+                copyBtn.innerHTML = '📋';
+                copyBtn.addEventListener('click', () => copyToClipboard(user.stats.referralCode));
+                referralCodeElement.appendChild(copyBtn);
+            }
+        }
+    }
     
-    // Mettre à jour le code de parrainage
-    const referralCodeElement = document.querySelector('.referral-code');
-    if (referralCodeElement) {
-        referralCodeElement.textContent = user.stats.referralCode;
-        // Ajouter le bouton de copie s'il n'existe pas déjà
-        if (!referralCodeElement.querySelector('.copy-btn')) {
-            const copyBtn = document.createElement('button');
-            copyBtn.className = 'copy-btn';
-            copyBtn.title = 'Copier';
-            copyBtn.innerHTML = '📋';
-            copyBtn.addEventListener('click', () => copyToClipboard(user.stats.referralCode));
-            referralCodeElement.appendChild(copyBtn);
+    // Initialiser l'identifiant Telegram dans l'input si disponible
+    if (user.telegamId) {
+        const telegramInput = document.getElementById('telegram-notification');
+        if (telegramInput) {
+            telegramInput.value = user.telegamId;
         }
     }
 }
@@ -104,9 +128,9 @@ function showNotification(message, type = 'info') {
 
 // Gestionnaire pour modifier le nom d'utilisateur
 async function updateUsername() {
-    const newUsername = prompt('Entrez votre nouveau nom d\'utilisateur:', currentUser.username);
+    const newUsername = prompt('Entrez votre nouveau nom d\'utilisateur:', currentUser ? currentUser.username : '');
     
-    if (!newUsername || newUsername === currentUser.username) return;
+    if (!newUsername || (currentUser && newUsername === currentUser.username)) return;
     
     try {
         const response = await fetch('/api/user/username', {
@@ -117,14 +141,21 @@ async function updateUsername() {
             body: JSON.stringify({ username: newUsername })
         });
         
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
+        }
+        
         const data = await response.json();
         
         if (!data.success) {
             throw new Error(data.message || 'Erreur lors de la mise à jour du nom d\'utilisateur');
         }
         
-        currentUser.username = data.username;
-        document.getElementById('profile-username').textContent = currentUser.username;
+        if (currentUser) {
+            currentUser.username = data.username;
+            document.getElementById('profile-username').textContent = currentUser.username;
+        }
         showNotification('Nom d\'utilisateur mis à jour avec succès!', 'success');
     } catch (error) {
         console.error('Erreur lors de la mise à jour du nom d\'utilisateur:', error);
@@ -143,12 +174,20 @@ async function updateTelegramId(telegramId) {
             body: JSON.stringify({ telegramId })
         });
         
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
+        }
+        
         const data = await response.json();
         
         if (!data.success) {
             throw new Error(data.message || 'Erreur lors de la mise à jour de l\'identifiant Telegram');
         }
         
+        if (currentUser) {
+            currentUser.telegamId = telegramId;
+        }
         showNotification('Identifiant Telegram mis à jour avec succès!', 'success');
     } catch (error) {
         console.error('Erreur lors de la mise à jour de l\'identifiant Telegram:', error);
@@ -170,13 +209,20 @@ async function regenerateKey() {
             }
         });
         
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
+        }
+        
         const data = await response.json();
         
         if (!data.success) {
             throw new Error(data.message || 'Erreur lors de la régénération de la clé');
         }
         
-        currentUser.telegramKey = data.newKey;
+        if (currentUser) {
+            currentUser.telegramKey = data.newKey;
+        }
         
         // Afficher la nouvelle clé à l'utilisateur
         alert(`Votre nouvelle clé Telegram est: ${data.newKey}\nVeuillez la conserver en lieu sûr.`);
@@ -263,21 +309,21 @@ function initEventListeners() {
     const shareWhatsapp = document.querySelector('.share-whatsapp');
     const shareEmail = document.querySelector('.share-email');
     
-    if (shareTelegram && currentUser) {
+    if (shareTelegram && currentUser && currentUser.stats && currentUser.stats.referralCode) {
         shareTelegram.addEventListener('click', () => {
             const message = `Rejoins Allo Bedo avec mon code de parrainage: ${currentUser.stats.referralCode}`;
             window.open(`https://t.me/share/url?url=${encodeURIComponent(message)}`);
         });
     }
     
-    if (shareWhatsapp && currentUser) {
+    if (shareWhatsapp && currentUser && currentUser.stats && currentUser.stats.referralCode) {
         shareWhatsapp.addEventListener('click', () => {
             const message = `Rejoins Allo Bedo avec mon code de parrainage: ${currentUser.stats.referralCode}`;
             window.open(`https://wa.me/?text=${encodeURIComponent(message)}`);
         });
     }
     
-    if (shareEmail && currentUser) {
+    if (shareEmail && currentUser && currentUser.stats && currentUser.stats.referralCode) {
         shareEmail.addEventListener('click', () => {
             const subject = 'Rejoins Allo Bedo';
             const body = `Utilise mon code de parrainage pour rejoindre Allo Bedo: ${currentUser.stats.referralCode}`;
@@ -288,16 +334,15 @@ function initEventListeners() {
 
 // Fonction principale d'initialisation
 async function init() {
-    await getUserProfile();
-    initEventListeners();
-    
-    // Initialiser l'identifiant Telegram dans l'input si disponible
-    if (currentUser && currentUser.telegamId) {
-        const telegramInput = document.getElementById('telegram-notification');
-        if (telegramInput) {
-            telegramInput.value = currentUser.telegamId;
-        }
+    try {
+        await getUserProfile();
+        initEventListeners();
+        console.log("Profil initialisé avec succès");
+    } catch (error) {
+        console.error("Erreur d'initialisation:", error);
+        showNotification("Erreur lors du chargement du profil", "error");
     }
 }
+
 // Exécuter la fonction d'initialisation lorsque le DOM est chargé
 document.addEventListener('DOMContentLoaded', init);
