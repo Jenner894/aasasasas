@@ -4,21 +4,44 @@ let currentUser = null;
 // Fonction pour récupérer les informations de l'utilisateur
 async function getUserProfile() {
     try {
-        // Vérifier d'abord si l'utilisateur est authentifié
-        const authStatusResponse = await fetch('/api/auth/status');
+        // Vérifier d'abord si l'utilisateur est authentifié, mais ne pas rediriger immédiatement
+        const authStatusResponse = await fetch('/api/auth/status', {
+            credentials: 'include' // Important pour envoyer les cookies de session
+        });
+        
         const authStatus = await authStatusResponse.json();
         
         if (!authStatus.authenticated) {
-            // Rediriger vers la page de connexion si non authentifié
-            window.location.href = '/login.html';
-            return;
+            console.warn('Session utilisateur non authentifiée');
+            // Au lieu de rediriger immédiatement, nous afficherons une notification
+            showNotification('Session expirée, veuillez vous reconnecter', 'error');
+            
+            // Attendre un peu avant de rediriger pour que l'utilisateur puisse voir la notification
+            setTimeout(() => {
+                window.location.href = '/login.html';
+            }, 2000);
+            
+            return false; // Indiquer que la récupération a échoué
         }
         
-        const response = await fetch('/api/user/profile');
+        // Récupérer les informations de profil avec les credentials
+        const response = await fetch('/api/user/profile', {
+            credentials: 'include' // Important pour envoyer les cookies de session
+        });
         
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Erreur HTTP:', response.status, errorText);
+            
+            if (response.status === 401) {
+                // Problème d'authentification
+                showNotification('Session expirée, veuillez vous reconnecter', 'error');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 2000);
+                return false;
+            }
+            
             throw new Error(`Erreur HTTP: ${response.status}`);
         }
         
@@ -37,14 +60,18 @@ async function getUserProfile() {
         
         currentUser = data.user;
         updateProfileUI(currentUser);
+        return true; // Indiquer que la récupération a réussi
     } catch (error) {
         console.error('Erreur lors de la récupération du profil:', error);
         showNotification('Erreur lors du chargement du profil', 'error');
+        return false; // Indiquer que la récupération a échoué
     }
 }
 
 // Fonction pour mettre à jour l'interface utilisateur avec les données du profil
 function updateProfileUI(user) {
+    if (!user) return; // S'assurer que l'utilisateur existe
+    
     // Mettre à jour les informations principales du profil
     document.getElementById('profile-username').textContent = user.username || 'Non défini';
     document.getElementById('profile-join-date').textContent = user.joinDate || 'Non défini';
@@ -153,7 +180,8 @@ async function updateUsername() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username: newUsername })
+            body: JSON.stringify({ username: newUsername }),
+            credentials: 'include' // Important pour envoyer les cookies de session
         });
         
         const data = await response.json();
@@ -181,7 +209,8 @@ async function updateTelegramId(telegramId) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ telegramId })
+            body: JSON.stringify({ telegramId }),
+            credentials: 'include' // Important pour envoyer les cookies de session
         });
         
         const data = await response.json();
@@ -211,7 +240,8 @@ async function regenerateKey() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            credentials: 'include' // Important pour envoyer les cookies de session
         });
         
         const data = await response.json();
@@ -235,13 +265,56 @@ async function regenerateKey() {
 
 // Gestionnaire pour la déconnexion
 function logout() {
-    fetch('/api/auth/logout')
-        .then(() => {
-            window.location.href = '/login.html';
-        })
-        .catch(error => {
-            console.error('Erreur lors de la déconnexion:', error);
+    fetch('/api/auth/logout', {
+        credentials: 'include' // Important pour envoyer les cookies de session
+    })
+    .then(() => {
+        window.location.href = '/login.html';
+    })
+    .catch(error => {
+        console.error('Erreur lors de la déconnexion:', error);
+    });
+}
+
+// Meilleure initialisation des boutons de partage
+function initializeShareButtons() {
+    // Attendre que currentUser soit initialisé
+    if (!currentUser || !currentUser.stats || !currentUser.stats.referralCode) {
+        console.warn("Informations de référence non disponibles pour les boutons de partage");
+        setTimeout(initializeShareButtons, 500); // Réessayer dans 500ms
+        return;
+    }
+    
+    const referralCode = currentUser.stats.referralCode;
+    
+    // Boutons de partage
+    const shareTelegram = document.querySelector('.share-telegram');
+    const shareWhatsapp = document.querySelector('.share-whatsapp');
+    const shareEmail = document.querySelector('.share-email');
+    
+    if (shareTelegram) {
+        shareTelegram.addEventListener('click', () => {
+            const message = `Rejoins Allo Bedo avec mon code de parrainage: ${referralCode}`;
+            window.open(`https://t.me/share/url?url=${encodeURIComponent(message)}`);
         });
+    }
+    
+    if (shareWhatsapp) {
+        shareWhatsapp.addEventListener('click', () => {
+            const message = `Rejoins Allo Bedo avec mon code de parrainage: ${referralCode}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`);
+        });
+    }
+    
+    if (shareEmail) {
+        shareEmail.addEventListener('click', () => {
+            const subject = 'Rejoins Allo Bedo';
+            const body = `Utilise mon code de parrainage pour rejoindre Allo Bedo: ${referralCode}`;
+            window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+        });
+    }
+    
+    console.log("Boutons de partage initialisés avec succès");
 }
 
 // Fonction pour initialiser les gestionnaires d'événements une fois que le DOM est chargé
@@ -320,40 +393,23 @@ function initEventListeners() {
         });
     }
     
-    // Boutons de partage
-    const shareTelegram = document.querySelector('.share-telegram');
-    const shareWhatsapp = document.querySelector('.share-whatsapp');
-    const shareEmail = document.querySelector('.share-email');
-    
-    if (shareTelegram && currentUser && currentUser.stats && currentUser.stats.referralCode) {
-        shareTelegram.addEventListener('click', () => {
-            const message = `Rejoins Allo Bedo avec mon code de parrainage: ${currentUser.stats.referralCode}`;
-            window.open(`https://t.me/share/url?url=${encodeURIComponent(message)}`);
-        });
-    }
-    
-    if (shareWhatsapp && currentUser && currentUser.stats && currentUser.stats.referralCode) {
-        shareWhatsapp.addEventListener('click', () => {
-            const message = `Rejoins Allo Bedo avec mon code de parrainage: ${currentUser.stats.referralCode}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`);
-        });
-    }
-    
-    if (shareEmail && currentUser && currentUser.stats && currentUser.stats.referralCode) {
-        shareEmail.addEventListener('click', () => {
-            const subject = 'Rejoins Allo Bedo';
-            const body = `Utilise mon code de parrainage pour rejoindre Allo Bedo: ${currentUser.stats.referralCode}`;
-            window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
-        });
-    }
+    // Initialiser les boutons de partage séparément
+    initializeShareButtons();
 }
 
 // Fonction principale d'initialisation
 async function init() {
     try {
-        await getUserProfile();
-        initEventListeners();
-        console.log("Profil initialisé avec succès");
+        // Attendre explicitement la récupération du profil avant de continuer
+        const profileSuccess = await getUserProfile();
+        
+        // Seulement initialiser les événements si la récupération du profil a réussi
+        if (profileSuccess) {
+            initEventListeners();
+            console.log("Profil initialisé avec succès");
+        } else {
+            console.warn("Échec de l'initialisation du profil - les événements n'ont pas été configurés");
+        }
     } catch (error) {
         console.error("Erreur d'initialisation:", error);
         showNotification("Erreur lors du chargement du profil", "error");
