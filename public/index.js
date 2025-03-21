@@ -741,7 +741,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialisation
     function init() {
         console.log('Initialisation du dashboard');
-        checkAuthentication(); // Vérifier l'authentification avant de charger le reste
         setupLogout();
         fetchUserOrders();
         fetchProducts(); // Cette fonction appellera setupCategoryFilters une fois les produits chargés
