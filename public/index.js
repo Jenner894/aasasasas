@@ -7,37 +7,49 @@ document.addEventListener('DOMContentLoaded', function() {
     let cart = []; // Panier d'achat
     
     // Vérification de l'authentification au chargement
-    async function checkAuthentication() {
-        try {
-            const response = await fetch('/api/auth/status');
-            
-            if (!response.ok) {
-                console.error('Erreur HTTP:', response.status, response.statusText);
+async function checkAuthentication() {
+    try {
+        const response = await fetch('/api/auth/status');
+        
+        if (!response.ok) {
+            console.error('Erreur HTTP:', response.status, response.statusText);
+            // Ajouter un délai avant la redirection pour éviter une boucle infinie
+            setTimeout(() => {
                 redirectToLogin();
-                return;
-            }
-            
-            const data = await response.json();
-            
-            if (!data.authenticated) {
-                console.log('Utilisateur non authentifié');
+            }, 500);
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (!data.authenticated) {
+            console.log('Utilisateur non authentifié');
+            setTimeout(() => {
                 redirectToLogin();
-                return;
-            }
-            
-            // Utilisateur authentifié
-            currentUser = data.user;
-            console.log('Utilisateur authentifié:', currentUser);
-            displayUsername();
-            
-            // Charger le panier depuis le localStorage
-            loadCart();
-            
-        } catch (error) {
-            console.error('Erreur lors de la vérification de l\'authentification:', error);
-            redirectToLogin();
+            }, 500);
+            return;
+        }
+        
+        // Utilisateur authentifié
+        currentUser = data.user;
+        console.log('Utilisateur authentifié:', currentUser);
+        displayUsername();
+        
+        // Charger le panier depuis le localStorage
+        loadCart();
+        
+    } catch (error) {
+        console.error('Erreur lors de la vérification de l\'authentification:', error);
+        // Ajouter plus d'informations de débogage
+        console.log('Détail de l\'erreur:', error.message);
+        // Éviter de rediriger immédiatement en cas d'erreur réseau
+        if (error.name !== 'TypeError') {
+            setTimeout(() => {
+                redirectToLogin();
+            }, 500);
         }
     }
+}
     
     // Redirection vers la page de login
     function redirectToLogin() {
