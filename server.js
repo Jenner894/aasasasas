@@ -205,25 +205,23 @@ app.use(express.urlencoded({ extended: true }));
 const allowedOrigins = ['https://allob-1.onrender.com', 'http://localhost:3000'];
 app.use(cors({
   origin: function(origin, callback) {
-    // Permettre les requêtes sans origine (comme les appels API mobiles)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      return callback(null, false);
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(null, false);
     }
-    return callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
 // Configuration des sessions
 app.use(session({
   secret: process.env.SESSION_SECRET || 'mySecret',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // Secure en production (HTTPS)
+    secure: process.env.NODE_ENV === 'production', // S'assurer que c'est false en développement
     httpOnly: true,
     sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000 // 24 heures
