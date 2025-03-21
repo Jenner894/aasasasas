@@ -87,6 +87,57 @@ OrderSchema.post('save', async function(doc) {
     );
 });
 
+// Modification du middleware post-save de Order pour mettre à jour les statistiques de l'utilisateur
+OrderSchema.post('save', async function(doc) {
+    try {
+        // Trouver l'utilisateur associé à cette commande
+        const user = await User.findById(doc.user);
+        
+        if (user) {
+            // Ajouter cette commande à la liste des commandes de l'utilisateur
+            await User.findByIdAndUpdate(
+                doc.user,
+                { 
+                    $addToSet: { orders: doc._id },
+                    $inc: { totalSpent: doc.totalPrice }, // Incrémenter le total dépensé
+                    lastOrderDate: doc.createdAt // Mettre à jour la date de dernière commande
+                }
+            );
+        }
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour des statistiques utilisateur:', error);
+    }
+});
+
+// Ajout d'un middleware post-delete pour mettre à jour les statistiques en cas d'annulation de commande
+OrderSchema.post('deleteOne', { document: true }, async function() {
+    try {
+        // Trouver l'utilisateur associé à cette commande
+        const user = await User.findById(this.user);
+        
+        if (user) {
+            // Retirer cette commande de la liste et réduire le total dépensé
+            await User.findByIdAndUpdate(
+                this.user,
+                { 
+                    $pull: { orders: this._id },
+                    $inc: { totalSpent: -this.totalPrice } // Décrémenter le total dépensé
+                }
+            );
+            
+            // Mise à jour de la date de dernière commande (prendre la plus récente parmi les commandes restantes)
+            const latestOrder = await Order.findOne({ user: this.user }).sort({ createdAt: -1 });
+            if (latestOrder) {
+                await User.findByIdAndUpdate(
+                    this.user,
+                    { lastOrderDate: latestOrder.createdAt }
+                );
+            }
+        }
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour des statistiques utilisateur après suppression:', error);
+    }
+});
 const Order = mongoose.model('Order', OrderSchema);
 // Définition du schéma utilisateur
 const UserSchema = new mongoose.Schema({
@@ -548,6 +599,9 @@ app.get('/', (req, res) => {
 });
 app.get('/dashboard', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+app.get('/profil', isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'profil.html'));
 });
 
 // Création du serveur HTTP
