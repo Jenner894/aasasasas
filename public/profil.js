@@ -4,7 +4,7 @@ let currentUser = null;
 // Fonction pour récupérer les informations de l'utilisateur
 async function getUserProfile() {
     try {
-        const response = await fetch('/api/user/profile');
+        const response = await fetch('/api/user/profil');
         
         // Vérifier d'abord si la réponse est OK
         if (!response.ok) {
