@@ -86,7 +86,17 @@ OrderSchema.post('save', async function(doc) {
         { $addToSet: { orders: doc._id } }
     );
 });
-
+// Méthode pour régénérer la clé Telegram
+UserSchema.methods.regenerateKeys = function() {
+    // Générer une nouvelle clé de 16 caractères
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let newKey = '';
+    for (let i = 0; i < 16; i++) {
+        newKey += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    this.keys = newKey;
+    return this.save();
+};
 // Modification du middleware post-save de Order pour mettre à jour les statistiques de l'utilisateur
 OrderSchema.post('save', async function(doc) {
     try {
