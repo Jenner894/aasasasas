@@ -4,14 +4,24 @@ let currentUser = null;
 // Fonction pour récupérer les informations de l'utilisateur
 async function getUserProfile() {
     try {
+        // Vérifier d'abord si l'utilisateur est authentifié
+        const authStatusResponse = await fetch('/api/auth/status');
+        const authStatus = await authStatusResponse.json();
+        
+        if (!authStatus.authenticated) {
+            // Rediriger vers la page de connexion si non authentifié
+            window.location.href = '/login.html';
+            return;
+        }
+        
         const response = await fetch('/api/user/profile');
         
-        // Vérifier d'abord si la réponse est OK
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Erreur HTTP:', response.status, errorText);
             throw new Error(`Erreur HTTP: ${response.status}`);
         }
         
-        // Vérifier le type de contenu
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             const errorText = await response.text();
@@ -39,7 +49,7 @@ function updateProfileUI(user) {
     document.getElementById('profile-username').textContent = user.username || 'Non défini';
     document.getElementById('profile-join-date').textContent = user.joinDate || 'Non défini';
     document.getElementById('profile-account-type').textContent = user.accountType || 'Client';
-    document.getElementById('profile-telegram-key').textContent = '•••••••••••••';
+    document.getElementById('profile-telegram-key').textContent = user.telegramKey || '•••••••••••••';
     
     // Mettre à jour les statistiques
     if (user.stats) {
@@ -47,10 +57,17 @@ function updateProfileUI(user) {
         document.getElementById('stat-total-spent').textContent = user.stats.totalSpent || '0€';
         document.getElementById('stat-last-order').textContent = user.stats.lastOrder || 'N/A';
         
+        // Ajouter les points de fidélité si disponibles
+        const loyaltyPointsElement = document.getElementById('stat-loyalty-points');
+        if (loyaltyPointsElement) {
+            loyaltyPointsElement.textContent = user.stats.loyaltyPoints || '0';
+        }
+        
         // Gestion du programme de parrainage
         const referralCodeElement = document.querySelector('.referral-code');
         if (referralCodeElement && user.stats.referralCode) {
             referralCodeElement.textContent = user.stats.referralCode;
+            
             // Ajouter le bouton de copie s'il n'existe pas déjà
             if (!referralCodeElement.querySelector('.copy-btn')) {
                 const copyBtn = document.createElement('button');
@@ -64,11 +81,9 @@ function updateProfileUI(user) {
     }
     
     // Initialiser l'identifiant Telegram dans l'input si disponible
-    if (user.telegamId) {
-        const telegramInput = document.getElementById('telegram-notification');
-        if (telegramInput) {
-            telegramInput.value = user.telegamId;
-        }
+    const telegramInput = document.getElementById('telegram-notification');
+    if (telegramInput && user.telegamId) {
+        telegramInput.value = user.telegamId;
     }
 }
 
@@ -141,11 +156,6 @@ async function updateUsername() {
             body: JSON.stringify({ username: newUsername })
         });
         
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
-        }
-        
         const data = await response.json();
         
         if (!data.success) {
@@ -173,11 +183,6 @@ async function updateTelegramId(telegramId) {
             },
             body: JSON.stringify({ telegramId })
         });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
-        }
         
         const data = await response.json();
         
@@ -208,11 +213,6 @@ async function regenerateKey() {
                 'Content-Type': 'application/json'
             }
         });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
-        }
         
         const data = await response.json();
         
@@ -260,6 +260,22 @@ function initEventListeners() {
     if (closeSidebar && sidebar) {
         closeSidebar.addEventListener('click', () => {
             sidebar.classList.remove('open');
+        });
+    }
+    
+    // Bouton de profil dans le header - redirection vers la page profil
+    const profileButton = document.getElementById('profile-button');
+    if (profileButton) {
+        profileButton.addEventListener('click', () => {
+            window.location.href = '/profil';
+        });
+    }
+    
+    // Bouton de commandes dans le header - redirection vers la page commandes
+    const ordersButton = document.getElementById('orders-button');
+    if (ordersButton) {
+        ordersButton.addEventListener('click', () => {
+            window.location.href = '/dashboard';
         });
     }
     
