@@ -458,6 +458,7 @@ app.get('/api/auth/status', (req, res) => {
         res.json({
             authenticated: true,
             user: {
+                id: req.session.user.id,
                 username: req.session.user.username,
                 role: req.session.user.role
             }
@@ -466,16 +467,16 @@ app.get('/api/auth/status', (req, res) => {
         res.json({ authenticated: false });
     }
 });
-
 ////////////////////////////////////////// Profile //////////////////////////////////////
 // Route pour obtenir les informations de l'utilisateur courant
 // Route pour obtenir les informations de l'utilisateur courant
-app.get('/api/user/profile', async (req, res) => {
-    if (!req.session || !req.session.user) {
-        return res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
-    }
-
+app.get('/api/user/profile', isAuthenticated, async (req, res) => {
     try {
+        // S'assurer que l'utilisateur est authentifié
+        if (!req.session || !req.session.user) {
+            return res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        }
+
         const user = await User.findById(req.session.user.id)
             .populate({
                 path: 'orders',
@@ -502,7 +503,7 @@ app.get('/api/user/profile', async (req, res) => {
             year: 'numeric'
         });
 
-        // Réponse directe sans vérification d'authentification supplémentaire
+        // Réponse avec toutes les informations nécessaires
         res.json({ 
             success: true, 
             user: {
@@ -515,7 +516,8 @@ app.get('/api/user/profile', async (req, res) => {
                     totalOrders: user.orders.length,
                     totalSpent: `${user.totalSpent}€`,
                     lastOrder: lastOrderTimeAgo || 'N/A',
-                    referralCode: user.referralCode || "BEDO2025"
+                    referralCode: user.referralCode || "BEDO2025",
+                    loyaltyPoints: Math.floor(user.totalSpent * 0.5) // Exemple: 1 point pour chaque 2€ dépensés
                 }
             }
         });
@@ -524,6 +526,7 @@ app.get('/api/user/profile', async (req, res) => {
         res.status(500).json({ success: false, message: 'Erreur lors de la récupération du profil' });
     }
 });
+
 
 // Route pour mettre à jour le nom d'utilisateur
 app.put('/api/user/username', isAuthenticated, async (req, res) => {
