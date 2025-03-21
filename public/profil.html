@@ -808,100 +808,78 @@
         <!-- Main Content -->
         <div class="container">
             <!-- Profil principal -->
-            <div class="profile-section">
-                <h2>Mon Profil</h2>
-                <div class="profile-info">
-                    <div class="profile-avatar">👤</div>
-                    <div class="profile-details">
-                        <div class="profile-detail">
-                            <div class="profile-detail-label">Nom d'utilisateur</div>
-                            <div class="profile-detail-value" id="profile-username">UserName</div>
-                        </div>
-                        <div class="profile-detail">
-                            <div class="profile-detail-label">Date d'inscription</div>
-                            <div class="profile-detail-value" id="profile-join-date">15 Mars 2025</div>
-                        </div>
-                        <div class="profile-detail">
-                            <div class="profile-detail-label">Type de compte</div>
-                            <div class="profile-detail-value" id="profile-account-type">Client</div>
-                        </div>
-                        <div class="profile-detail">
-                            <div class="profile-detail-label">Clé Telegram</div>
-                            <div class="profile-detail-value" id="profile-telegram-key">•••••••••••••</div>
-                        </div>
-                        
-                        <button class="edit-profile-btn">
-                            <span>✏️</span> Modifier mon profil
-                        </button>
-                    </div>
-                </div>
+<div class="profile-section">
+    <h2>Mon Profil</h2>
+    <div class="profile-info">
+        <div class="profile-avatar">👤</div>
+        <div class="profile-details">
+            <div class="profile-detail">
+                <div class="profile-detail-label">Nom d'utilisateur</div>
+                <div class="profile-detail-value" id="profile-username">Chargement...</div>
+            </div>
+            <div class="profile-detail">
+                <div class="profile-detail-label">Date d'inscription</div>
+                <div class="profile-detail-value" id="profile-join-date">Chargement...</div>
+            </div>
+            <div class="profile-detail">
+                <div class="profile-detail-label">Type de compte</div>
+                <div class="profile-detail-value" id="profile-account-type">Chargement...</div>
+            </div>
+            <div class="profile-detail">
+                <div class="profile-detail-label">Clé Telegram</div>
+                <div class="profile-detail-value" id="profile-telegram-key">•••••••••••••</div>
             </div>
             
-            <!-- Statistiques -->
-            <div class="profile-section">
-                <h2>Mes Statistiques</h2>
-                <div class="stats-container">
-                    <div class="stat-card">
-                        <div class="stat-icon">📦</div>
-                        <div class="stat-value" id="stat-total-orders">12</div>
-                        <div class="stat-label">Commandes totales</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">💰</div>
-                        <div class="stat-value" id="stat-total-spent">483€</div>
-                        <div class="stat-label">Total dépensé</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">🔄</div>
-                        <div class="stat-value" id="stat-last-order">3j</div>
-                        <div class="stat-label">Dernière commande</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">⭐</div>
-                        <div class="stat-value" id="stat-loyalty-points">320</div>
-                        <div class="stat-label">Points fidélité</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Programme de fidélité -->
-            <div class="profile-section">
-                <h2>Programme de Fidélité</h2>
-                <div class="loyalty-section">
-                    <div class="loyalty-details">
-                        <div class="loyalty-current">
-                            <div class="loyalty-status">Niveau Silver</div>
-                            <div class="loyalty-points">320 points</div>
-                        </div>
-                        <div class="loyalty-next">
-                            <div class="loyalty-status">Prochain niveau: Gold</div>
-                            <div class="loyalty-points">180 points restants</div>
-                        </div>
-                    </div>
-                    <div class="loyalty-progress">
-                        <div class="loyalty-bar"></div>
-                    </div>
-                    <p>Gagnez des points à chaque achat et bénéficiez d'avantages exclusifs!</p>
-                </div>
-            </div>
-            
-            <!-- Programme de parrainage -->
-            <div class="profile-section">
-                <h2>Programme de Parrainage</h2>
-                <div class="referral-section">
-                    <p>Partagez votre code de parrainage et gagnez 10% de remise sur votre prochaine commande pour chaque ami qui rejoint Allo Bedo!</p>
-                    <div class="referral-code">
-                        BEDO2025
-                        <button class="copy-btn" title="Copier">📋</button>
-                    </div>
-                    <p>Partagez votre code via:</p>
-                    <div class="share-options">
-                        <div class="share-btn share-telegram" title="Partager via Telegram">📱</div>
-                        <div class="share-btn share-whatsapp" title="Partager via WhatsApp">📲</div>
-                        <div class="share-btn share-email" title="Partager via Email">✉️</div>
-                    </div>
-                </div>
-            </div>
+            <button class="edit-profile-btn">
+                <span>✏️</span> Modifier mon profil
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques -->
+<div class="profile-section">
+    <h2>Mes Statistiques</h2>
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-value" id="stat-total-orders">0</div>
+            <div class="stat-label">Commandes totales</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-value" id="stat-total-spent">0€</div>
+            <div class="stat-label">Total dépensé</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🔄</div>
+            <div class="stat-value" id="stat-last-order">N/A</div>
+            <div class="stat-label">Dernière commande</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-value" id="stat-loyalty-points">0</div>
+            <div class="stat-label">Points fidélité</div>
+        </div>
+    </div>
+</div>
+
+<!-- Programme de parrainage -->
+<div class="profile-section">
+    <h2>Programme de Parrainage</h2>
+    <div class="referral-section">
+        <p>Partagez votre code de parrainage et gagnez 10% de remise sur votre prochaine commande pour chaque ami qui rejoint Allo Bedo!</p>
+        <div class="referral-code">
+            Chargement...
+        </div>
+        <p>Partagez votre code via:</p>
+        <div class="share-options">
+            <div class="share-btn share-telegram" title="Partager via Telegram">📱</div>
+            <div class="share-btn share-whatsapp" title="Partager via WhatsApp">📲</div>
+            <div class="share-btn share-email" title="Partager via Email">✉️</div>
+        </div>
+    </div>
+</div>
             
             <!-- Paramètres du compte -->
             <div class="profile-section">
