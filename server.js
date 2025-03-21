@@ -469,12 +469,17 @@ app.get('/api/auth/status', (req, res) => {
 
 ////////////////////////////////////////// Profile //////////////////////////////////////
 // Route pour obtenir les informations de l'utilisateur courant
-app.get('/api/user/profile', isAuthenticated, async (req, res) => {
+// Route pour obtenir les informations de l'utilisateur courant
+app.get('/api/user/profile', async (req, res) => {
+    if (!req.session || !req.session.user) {
+        return res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+    }
+
     try {
         const user = await User.findById(req.session.user.id)
             .populate({
                 path: 'orders',
-                select: 'totalPrice createdAt status' // Sélection des champs nécessaires pour les stats
+                select: 'totalPrice createdAt status'
             });
 
         if (!user) {
@@ -497,22 +502,23 @@ app.get('/api/user/profile', isAuthenticated, async (req, res) => {
             year: 'numeric'
         });
 
-        // Préparation de la réponse avec les informations formatées
-        const userProfile = {
-            username: user.username,
-            joinDate: joinDate,
-            accountType: user.role === 'admin' ? 'Administrateur' : 'Client',
-            telegramKey: user.keys,
-            telegamId: user.telegramId || "",
-            stats: {
-                totalOrders: user.orders.length,
-                totalSpent: `${user.totalSpent}€`,
-                lastOrder: lastOrderTimeAgo || 'N/A',
-                referralCode: user.referralCode
+        // Réponse directe sans vérification d'authentification supplémentaire
+        res.json({ 
+            success: true, 
+            user: {
+                username: user.username,
+                joinDate: joinDate,
+                accountType: user.role === 'admin' ? 'Administrateur' : 'Client',
+                telegramKey: user.keys,
+                telegamId: user.telegramId || "",
+                stats: {
+                    totalOrders: user.orders.length,
+                    totalSpent: `${user.totalSpent}€`,
+                    lastOrder: lastOrderTimeAgo || 'N/A',
+                    referralCode: user.referralCode || "BEDO2025"
+                }
             }
-        };
-
-        res.status(200).json({ success: true, user: userProfile });
+        });
     } catch (error) {
         console.error('Erreur lors de la récupération du profil:', error);
         res.status(500).json({ success: false, message: 'Erreur lors de la récupération du profil' });
