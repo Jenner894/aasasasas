@@ -7,7 +7,28 @@ document.addEventListener('DOMContentLoaded', function() {
     let cart = []; // Panier d'achat
     
 
-
+async function checkAuth() {
+  try {
+    const response = await fetch('/api/auth/status');
+    const data = await response.json();
+    
+    if (!data.authenticated) {
+      console.log('Utilisateur non authentifié, redirection vers la page de connexion');
+      window.location.href = '/login.html';
+      return false;
+    }
+    
+    console.log('Utilisateur authentifié:', data.user.username);
+    return {
+      authenticated: true,
+      user: data.user
+    };
+  } catch (error) {
+    console.error('Erreur lors de la vérification de l\'authentification:', error);
+    window.location.href = '/login.html';
+    return false;
+  }
+}
     // Afficher le nom d'utilisateur
     function displayUsername() {
         const profileButton = document.getElementById('profile-button');
