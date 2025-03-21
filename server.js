@@ -93,7 +93,12 @@ const UserSchema = new mongoose.Schema({
     username: { type: String, unique: true, required: true },
     keys: { type: String, required: true },
     role: { type: String, enum: ['client', 'admin'], default: 'client' },
-    orders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }]  // Référence aux commandes de l'utilisateur
+    createdAt: { type: Date, default: Date.now },
+    orders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }],
+    totalSpent: { type: Number, default: 0 },
+    lastOrderDate: { type: Date },
+    referralCode: { type: String, unique: true },
+    telegramId: { type: String, default: '' }
 });
 
 const User = mongoose.model('User', UserSchema);
@@ -400,6 +405,139 @@ app.get('/api/auth/status', (req, res) => {
     }
 });
 
+////////////////////////////////////////// Profile //////////////////////////////////////
+// Route pour obtenir les informations de l'utilisateur courant
+app.get('/api/user/profile', isAuthenticated, async (req, res) => {
+    try {
+        const user = await User.findById(req.session.user.id)
+            .populate({
+                path: 'orders',
+                select: 'totalPrice createdAt status' // Sélection des champs nécessaires pour les stats
+            });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+        }
+
+        // Calcul du temps écoulé depuis la dernière commande
+        let lastOrderTimeAgo = null;
+        if (user.lastOrderDate) {
+            const now = new Date();
+            const diffTime = Math.abs(now - user.lastOrderDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            lastOrderTimeAgo = `${diffDays}j`;
+        }
+
+        // Format de date pour l'affichage
+        const joinDate = new Date(user.createdAt).toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+
+        // Préparation de la réponse avec les informations formatées
+        const userProfile = {
+            username: user.username,
+            joinDate: joinDate,
+            accountType: user.role === 'admin' ? 'Administrateur' : 'Client',
+            telegramKey: user.keys,
+            telegamId: user.telegramId || "",
+            stats: {
+                totalOrders: user.orders.length,
+                totalSpent: `${user.totalSpent}€`,
+                lastOrder: lastOrderTimeAgo || 'N/A',
+                referralCode: user.referralCode
+            }
+        };
+
+        res.status(200).json({ success: true, user: userProfile });
+    } catch (error) {
+        console.error('Erreur lors de la récupération du profil:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération du profil' });
+    }
+});
+
+// Route pour mettre à jour le nom d'utilisateur
+app.put('/api/user/username', isAuthenticated, async (req, res) => {
+    try {
+        const { username } = req.body;
+        
+        if (!username) {
+            return res.status(400).json({ success: false, message: 'Nom d\'utilisateur requis' });
+        }
+
+        // Vérifier si le nom d'utilisateur est déjà utilisé
+        const existingUser = await User.findOne({ username, _id: { $ne: req.session.user.id } });
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: 'Ce nom d\'utilisateur est déjà utilisé' });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.session.user.id,
+            { username },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+        }
+
+        // Mettre à jour la session
+        req.session.user.username = updatedUser.username;
+        await new Promise((resolve, reject) => {
+            req.session.save(err => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+
+        res.status(200).json({ success: true, message: 'Nom d\'utilisateur mis à jour', username: updatedUser.username });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du nom d\'utilisateur:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la mise à jour du nom d\'utilisateur' });
+    }
+});
+
+// Route pour mettre à jour l'identifiant Telegram
+app.put('/api/user/telegram-id', isAuthenticated, async (req, res) => {
+    try {
+        const { telegramId } = req.body;
+        
+        const updatedUser = await User.findByIdAndUpdate(
+            req.session.user.id,
+            { telegramId },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+        }
+
+        res.status(200).json({ success: true, message: 'Identifiant Telegram mis à jour', telegramId: updatedUser.telegramId });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour de l\'identifiant Telegram:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la mise à jour de l\'identifiant Telegram' });
+    }
+});
+
+// Route pour régénérer la clé Telegram
+app.post('/api/user/regenerate-key', isAuthenticated, async (req, res) => {
+    try {
+        const user = await User.findById(req.session.user.id);
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+        }
+
+        await user.regenerateKeys();
+
+        res.status(200).json({ success: true, message: 'Clé Telegram régénérée', newKey: user.keys });
+    } catch (error) {
+        console.error('Erreur lors de la régénération de la clé:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la régénération de la clé' });
+    }
+});
+//////////////////////////////////////////////////////////////////////// Profil ////////////////////
 // Routes publiques - redirection vers la page de login
 app.get('/', (req, res) => {
   if (req.session && req.session.user) {
