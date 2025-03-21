@@ -226,10 +226,11 @@ app.post('/api/products', isAuthenticated, async (req, res) => {
         res.status(500).json({ success: false, message: 'Erreur lors de la création du produit' });
     }
 });
+
 // Route pour récupérer les commandes de l'utilisateur connecté
 app.get('/api/orders/user', isAuthenticated, async (req, res) => {
     try {
-        const orders = await Order.find({ username: req.session.user.username });
+        const orders = await Order.find({ user: req.session.user.id });
         res.status(200).json({ success: true, orders });
     } catch (error) {
         console.error('Erreur lors de la récupération des commandes:', error);
