@@ -1,25 +1,6 @@
 // État global pour stocker les informations de l'utilisateur
 let currentUser = null;
 
-// Fonction pour vérifier l'authentification
-async function checkAuth() {
-    try {
-        const response = await fetch('/api/auth/status');
-        const data = await response.json();
-        
-        if (!data.authenticated) {
-            window.location.href = '/login.html';
-            return false;
-        }
-        
-        return true;
-    } catch (error) {
-        console.error('Erreur lors de la vérification de l\'authentification:', error);
-        window.location.href = '/login.html';
-        return false;
-    }
-}
-
 // Fonction pour récupérer les informations de l'utilisateur
 async function getUserProfile() {
     try {
@@ -307,21 +288,16 @@ function initEventListeners() {
 
 // Fonction principale d'initialisation
 async function init() {
-    const isAuthenticated = await checkAuth();
+    await getUserProfile();
+    initEventListeners();
     
-    if (isAuthenticated) {
-        await getUserProfile();
-        initEventListeners();
-        
-        // Initialiser l'identifiant Telegram dans l'input si disponible
-        if (currentUser && currentUser.telegamId) {
-            const telegramInput = document.getElementById('telegram-notification');
-            if (telegramInput) {
-                telegramInput.value = currentUser.telegamId;
-            }
+    // Initialiser l'identifiant Telegram dans l'input si disponible
+    if (currentUser && currentUser.telegamId) {
+        const telegramInput = document.getElementById('telegram-notification');
+        if (telegramInput) {
+            telegramInput.value = currentUser.telegamId;
         }
     }
 }
-
 // Exécuter la fonction d'initialisation lorsque le DOM est chargé
 document.addEventListener('DOMContentLoaded', init);
