@@ -6,29 +6,41 @@ document.addEventListener('DOMContentLoaded', function() {
     let products = [];
     let cart = []; // Panier d'achat
     
-
-async function checkAuth() {
-  try {
-    const response = await fetch('/api/auth/status');
-    const data = await response.json();
-    
-    if (!data.authenticated) {
-      console.log('Utilisateur non authentifié, redirection vers la page de connexion');
-      window.location.href = '/login.html';
-      return false;
+    // Vérification de l'authentification
+    async function checkAuth() {
+        try {
+            const response = await fetch('/api/auth/status', {
+                credentials: 'include' // Important pour envoyer les cookies de session
+            });
+            
+            if (!response.ok) {
+                console.error('Erreur HTTP lors de la vérification:', response.status);
+                window.location.href = '/login.html';
+                return false;
+            }
+            
+            const data = await response.json();
+            
+            if (!data.authenticated) {
+                console.log('Utilisateur non authentifié, redirection vers la page de connexion');
+                window.location.href = '/login.html';
+                return false;
+            }
+            
+            console.log('Utilisateur authentifié:', data.user.username);
+            currentUser = data.user;
+            displayUsername();
+            return {
+                authenticated: true,
+                user: data.user
+            };
+        } catch (error) {
+            console.error('Erreur lors de la vérification de l\'authentification:', error);
+            window.location.href = '/login.html';
+            return false;
+        }
     }
     
-    console.log('Utilisateur authentifié:', data.user.username);
-    return {
-      authenticated: true,
-      user: data.user
-    };
-  } catch (error) {
-    console.error('Erreur lors de la vérification de l\'authentification:', error);
-    window.location.href = '/login.html';
-    return false;
-  }
-}
     // Afficher le nom d'utilisateur
     function displayUsername() {
         const profileButton = document.getElementById('profile-button');
@@ -173,7 +185,9 @@ async function checkAuth() {
     // Récupération des commandes utilisateur
     async function fetchUserOrders() {
         try {
-            const response = await fetch('/api/orders/user');
+            const response = await fetch('/api/orders/user', {
+                credentials: 'include' // Important pour envoyer les cookies de session
+            });
             
             // Vérifier si la réponse est OK avant de tenter de parser le JSON
             if (!response.ok) {
@@ -217,7 +231,9 @@ async function checkAuth() {
     // Récupération des produits
     async function fetchProducts() {
         try {
-            const response = await fetch('/api/products');
+            const response = await fetch('/api/products', {
+                credentials: 'include' // Important pour envoyer les cookies de session
+            });
             
             // Vérifier si la réponse est OK avant de tenter de parser le JSON
             if (!response.ok) {
@@ -277,7 +293,7 @@ async function checkAuth() {
             const productCard = document.createElement('div');
             productCard.className = 'product-card';
             productCard.dataset.id = product._id;
-            productCard.dataset.category = product.category || ''; // Ajouter la catégorie comme attribut de données
+            productCard.dataset.category = product.category ? product.category.toLowerCase() : ''; // Ajouter la catégorie comme attribut de données
             
             // Vérifier si inStock existe, sinon utiliser true par défaut
             const isInStock = product.inStock !== undefined ? product.inStock : true;
@@ -549,7 +565,9 @@ async function checkAuth() {
             
             document.getElementById('logout-item').addEventListener('click', async function() {
                 try {
-                    const response = await fetch('/api/auth/logout');
+                    const response = await fetch('/api/auth/logout', {
+                        credentials: 'include' // Important pour envoyer les cookies de session
+                    });
                     console.log('Réponse de déconnexion:', await response.text());
                     window.location.href = '/login.html';
                 } catch (error) {
@@ -635,7 +653,8 @@ async function checkAuth() {
                 body: JSON.stringify({
                     items: orderItems,
                     totalAmount: totalAmount
-                })
+                }),
+                credentials: 'include' // Important pour envoyer les cookies de session
             });
             
             if (!response.ok) {
@@ -709,6 +728,19 @@ async function checkAuth() {
                     // Ajouter la classe active à l'élément cliqué
                     this.classList.add('active');
                     
+                    // Gérer la navigation
+                    const text = this.textContent.trim();
+                    
+                    if (text.includes('Produits')) {
+                        window.location.href = '/dashboard.html';
+                    } else if (text.includes('Profil')) {
+                        window.location.href = '/profil.html';
+                    } else if (text.includes('Commandes')) {
+                        window.location.href = '/commandes.html';
+                    } else if (text.includes('Déconnexion')) {
+                        logout();
+                    }
+                    
                     // Fermer la barre latérale sur mobile
                     if (window.innerWidth < 768) {
                         sidebar.classList.remove('open');
@@ -719,11 +751,32 @@ async function checkAuth() {
         }
     }
 
+    // Fonction de déconnexion
+    async function logout() {
+        try {
+            const response = await fetch('/api/auth/logout', {
+                credentials: 'include' // Important pour envoyer les cookies de session
+            });
+            console.log('Réponse de déconnexion:', await response.text());
+            window.location.href = '/login.html';
+        } catch (error) {
+            console.error('Erreur lors de la déconnexion:', error);
+        }
+    }
+
     // Configuration des événements
     function setupEventListeners() {
         const ordersButton = document.getElementById('orders-button');
         if (ordersButton) {
             ordersButton.addEventListener('click', displayOrders);
+        }
+        
+        // Configurer le bouton de profil
+        const profileButton = document.getElementById('profile-button');
+        if (profileButton) {
+            profileButton.addEventListener('click', () => {
+                window.location.href = '/profil.html';
+            });
         }
         
         // Configurer le panier
@@ -732,42 +785,50 @@ async function checkAuth() {
         // Configurer la barre latérale
         setupSidebar();
         
-        // Ajouter des écouteurs d'événements pour le panier
-        document.addEventListener('click', function(event) {
-            if (event.target.classList.contains('add-to-cart-btn')) {
-                const productId = event.target.getAttribute('data-product-id');
-                const productName = event.target.getAttribute('data-product-name');
-                const productCategory = event.target.getAttribute('data-product-category');
-                const productCard = event.target.closest('.product-card');
+       // Ajouter des écouteurs d'événements pour le panier
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('add-to-cart-btn')) {
+            const productId = event.target.getAttribute('data-product-id');
+            const productName = event.target.getAttribute('data-product-name');
+            const productCategory = event.target.getAttribute('data-product-category');
+            const productCard = event.target.closest('.product-card');
+            
+            if (productCard) {
+                const quantityDropdown = productCard.querySelector('.quantity-dropdown');
+                const quantity = quantityDropdown ? quantityDropdown.value : 1;
+                const selectedOption = quantityDropdown ? quantityDropdown.options[quantityDropdown.selectedIndex] : null;
+                const price = selectedOption ? selectedOption.getAttribute('data-price') : 0;
                 
-                if (productCard) {
-                    const quantityDropdown = productCard.querySelector('.quantity-dropdown');
-                    const quantity = quantityDropdown ? quantityDropdown.value : 1;
-                    const selectedOption = quantityDropdown ? quantityDropdown.options[quantityDropdown.selectedIndex] : null;
-                    const price = selectedOption ? selectedOption.getAttribute('data-price') : 0;
-                    
-                    // Ajouter au panier
-                    addToCart(productId, quantity, price, productName, productCategory);
-                    
-                    // Animation ou feedback pour l'utilisateur
-                    event.target.textContent = 'Ajouté!';
-                    setTimeout(() => {
-                        event.target.textContent = 'Ajouter au panier';
-                    }, 1500);
-                }
+                // Ajouter au panier
+                addToCart(productId, quantity, price, productName, productCategory);
+                
+                // Animation ou feedback pour l'utilisateur
+                event.target.textContent = 'Ajouté!';
+                setTimeout(() => {
+                    event.target.textContent = 'Ajouter au panier';
+                }, 1500);
             }
-        });
-    }
+        }
+    });
+}
 
-    // Initialisation
-    function init() {
-        console.log('Initialisation du dashboard');
+// Initialisation
+async function init() {
+    console.log('Initialisation du dashboard');
+    
+    // Vérifier l'authentification avant de charger le reste
+    const authStatus = await checkAuth();
+    
+    if (authStatus) {
+        // Seulement si authentifié
+        loadCart(); // Charger le panier depuis localStorage
         setupLogout();
         fetchUserOrders();
         fetchProducts(); // Cette fonction appellera setupCategoryFilters une fois les produits chargés
         setupEventListeners();
     }
+}
 
-    // Démarrer l'application
-    init();
+// Démarrer l'application
+init();
 });
