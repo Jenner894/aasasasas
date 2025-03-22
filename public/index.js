@@ -816,16 +816,27 @@ document.addEventListener('DOMContentLoaded', function() {
 async function init() {
     console.log('Initialisation du dashboard');
     
-    // Vérifier l'authentification avant de charger le reste
-    const authStatus = await checkAuth();
-    
-    if (authStatus) {
+    try {
+        // Vérifier l'authentification avant de charger le reste
+        const authStatus = await checkAuth();
+        
+        if (!authStatus) {
+            console.error("L'authentification a échoué, redirection vers login");
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        console.log("Authentification réussie, chargement du dashboard");
+        
         // Seulement si authentifié
         loadCart(); // Charger le panier depuis localStorage
         setupLogout();
         fetchUserOrders();
         fetchProducts(); // Cette fonction appellera setupCategoryFilters une fois les produits chargés
         setupEventListeners();
+    } catch (error) {
+        console.error("Erreur lors de l'initialisation:", error);
+        // Ne pas rediriger automatiquement en cas d'erreur pour éviter les boucles infinies
     }
 }
 
