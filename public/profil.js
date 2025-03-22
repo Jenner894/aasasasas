@@ -4,10 +4,16 @@ let currentUser = null;
 // Fonction pour récupérer les informations de l'utilisateur
 async function getUserProfile() {
     try {
-        // Vérifier d'abord si l'utilisateur est authentifié, mais ne pas rediriger immédiatement
+        // Vérifier d'abord si l'utilisateur est authentifié
         const authStatusResponse = await fetch('/api/auth/status', {
             credentials: 'include' // Important pour envoyer les cookies de session
         });
+        
+        if (!authStatusResponse.ok) {
+            console.error('Erreur HTTP lors de la vérification du statut:', authStatusResponse.status);
+            showNotification('Erreur de connexion au serveur', 'error');
+            return false;
+        }
         
         const authStatus = await authStatusResponse.json();
         
@@ -30,9 +36,6 @@ async function getUserProfile() {
         });
         
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Erreur HTTP:', response.status, errorText);
-            
             if (response.status === 401) {
                 // Problème d'authentification
                 showNotification('Session expirée, veuillez vous reconnecter', 'error');
@@ -42,14 +45,9 @@ async function getUserProfile() {
                 return false;
             }
             
-            throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
             const errorText = await response.text();
-            console.error('Réponse non-JSON reçue:', errorText);
-            throw new Error('Réponse invalide du serveur (non-JSON)');
+            console.error('Erreur HTTP:', response.status, errorText);
+            throw new Error(`Erreur HTTP: ${response.status}`);
         }
         
         const data = await response.json();
@@ -58,6 +56,7 @@ async function getUserProfile() {
             throw new Error(data.message || 'Erreur lors de la récupération du profil');
         }
         
+        console.log("Données utilisateur reçues:", data.user);
         currentUser = data.user;
         updateProfileUI(currentUser);
         return true; // Indiquer que la récupération a réussi
@@ -70,19 +69,36 @@ async function getUserProfile() {
 
 // Fonction pour mettre à jour l'interface utilisateur avec les données du profil
 function updateProfileUI(user) {
-    if (!user) return; // S'assurer que l'utilisateur existe
+    if (!user) {
+        console.error("Pas de données utilisateur disponibles pour mettre à jour l'UI");
+        return;
+    }
+    
+    console.log("Mise à jour de l'interface avec les données utilisateur:", user);
     
     // Mettre à jour les informations principales du profil
-    document.getElementById('profile-username').textContent = user.username || 'Non défini';
-    document.getElementById('profile-join-date').textContent = user.joinDate || 'Non défini';
-    document.getElementById('profile-account-type').textContent = user.accountType || 'Client';
-    document.getElementById('profile-telegram-key').textContent = user.telegramKey || '•••••••••••••';
+    const usernameElement = document.getElementById('profile-username');
+    if (usernameElement) usernameElement.textContent = user.username || 'Non défini';
+    
+    const joinDateElement = document.getElementById('profile-join-date');
+    if (joinDateElement) joinDateElement.textContent = user.joinDate || 'Non défini';
+    
+    const accountTypeElement = document.getElementById('profile-account-type');
+    if (accountTypeElement) accountTypeElement.textContent = user.accountType || 'Client';
+    
+    const telegramKeyElement = document.getElementById('profile-telegram-key');
+    if (telegramKeyElement) telegramKeyElement.textContent = user.telegramKey || '•••••••••••••';
     
     // Mettre à jour les statistiques
     if (user.stats) {
-        document.getElementById('stat-total-orders').textContent = user.stats.totalOrders || '0';
-        document.getElementById('stat-total-spent').textContent = user.stats.totalSpent || '0€';
-        document.getElementById('stat-last-order').textContent = user.stats.lastOrder || 'N/A';
+        const totalOrdersElement = document.getElementById('stat-total-orders');
+        if (totalOrdersElement) totalOrdersElement.textContent = user.stats.totalOrders || '0';
+        
+        const totalSpentElement = document.getElementById('stat-total-spent');
+        if (totalSpentElement) totalSpentElement.textContent = user.stats.totalSpent || '0€';
+        
+        const lastOrderElement = document.getElementById('stat-last-order');
+        if (lastOrderElement) lastOrderElement.textContent = user.stats.lastOrder || 'N/A';
         
         // Ajouter les points de fidélité si disponibles
         const loyaltyPointsElement = document.getElementById('stat-loyalty-points');
@@ -252,6 +268,7 @@ async function regenerateKey() {
         
         if (currentUser) {
             currentUser.telegramKey = data.newKey;
+            document.getElementById('profile-telegram-key').textContent = data.newKey;
         }
         
         // Afficher la nouvelle clé à l'utilisateur
@@ -276,7 +293,7 @@ function logout() {
     });
 }
 
-// Meilleure initialisation des boutons de partage
+// Initialisation des boutons de partage
 function initializeShareButtons() {
     // Attendre que currentUser soit initialisé
     if (!currentUser || !currentUser.stats || !currentUser.stats.referralCode) {
@@ -286,6 +303,7 @@ function initializeShareButtons() {
     }
     
     const referralCode = currentUser.stats.referralCode;
+    console.log("Initialisation des boutons de partage avec le code:", referralCode);
     
     // Boutons de partage
     const shareTelegram = document.querySelector('.share-telegram');
@@ -319,36 +337,60 @@ function initializeShareButtons() {
 
 // Fonction pour initialiser les gestionnaires d'événements une fois que le DOM est chargé
 function initEventListeners() {
+    console.log("Initialisation des gestionnaires d'événements");
+    
     // Sidebar toggle
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebar = document.getElementById('sidebar');
     const closeSidebar = document.getElementById('close-sidebar');
+    const overlay = document.getElementById('overlay');
     
     if (sidebarToggle && sidebar) {
         sidebarToggle.addEventListener('click', () => {
+            console.log("Toggle sidebar");
             sidebar.classList.add('open');
+            if (overlay) overlay.classList.add('active');
         });
     }
     
     if (closeSidebar && sidebar) {
         closeSidebar.addEventListener('click', () => {
+            console.log("Close sidebar");
             sidebar.classList.remove('open');
+            if (overlay) overlay.classList.remove('active');
         });
     }
     
-    // Bouton de profil dans le header - redirection vers la page profil
-    const profileButton = document.getElementById('profile-button');
-    if (profileButton) {
-        profileButton.addEventListener('click', () => {
-            window.location.href = '/profil';
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            if (sidebar) sidebar.classList.remove('open');
+            overlay.classList.remove('active');
         });
     }
     
-    // Bouton de commandes dans le header - redirection vers la page commandes
+    // Navigation dans la barre latérale
+    const sidebarItems = document.querySelectorAll('.sidebar-item');
+    sidebarItems.forEach(item => {
+        const text = item.textContent.trim();
+        
+        item.addEventListener('click', () => {
+            console.log("Sidebar item clicked:", text);
+            
+            if (text.includes('Produits')) {
+                window.location.href = '/dashboard.html';
+            } else if (text.includes('Commandes')) {
+                window.location.href = '/commandes.html';
+            } else if (text.includes('Déconnexion')) {
+                logout();
+            }
+        });
+    });
+    
+    // Bouton de commandes dans le header
     const ordersButton = document.getElementById('orders-button');
     if (ordersButton) {
         ordersButton.addEventListener('click', () => {
-            window.location.href = '/dashboard';
+            window.location.href = '/dashboard.html';
         });
     }
     
@@ -395,10 +437,13 @@ function initEventListeners() {
     
     // Initialiser les boutons de partage séparément
     initializeShareButtons();
+    
+    console.log("Gestionnaires d'événements initialisés avec succès");
 }
 
 // Fonction principale d'initialisation
 async function init() {
+    console.log("Initialisation de la page profil");
     try {
         // Attendre explicitement la récupération du profil avant de continuer
         const profileSuccess = await getUserProfile();
