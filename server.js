@@ -221,7 +221,8 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // Doit être false en développement local
+    // Force 'secure: false' pour tester, même en production
+    secure: false, 
     httpOnly: true,
     sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000 // 24 heures
