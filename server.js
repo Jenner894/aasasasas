@@ -67,7 +67,7 @@ const OrderSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'User', 
         required: true 
-    },  // Référence à l'utilisateur qui a passé la commande
+    },
     productName: { type: String, required: true },
     quantity: { type: Number, required: true },
     totalPrice: { type: Number, required: true },
@@ -76,8 +76,33 @@ const OrderSchema = new mongoose.Schema({
         enum: ['En attente', 'En préparation', 'Expédié', 'Livré', 'Annulé'],
         default: 'En attente'
     },
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
+    // Ajout des informations de livraison
+    delivery: {
+        type: { 
+            type: String, 
+            enum: ['instant', 'scheduled'], 
+            default: 'instant'
+        },
+        address: { 
+            type: String, 
+            required: true 
+        },
+        timeSlot: { 
+            type: String, 
+            required: function() { 
+                return this.delivery.type === 'scheduled'; 
+            } 
+        },
+        deliveryDate: { 
+            type: Date,
+            default: function() {
+                return this.delivery.type === 'instant' ? new Date() : null;
+            }
+        }
+    }
 });
+
 
 // Middleware pour mettre à jour la liste des commandes de l'utilisateur
 OrderSchema.post('save', async function(doc) {
@@ -294,7 +319,39 @@ app.post('/api/products', isAuthenticated, async (req, res) => {
 });
 
 // ========================== ROUTES POUR LES COMMANDES ==========================
-
+// Route pour créer une nouvelle commande (modifiée pour prendre en charge la livraison)
+app.post('/api/orders', isAuthenticated, async (req, res) => {
+    try {
+        const { productName, quantity, totalPrice, delivery } = req.body;
+        
+        // Validation des données
+        if (!productName || !quantity || !totalPrice) {
+            return res.status(400).json({ success: false, message: 'Tous les champs sont requis' });
+        }
+        
+        // Création de la commande
+        const newOrder = new Order({
+            user: req.session.user.id,
+            productName,
+            quantity,
+            totalPrice,
+            status: 'En attente',
+            // Ajouter les informations de livraison si fournies
+            delivery: delivery ? {
+                type: delivery.type || 'instant',
+                address: delivery.address,
+                timeSlot: delivery.timeSlot
+            } : undefined
+        });
+        
+        await newOrder.save();
+        
+        res.status(201).json({ success: true, order: newOrder });
+    } catch (error) {
+        console.error('Erreur lors de la création de la commande:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la création de la commande' });
+    }
+});
 // Route pour récupérer toutes les commandes de l'utilisateur connecté
 app.get('/api/orders/user', isAuthenticated, async (req, res) => {
     try {
@@ -483,6 +540,259 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         res.status(500).json({ success: false, message: 'Erreur lors de l\'envoi du message' });
     }
 });
+// ===================== ROUTES POUR LA COMMANDE AVEC LIVRAISON =====================
+
+// Route pour créer une nouvelle commande avec informations de livraison
+app.post('/api/orders/delivery', isAuthenticated, async (req, res) => {
+    try {
+        const { 
+            items,
+            totalAmount,
+            delivery 
+        } = req.body;
+        
+        // Validation des données
+        if (!items || !items.length || !totalAmount) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Informations de commande incomplètes' 
+            });
+        }
+        
+        if (!delivery || !delivery.address) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Informations de livraison requises' 
+            });
+        }
+        
+        // Vérification si livraison planifiée nécessite une heure
+        if (delivery.type === 'scheduled' && !delivery.timeSlot) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Heure de livraison requise pour une livraison planifiée' 
+            });
+        }
+        
+        // Création d'une commande pour chaque article
+        const createdOrders = [];
+        
+        for (const item of items) {
+            const newOrder = new Order({
+                user: req.session.user.id,
+                productName: item.productName,
+                quantity: item.quantity,
+                totalPrice: item.total,
+                status: 'En attente',
+                delivery: {
+                    type: delivery.type,
+                    address: delivery.address,
+                    timeSlot: delivery.timeSlot
+                }
+            });
+            
+            await newOrder.save();
+            createdOrders.push(newOrder);
+        }
+        
+        // Réponse avec les commandes créées
+        res.status(201).json({ 
+            success: true, 
+            message: 'Commande créée avec succès',
+            orders: createdOrders 
+        });
+    } catch (error) {
+        console.error('Erreur lors de la création de la commande avec livraison:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la création de la commande' 
+        });
+    }
+});
+
+// Route pour une commande avec un seul article (alternative simplifiée)
+app.post('/api/orders/simple-delivery', isAuthenticated, async (req, res) => {
+    try {
+        const { 
+            productName,
+            quantity,
+            totalPrice, 
+            deliveryType,
+            deliveryAddress,
+            deliveryTimeSlot
+        } = req.body;
+        
+        // Validation des données basiques
+        if (!productName || !quantity || !totalPrice || !deliveryAddress) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Tous les champs sont requis' 
+            });
+        }
+        
+        // Vérification du créneau horaire pour livraison planifiée
+        if (deliveryType === 'scheduled' && !deliveryTimeSlot) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Créneau horaire requis pour livraison planifiée' 
+            });
+        }
+        
+        // Création de la commande
+        const newOrder = new Order({
+            user: req.session.user.id,
+            productName,
+            quantity,
+            totalPrice,
+            status: 'En attente',
+            delivery: {
+                type: deliveryType || 'instant',
+                address: deliveryAddress,
+                timeSlot: deliveryTimeSlot
+            }
+        });
+        
+        await newOrder.save();
+        
+        res.status(201).json({ 
+            success: true, 
+            message: 'Commande créée avec succès',
+            order: newOrder 
+        });
+    } catch (error) {
+        console.error('Erreur lors de la création de la commande simple:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la création de la commande' 
+        });
+    }
+});
+
+// Route pour obtenir les horaires de livraison disponibles
+app.get('/api/delivery/timeslots', isAuthenticated, (req, res) => {
+    try {
+        const now = new Date();
+        const currentHour = now.getHours();
+        
+        // Génération des créneaux de 10h à 22h
+        const availableSlots = [];
+        
+        for (let hour = 10; hour <= 22; hour++) {
+            // Pour aujourd'hui, ne pas proposer les heures déjà passées
+            if (hour > currentHour) {
+                availableSlots.push({
+                    hour: hour,
+                    label: `${hour}:00`,
+                    available: true
+                });
+            }
+        }
+        
+        res.status(200).json({
+            success: true,
+            today: now.toISOString().split('T')[0],
+            slots: availableSlots
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des créneaux horaires:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la récupération des créneaux horaires' 
+        });
+    }
+});
+
+// Route pour récupérer les détails de livraison d'une commande
+app.get('/api/orders/:id/delivery', isAuthenticated, async (req, res) => {
+    try {
+        const order = await Order.findOne({
+            _id: req.params.id,
+            user: req.session.user.id
+        });
+        
+        if (!order) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Commande non trouvée' 
+            });
+        }
+        
+        // Si la commande n'a pas d'informations de livraison
+        if (!order.delivery) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Informations de livraison non disponibles' 
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            delivery: order.delivery
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des informations de livraison:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la récupération des informations de livraison' 
+        });
+    }
+});
+
+// Route pour mettre à jour les informations de livraison
+app.put('/api/orders/:id/delivery', isAuthenticated, async (req, res) => {
+    try {
+        const { address, timeSlot, type } = req.body;
+        
+        // Vérifier si la commande appartient à l'utilisateur
+        const order = await Order.findOne({
+            _id: req.params.id,
+            user: req.session.user.id
+        });
+        
+        if (!order) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Commande non trouvée' 
+            });
+        }
+        
+        // Vérifier si la commande peut encore être modifiée
+        if (order.status !== 'En attente') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'La commande ne peut plus être modifiée' 
+            });
+        }
+        
+        // Construire l'objet de mise à jour
+        const updateData = {};
+        
+        if (address) updateData['delivery.address'] = address;
+        if (type) updateData['delivery.type'] = type;
+        if (timeSlot) updateData['delivery.timeSlot'] = timeSlot;
+        
+        // Mettre à jour la commande
+        const updatedOrder = await Order.findByIdAndUpdate(
+            req.params.id,
+            { $set: updateData },
+            { new: true }
+        );
+        
+        res.status(200).json({
+            success: true,
+            message: 'Informations de livraison mises à jour',
+            delivery: updatedOrder.delivery
+        });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour des informations de livraison:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la mise à jour des informations de livraison' 
+        });
+    }
+});
+
+// ===================== ROUTES POUR ADMINISTRATEURS =====================
 
 // ========================== ROUTES POUR L'ADMINISTRATEUR ==========================
 
