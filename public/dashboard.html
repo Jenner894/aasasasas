@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Allo Bedo - Dashboard</title>
-    <!-- Ajout de la bibliothèque Boxicons -->
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>  
     :root {
 --primary-blue: #45d3ff;
@@ -848,7 +847,7 @@ transform: rotate(15deg);
 <body>
     <!-- Sidebar Toggle Button -->
     <button class="sidebar-toggle" id="sidebar-toggle">
-        <i class='bx bx-menu'></i>
+        <i class="fa fa-bars"></i>
     </button>
     
     <!-- Sidebar -->
@@ -856,7 +855,7 @@ transform: rotate(15deg);
         <div class="sidebar-header">
             <div class="logo">Allo<span>80</span>Bedo</div>
             <button class="close-sidebar" id="close-sidebar">
-                <i class='bx bx-x'></i>
+                <i class="fa fa-times"></i>
             </button>
         </div>
         <div class="sidebar-content">
@@ -864,19 +863,19 @@ transform: rotate(15deg);
                 <div class="sidebar-section-title">Principal</div>
                 <a href="/dashboard" class="sidebar-item active">
                     <span class="sidebar-item-icon">
-                        <i class='bx bx-store'></i>
+                        <i class="fa fa-shopping-cart"></i>
                     </span>
                     Produits
                 </a>
                 <a href="/profil.html" class="sidebar-item">
                     <span class="sidebar-item-icon">
-                        <i class='bx bx-user'></i>
+                        <i class="fa fa-user"></i>
                     </span>
                     Mon Profil
                 </a>
                 <a href="/commandes.html" class="sidebar-item">
                     <span class="sidebar-item-icon">
-                        <i class='bx bx-package'></i>
+                        <i class="fa fa-box"></i>
                     </span>
                     Mes Commandes
                 </a>
@@ -886,13 +885,13 @@ transform: rotate(15deg);
                 <div class="sidebar-section-title">Programmes</div>
                 <a href="/parrainages.html" class="sidebar-item">
                     <span class="sidebar-item-icon">
-                        <i class='bx bx-group'></i>
+                        <i class="fa fa-users"></i>
                     </span>
                     Parrainages
                 </a>
                 <a href="/fidelite.html" class="sidebar-item">
                     <span class="sidebar-item-icon">
-                        <i class='bx bx-gift'></i>
+                        <i class="fa fa-gift"></i>
                     </span>
                     Fidélité
                 </a>
@@ -902,19 +901,19 @@ transform: rotate(15deg);
                 <div class="sidebar-section-title">Aide</div>
                 <a href="/support.html" class="sidebar-item">
                     <span class="sidebar-item-icon">
-                        <i class='bx bx-message-dots'></i>
+                        <i class="fa fa-comment-dots"></i>
                     </span>
                     Support Client
                 </a>
                 <a href="/faq.html" class="sidebar-item">
                     <span class="sidebar-item-icon">
-                        <i class='bx bx-help-circle'></i>
+                        <i class="fa fa-question-circle"></i>
                     </span>
                     FAQ
                 </a>
                 <a href="/contact.html" class="sidebar-item">
                     <span class="sidebar-item-icon">
-                        <i class='bx bx-phone'></i>
+                        <i class="fa fa-phone"></i>
                     </span>
                     Contact
                 </a>
@@ -940,21 +939,21 @@ transform: rotate(15deg);
                 <div class="user-actions">
                     <a href="/profil" class="user-button" id="profile-button">
                         <div class="profile-icon">
-                            <i class='bx bx-user'></i>
+                            <i class="fa fa-user"></i>
                         </div>
                         Mon Profil
                     </a>
                     
                     <a href="/commandes" class="user-button" id="orders-button">
                         <div class="orders-icon">
-                            <i class='bx bx-package'></i>
+                            <i class="fa fa-box"></i>
                         </div>
                         Mes Commandes
                     </a>
                     
                     <button class="cart-button" id="open-cart">
                         <div class="cart-icon">
-                            <i class='bx bx-cart'></i>
+                            <i class="fa fa-shopping-cart"></i>
                             <span class="cart-count" id="cart-count">0</span>
                         </div>
                         Mon Panier
@@ -984,7 +983,7 @@ transform: rotate(15deg);
         <div class="cart-header">
             <h2>Votre Panier</h2>
             <button class="close-cart" id="close-cart">
-                <i class='bx bx-x'></i>
+                <i class="fa fa-times"></i>
             </button>
         </div>
         
@@ -1001,12 +1000,11 @@ transform: rotate(15deg);
                 <span id="cart-total-price">0.00€</span>
             </div>
             <button class="checkout-btn">
-                <i class='bx bx-check-circle'></i>
+                <i class="fa fa-check-circle"></i>
                 Commander maintenant
             </button>
         </div>
     </div>
-    
     <!-- Overlay -->
     <div class="overlay" id="overlay"></div>
     <script src="index.js"></script>
