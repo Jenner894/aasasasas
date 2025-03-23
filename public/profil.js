@@ -42,6 +42,53 @@ async function getUserProfile() {
         return false;
     }
 }
+// Fonction pour basculer l'affichage de la clé Telegram
+function toggleTelegramKey() {
+    const keyElement = document.getElementById('profile-telegram-key');
+    const eyeIcon = document.getElementById('eye-icon');
+    
+    if (keyElement.textContent === '•••••••••••••' && currentUser && currentUser.telegramKey) {
+        keyElement.textContent = currentUser.telegramKey;
+        eyeIcon.textContent = '🔒';
+    } else {
+        keyElement.textContent = '•••••••••••••';
+        eyeIcon.textContent = '👁️';
+    }
+}
+
+// Fonction pour ouvrir le modal de modification du nom d'utilisateur
+function openUsernameModal() {
+    const modal = document.getElementById('username-modal');
+    const overlay = document.getElementById('modal-overlay');
+    const usernameInput = document.getElementById('new-username');
+    
+    // Pré-remplir avec le nom d'utilisateur actuel
+    if (currentUser && currentUser.username) {
+        usernameInput.value = currentUser.username;
+    }
+    
+    modal.classList.add('active');
+    overlay.classList.add('active');
+    usernameInput.focus();
+}
+
+// Fonction pour fermer tous les modals
+function closeModals() {
+    const modals = document.querySelectorAll('.modal');
+    const overlay = document.getElementById('modal-overlay');
+    
+    modals.forEach(modal => modal.classList.remove('active'));
+    if (overlay) overlay.classList.remove('active');
+}
+
+// Fonction pour ouvrir le modal de confirmation de régénération de clé
+function openRegenerateKeyModal() {
+    const modal = document.getElementById('regenerate-key-modal');
+    const overlay = document.getElementById('modal-overlay');
+    
+    modal.classList.add('active');
+    overlay.classList.add('active');
+}
 
 // Fonction pour mettre à jour l'interface utilisateur avec les données du profil
 function updateProfileUI(user) {
@@ -161,9 +208,7 @@ function showNotification(message, type = 'info') {
 }
 
 // Gestionnaire pour modifier le nom d'utilisateur
-async function updateUsername() {
-    const newUsername = prompt('Entrez votre nouveau nom d\'utilisateur:', currentUser ? currentUser.username : '');
-    
+async function updateUsername(newUsername) {
     if (!newUsername || (currentUser && newUsername === currentUser.username)) return;
     
     try {
@@ -315,7 +360,7 @@ function initializeShareButtons() {
 function initEventListeners() {
     console.log("Initialisation des gestionnaires d'événements");
     
-    // Sidebar toggle
+    // Gestionnaires existants (sidebar, navigation, etc.)
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebar = document.getElementById('sidebar');
     const closeSidebar = document.getElementById('close-sidebar');
@@ -373,27 +418,60 @@ function initEventListeners() {
     // Bouton de modification de profil
     const editProfileBtn = document.querySelector('.edit-profile-btn');
     if (editProfileBtn) {
-        editProfileBtn.addEventListener('click', () => {
-            const options = [
-                'Modifier mon nom d\'utilisateur',
-                'Régénérer ma clé Telegram',
-                'Annuler'
-            ];
-            
-            const choice = prompt(`Choisissez une option:\n1. ${options[0]}\n2. ${options[1]}\n3. ${options[2]}`);
-            
-            switch (choice) {
-                case '1':
-                    updateUsername();
-                    break;
-                case '2':
-                    regenerateKey();
-                    break;
-                default:
-                    // Annuler
-                    break;
-            }
+        editProfileBtn.addEventListener('click', openUsernameModal);
+    }
+    
+    // Bouton pour afficher/masquer la clé Telegram
+    const toggleKeyBtn = document.getElementById('toggle-key-btn');
+    if (toggleKeyBtn) {
+        toggleKeyBtn.addEventListener('click', toggleTelegramKey);
+    }
+    
+    // Bouton pour régénérer la clé Telegram
+    const regenerateKeyBtn = document.getElementById('regenerate-key-btn');
+    if (regenerateKeyBtn) {
+        regenerateKeyBtn.addEventListener('click', openRegenerateKeyModal);
+    }
+    
+    // Gestion des modals
+    const closeModalButtons = document.querySelectorAll('.close-modal');
+    closeModalButtons.forEach(button => {
+        button.addEventListener('click', closeModals);
+    });
+    
+    // Overlay des modals
+    const modalOverlay = document.getElementById('modal-overlay');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', closeModals);
+    }
+    
+    // Boutons du modal de nom d'utilisateur
+    const saveUsernameBtn = document.getElementById('save-username-btn');
+    if (saveUsernameBtn) {
+        saveUsernameBtn.addEventListener('click', () => {
+            const newUsername = document.getElementById('new-username').value;
+            updateUsername(newUsername);
+            closeModals();
         });
+    }
+    
+    const cancelUsernameBtn = document.getElementById('cancel-username-btn');
+    if (cancelUsernameBtn) {
+        cancelUsernameBtn.addEventListener('click', closeModals);
+    }
+    
+    // Boutons du modal de régénération de clé
+    const confirmRegenerateBtn = document.getElementById('confirm-regenerate-btn');
+    if (confirmRegenerateBtn) {
+        confirmRegenerateBtn.addEventListener('click', () => {
+            regenerateKey();
+            closeModals();
+        });
+    }
+    
+    const cancelRegenerateBtn = document.getElementById('cancel-regenerate-btn');
+    if (cancelRegenerateBtn) {
+        cancelRegenerateBtn.addEventListener('click', closeModals);
     }
     
     // Bouton de déconnexion
