@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Allo Bedo - Dashboard</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>  
     :root {
 --primary-blue: #45d3ff;
@@ -140,7 +139,8 @@ background-color: #3dd677;
 transform: scale(1.02);
 }
 
-.add-to-cart-btn i {
+.add-to-cart-btn:before {
+content: '🛒';
 margin-right: 8px;
 }
 
@@ -672,13 +672,6 @@ font-size: 1rem;
 font-weight: bold;
 cursor: pointer;
 transition: all 0.3s;
-display: flex;
-justify-content: center;
-align-items: center;
-}
-
-.checkout-btn i {
-margin-right: 8px;
 }
 
 .checkout-btn:hover {
@@ -846,37 +839,27 @@ transform: rotate(15deg);
 </head>
 <body>
     <!-- Sidebar Toggle Button -->
-    <button class="sidebar-toggle" id="sidebar-toggle">
-        <i class="fa fa-bars"></i>
-    </button>
+    <button class="sidebar-toggle" id="sidebar-toggle">☰</button>
     
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="logo">Allo<span>80</span>Bedo</div>
-            <button class="close-sidebar" id="close-sidebar">
-                <i class="fa fa-times"></i>
-            </button>
+            <button class="close-sidebar" id="close-sidebar">×</button>
         </div>
         <div class="sidebar-content">
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Principal</div>
                 <a href="/dashboard" class="sidebar-item active">
-                    <span class="sidebar-item-icon">
-                        <i class="fa fa-shopping-cart"></i>
-                    </span>
+                    <span class="sidebar-item-icon">🛒</span>
                     Produits
                 </a>
                 <a href="/profil.html" class="sidebar-item">
-                    <span class="sidebar-item-icon">
-                        <i class="fa fa-user"></i>
-                    </span>
+                    <span class="sidebar-item-icon">👤</span>
                     Mon Profil
                 </a>
                 <a href="/commandes.html" class="sidebar-item">
-                    <span class="sidebar-item-icon">
-                        <i class="fa fa-box"></i>
-                    </span>
+                    <span class="sidebar-item-icon">📦</span>
                     Mes Commandes
                 </a>
             </div>
@@ -884,15 +867,11 @@ transform: rotate(15deg);
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Programmes</div>
                 <a href="/parrainages.html" class="sidebar-item">
-                    <span class="sidebar-item-icon">
-                        <i class="fa fa-users"></i>
-                    </span>
+                    <span class="sidebar-item-icon">👥</span>
                     Parrainages
                 </a>
                 <a href="/fidelite.html" class="sidebar-item">
-                    <span class="sidebar-item-icon">
-                        <i class="fa fa-gift"></i>
-                    </span>
+                    <span class="sidebar-item-icon">🎁</span>
                     Fidélité
                 </a>
             </div>
@@ -900,21 +879,15 @@ transform: rotate(15deg);
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Aide</div>
                 <a href="/support.html" class="sidebar-item">
-                    <span class="sidebar-item-icon">
-                        <i class="fa fa-comment-dots"></i>
-                    </span>
+                    <span class="sidebar-item-icon">💬</span>
                     Support Client
                 </a>
                 <a href="/faq.html" class="sidebar-item">
-                    <span class="sidebar-item-icon">
-                        <i class="fa fa-question-circle"></i>
-                    </span>
+                    <span class="sidebar-item-icon">📚</span>
                     FAQ
                 </a>
                 <a href="/contact.html" class="sidebar-item">
-                    <span class="sidebar-item-icon">
-                        <i class="fa fa-phone"></i>
-                    </span>
+                    <span class="sidebar-item-icon">📞</span>
                     Contact
                 </a>
             </div>
@@ -938,22 +911,18 @@ transform: rotate(15deg);
                 
                 <div class="user-actions">
                     <a href="/profil" class="user-button" id="profile-button">
-                        <div class="profile-icon">
-                            <i class="fa fa-user"></i>
-                        </div>
+                        <div class="profile-icon">👤</div>
                         Mon Profil
                     </a>
                     
                     <a href="/commandes" class="user-button" id="orders-button">
-                        <div class="orders-icon">
-                            <i class="fa fa-box"></i>
-                        </div>
+                        <div class="orders-icon">📦</div>
                         Mes Commandes
                     </a>
                     
                     <button class="cart-button" id="open-cart">
                         <div class="cart-icon">
-                            <i class="fa fa-shopping-cart"></i>
+                            🛒
                             <span class="cart-count" id="cart-count">0</span>
                         </div>
                         Mon Panier
@@ -982,9 +951,7 @@ transform: rotate(15deg);
     <div class="cart-modal" id="cart-modal">
         <div class="cart-header">
             <h2>Votre Panier</h2>
-            <button class="close-cart" id="close-cart">
-                <i class="fa fa-times"></i>
-            </button>
+            <button class="close-cart" id="close-cart">×</button>
         </div>
         
         <div class="cart-items" id="cart-items">
@@ -999,12 +966,10 @@ transform: rotate(15deg);
                 <span>Total:</span>
                 <span id="cart-total-price">0.00€</span>
             </div>
-            <button class="checkout-btn">
-                <i class="fa fa-check-circle"></i>
-                Commander maintenant
-            </button>
+            <button class="checkout-btn">Commander maintenant</button>
         </div>
     </div>
+    
     <!-- Overlay -->
     <div class="overlay" id="overlay"></div>
     <script src="index.js"></script>
