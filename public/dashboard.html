@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Allo Bedo - Dashboard</title>
+    <!-- Ajout de la bibliothèque Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>  
     :root {
 --primary-blue: #45d3ff;
@@ -139,8 +141,7 @@ background-color: #3dd677;
 transform: scale(1.02);
 }
 
-.add-to-cart-btn:before {
-content: '🛒';
+.add-to-cart-btn i {
 margin-right: 8px;
 }
 
@@ -672,6 +673,13 @@ font-size: 1rem;
 font-weight: bold;
 cursor: pointer;
 transition: all 0.3s;
+display: flex;
+justify-content: center;
+align-items: center;
+}
+
+.checkout-btn i {
+margin-right: 8px;
 }
 
 .checkout-btn:hover {
@@ -839,27 +847,37 @@ transform: rotate(15deg);
 </head>
 <body>
     <!-- Sidebar Toggle Button -->
-    <button class="sidebar-toggle" id="sidebar-toggle">☰</button>
+    <button class="sidebar-toggle" id="sidebar-toggle">
+        <i class='bx bx-menu'></i>
+    </button>
     
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="logo">Allo<span>80</span>Bedo</div>
-            <button class="close-sidebar" id="close-sidebar">×</button>
+            <button class="close-sidebar" id="close-sidebar">
+                <i class='bx bx-x'></i>
+            </button>
         </div>
         <div class="sidebar-content">
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Principal</div>
                 <a href="/dashboard" class="sidebar-item active">
-                    <span class="sidebar-item-icon">🛒</span>
+                    <span class="sidebar-item-icon">
+                        <i class='bx bx-store'></i>
+                    </span>
                     Produits
                 </a>
                 <a href="/profil.html" class="sidebar-item">
-                    <span class="sidebar-item-icon">👤</span>
+                    <span class="sidebar-item-icon">
+                        <i class='bx bx-user'></i>
+                    </span>
                     Mon Profil
                 </a>
                 <a href="/commandes.html" class="sidebar-item">
-                    <span class="sidebar-item-icon">📦</span>
+                    <span class="sidebar-item-icon">
+                        <i class='bx bx-package'></i>
+                    </span>
                     Mes Commandes
                 </a>
             </div>
@@ -867,11 +885,15 @@ transform: rotate(15deg);
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Programmes</div>
                 <a href="/parrainages.html" class="sidebar-item">
-                    <span class="sidebar-item-icon">👥</span>
+                    <span class="sidebar-item-icon">
+                        <i class='bx bx-group'></i>
+                    </span>
                     Parrainages
                 </a>
                 <a href="/fidelite.html" class="sidebar-item">
-                    <span class="sidebar-item-icon">🎁</span>
+                    <span class="sidebar-item-icon">
+                        <i class='bx bx-gift'></i>
+                    </span>
                     Fidélité
                 </a>
             </div>
@@ -879,15 +901,21 @@ transform: rotate(15deg);
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Aide</div>
                 <a href="/support.html" class="sidebar-item">
-                    <span class="sidebar-item-icon">💬</span>
+                    <span class="sidebar-item-icon">
+                        <i class='bx bx-message-dots'></i>
+                    </span>
                     Support Client
                 </a>
                 <a href="/faq.html" class="sidebar-item">
-                    <span class="sidebar-item-icon">📚</span>
+                    <span class="sidebar-item-icon">
+                        <i class='bx bx-help-circle'></i>
+                    </span>
                     FAQ
                 </a>
                 <a href="/contact.html" class="sidebar-item">
-                    <span class="sidebar-item-icon">📞</span>
+                    <span class="sidebar-item-icon">
+                        <i class='bx bx-phone'></i>
+                    </span>
                     Contact
                 </a>
             </div>
@@ -911,18 +939,22 @@ transform: rotate(15deg);
                 
                 <div class="user-actions">
                     <a href="/profil" class="user-button" id="profile-button">
-                        <div class="profile-icon">👤</div>
+                        <div class="profile-icon">
+                            <i class='bx bx-user'></i>
+                        </div>
                         Mon Profil
                     </a>
                     
                     <a href="/commandes" class="user-button" id="orders-button">
-                        <div class="orders-icon">📦</div>
+                        <div class="orders-icon">
+                            <i class='bx bx-package'></i>
+                        </div>
                         Mes Commandes
                     </a>
                     
                     <button class="cart-button" id="open-cart">
                         <div class="cart-icon">
-                            🛒
+                            <i class='bx bx-cart'></i>
                             <span class="cart-count" id="cart-count">0</span>
                         </div>
                         Mon Panier
@@ -951,7 +983,9 @@ transform: rotate(15deg);
     <div class="cart-modal" id="cart-modal">
         <div class="cart-header">
             <h2>Votre Panier</h2>
-            <button class="close-cart" id="close-cart">×</button>
+            <button class="close-cart" id="close-cart">
+                <i class='bx bx-x'></i>
+            </button>
         </div>
         
         <div class="cart-items" id="cart-items">
@@ -966,7 +1000,10 @@ transform: rotate(15deg);
                 <span>Total:</span>
                 <span id="cart-total-price">0.00€</span>
             </div>
-            <button class="checkout-btn">Commander maintenant</button>
+            <button class="checkout-btn">
+                <i class='bx bx-check-circle'></i>
+                Commander maintenant
+            </button>
         </div>
     </div>
     
