@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // Vérification de l'authentification
 async function checkAuth() {
     try {
+        console.log("Tentative de vérification d'authentification...");
+        
         // Utiliser la nouvelle route API avec gestion de session explicite
         const response = await fetch('/api/user', {
             method: 'GET',
@@ -19,9 +21,13 @@ async function checkAuth() {
             credentials: 'include'  // Important pour envoyer les cookies de session
         });
         
+        console.log("Statut de réponse:", response.status);
+        console.log("Headers:", [...response.headers.entries()]);
+        
         if (response.status === 401) {
             console.log('Utilisateur non authentifié, redirection vers la page de connexion');
-            window.location.href = '/login.html';
+            // COMMENTER cette ligne pour empêcher la redirection automatique
+            // window.location.href = '/login.html';
             return false;
         }
         
