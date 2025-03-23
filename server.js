@@ -408,7 +408,7 @@ app.post('/api/auth/login', async (req, res) => {
             }
             
             // Déterminer l'URL de redirection en fonction du rôle
-            let redirectUrl = '/dashboard.html';
+            let redirectUrl = '/dashboard';
             if (user.role === 'admin') {
                 redirectUrl = '/admin-dashboard.html';
             }
@@ -446,7 +446,7 @@ app.get('/admin-dashboard.html', isAuthenticated, (req, res, next) => {
     if (req.session.user.role === 'admin') {
         res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
     } else {
-        res.redirect('/dashboard.html');
+        res.redirect('/dashboard');
     }
 });
 
@@ -602,7 +602,7 @@ app.post('/api/user/regenerate-key', isAuthenticated, async (req, res) => {
 app.get('/register.html', (req, res) => {
     // Si l'utilisateur est déjà connecté, le rediriger vers le dashboard
     if (req.session && req.session.user) {
-        return res.redirect('/dashboard.html');
+        return res.redirect('/dashboard');
     }
     res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
