@@ -7,39 +7,45 @@ document.addEventListener('DOMContentLoaded', function() {
     let cart = []; // Panier d'achat
     
     // Vérification de l'authentification
-    async function checkAuth() {
-        try {
-            const response = await fetch('/api/auth/status', {
-                credentials: 'include' // Important pour envoyer les cookies de session
-            });
-            
-            if (!response.ok) {
-                console.error('Erreur HTTP lors de la vérification:', response.status);
-                window.location.href = '/login.html';
-                return false;
-            }
-            
-            const data = await response.json();
-            
-            if (!data.authenticated) {
-                console.log('Utilisateur non authentifié, redirection vers la page de connexion');
-                window.location.href = '/login.html';
-                return false;
-            }
-            
-            console.log('Utilisateur authentifié:', data.user.username);
-            currentUser = data.user;
-            displayUsername();
-            return {
-                authenticated: true,
-                user: data.user
-            };
-        } catch (error) {
-            console.error('Erreur lors de la vérification de l\'authentification:', error);
+// Vérification de l'authentification
+async function checkAuth() {
+    try {
+        // Utiliser la nouvelle route API avec gestion de session explicite
+        const response = await fetch('/api/user', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'  // Important pour envoyer les cookies de session
+        });
+        
+        if (response.status === 401) {
+            console.log('Utilisateur non authentifié, redirection vers la page de connexion');
             window.location.href = '/login.html';
             return false;
         }
+        
+        if (!response.ok) {
+            throw new Error('Erreur d\'authentification');
+        }
+        
+        const userData = await response.json();
+        console.log('Utilisateur authentifié:', userData.username);
+        
+        // Stocker les données utilisateur
+        currentUser = userData;
+        displayUsername();
+        
+        return {
+            authenticated: true,
+            user: userData
+        };
+    } catch (error) {
+        console.error('Erreur lors de la vérification de l\'authentification:', error);
+        window.location.href = '/login.html';
+        return false;
     }
+}
     
     // Afficher le nom d'utilisateur
     function displayUsername() {
