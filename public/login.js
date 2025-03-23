@@ -1,27 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('login-form');
 
-    // Vérifier si l'utilisateur est déjà connecté lors du chargement de la page
-    checkAuthStatus();
-    
-    // Fonction pour vérifier le statut d'authentification
-    async function checkAuthStatus() {
-        try {
-            const response = await fetch('/api/auth/status', {
-                method: 'GET',
-                credentials: 'include'
-            });
-            
-            const data = await response.json();
-            
-            if (data.authenticated) {
-                // Utilisateur déjà connecté, rediriger vers le dashboard
-                window.location.href = data.user.role === 'admin' ? '/admin-dashboard.html' : '/dashboard';
-            }
-        } catch (error) {
-            console.error('Erreur lors de la vérification du statut d\'authentification:', error);
-        }
-    }
     
     // Créer la structure de notification
     function createNotification() {
