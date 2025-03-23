@@ -701,6 +701,9 @@ app.get('/', (req, res) => {
 app.get('/dashboard', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
+app.get('/commandes', isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'commandes.html'));
+});
 app.get('/profil', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'profil.html'));
 });
