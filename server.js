@@ -466,25 +466,24 @@ app.get('/api/auth/status', (req, res) => {
     }
 });
 ////////////////////////////////////////// Profile //////////////////////////////////////
-// Route pour obtenir les informations de l'utilisateur courant
-// Route pour obtenir les informations de l'utilisateur courant
-app.get('/api/user/profile', isAuthenticated, async (req, res) => {
+// Route pour récupérer les données utilisateur (ajoutez cela à votre fichier serveur)
+app.get('/api/user', isAuthenticated, async (req, res) => {
+    if (!req.session || !req.session.user) {
+        return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
     try {
-        // S'assurer que l'utilisateur est authentifié
-        if (!req.session || !req.session.user) {
-            return res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
-        }
-
-        const user = await User.findById(req.session.user.id)
-            .populate({
-                path: 'orders',
-                select: 'totalPrice createdAt status'
-            });
-
+        const user = await User.findById(req.session.user.id);
         if (!user) {
-            return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+            return res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
-
+        
+        // Format de date pour l'affichage
+        const joinDate = new Date(user.createdAt).toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+        
         // Calcul du temps écoulé depuis la dernière commande
         let lastOrderTimeAgo = null;
         if (user.lastOrderDate) {
@@ -493,35 +492,25 @@ app.get('/api/user/profile', isAuthenticated, async (req, res) => {
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             lastOrderTimeAgo = `${diffDays}j`;
         }
-
-        // Format de date pour l'affichage
-        const joinDate = new Date(user.createdAt).toLocaleDateString('fr-FR', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
-
-        // Réponse avec toutes les informations nécessaires
-        res.json({ 
-            success: true, 
-            user: {
-                username: user.username,
-                joinDate: joinDate,
-                accountType: user.role === 'admin' ? 'Administrateur' : 'Client',
-                telegramKey: user.keys,
-                telegamId: user.telegramId || "",
-                stats: {
-                    totalOrders: user.orders.length,
-                    totalSpent: `${user.totalSpent}€`,
-                    lastOrder: lastOrderTimeAgo || 'N/A',
-                    referralCode: user.referralCode || "BEDO2025",
-                    loyaltyPoints: Math.floor(user.totalSpent * 0.5) // Exemple: 1 point pour chaque 2€ dépensés
-                }
+        
+        res.json({
+            id: user._id,
+            username: user.username,
+            role: user.role,
+            joinDate: joinDate,
+            telegramKey: user.keys,
+            telegramId: user.telegramId || "",
+            stats: {
+                totalOrders: user.orders.length,
+                totalSpent: user.totalSpent,
+                lastOrder: lastOrderTimeAgo || 'N/A',
+                referralCode: user.referralCode || "BEDO2025",
+                loyaltyPoints: Math.floor(user.totalSpent * 0.5)
             }
         });
     } catch (error) {
-        console.error('Erreur lors de la récupération du profil:', error);
-        res.status(500).json({ success: false, message: 'Erreur lors de la récupération du profil' });
+        console.error('Erreur lors de la récupération des données utilisateur:', error);
+        res.status(500).json({ message: 'Erreur du serveur' });
     }
 });
 
