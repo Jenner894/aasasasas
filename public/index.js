@@ -731,37 +731,47 @@ async function processOrderWithDelivery() {
             timeSlot: currentDeliveryOption === 'scheduled' ? selectedTimeSlot : null
         };
         
-        // Simuler l'envoi de la commande au serveur
-        // Dans une application réelle, vous feriez un appel API ici
-        console.log('Envoi de la commande avec livraison:', {
-            items: orderItems,
-            totalAmount,
-            delivery: deliveryData
+        // Envoyer la commande au serveur avec les données de livraison
+        const response = await fetch('/api/orders/delivery', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                items: orderItems,
+                totalAmount: totalAmount,
+                delivery: deliveryData
+            }),
+            credentials: 'include' // Important pour envoyer les cookies de session
         });
         
-        // Simuler une réponse positive
-        setTimeout(() => {
-            // Afficher un message de confirmation
-            alert('Votre commande a été enregistrée avec succès! Un livreur va vous contacter bientôt.');
-            
-            // Vider le panier
-            cart = [];
-            saveCart();
-            updateCartCount();
-            
-            // Fermer le modal de livraison
-            closeDeliveryModal();
-            
-// Fermer le modal du panier
-            const cartModal = document.getElementById('cart-modal');
-            const overlay = document.getElementById('overlay');
-            
-            if (cartModal) cartModal.classList.remove('open');
-            if (overlay) overlay.classList.remove('active');
-            
-            // Mettre à jour les commandes
-            fetchUserOrders();
-        }, 1000);
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.message || 'Erreur lors du traitement de la commande');
+        }
+        
+        // Afficher un message de confirmation
+        alert('Votre commande a été enregistrée avec succès! Un livreur va vous contacter bientôt.');
+        
+        // Vider le panier
+        cart = [];
+        saveCart();
+        updateCartCount();
+        
+        // Fermer le modal de livraison
+        closeDeliveryModal();
+        
+        // Fermer le modal du panier
+        const cartModal = document.getElementById('cart-modal');
+        const overlay = document.getElementById('overlay');
+        
+        if (cartModal) cartModal.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
+        
+        // Rediriger vers la page des commandes
+        window.location.href = '/commandes';
         
     } catch (error) {
         console.error('Erreur lors du traitement de la commande:', error);
@@ -1101,91 +1111,6 @@ function generateOrderSummary() {
         }
     }
 
-    // Création modal commandes (comme le panier)
-    function createOrdersModal() {
-        let ordersModal = document.getElementById('orders-modal');
-        if (!ordersModal) {
-            ordersModal = document.createElement('div');
-            ordersModal.className = 'cart-modal';
-            ordersModal.id = 'orders-modal';
-            
-            ordersModal.innerHTML = `
-                <div class="cart-header">
-                    <h2>Vos Commandes</h2>
-                    <button class="close-cart" id="close-orders">×</button>
-                </div>
-                
-                <div class="cart-items" id="orders-items">
-                    <div class="empty-cart" id="empty-orders">
-                        Vous n'avez pas encore de commandes
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(ordersModal);
-            
-            let overlay = document.getElementById('overlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'overlay';
-                overlay.className = 'overlay';
-                document.body.appendChild(overlay);
-            }
-            
-            document.getElementById('close-orders').addEventListener('click', () => {
-                ordersModal.classList.remove('open');
-                document.getElementById('overlay').classList.remove('active');
-            });
-        }
-        
-        return ordersModal;
-    }
-
-    // Affichage commandes
-    function displayOrders() {
-        const ordersModal = createOrdersModal();
-        const ordersItemsContainer = document.getElementById('orders-items');
-        const emptyOrdersMessage = document.getElementById('empty-orders');
-        const overlay = document.getElementById('overlay');
-        
-        if (!userOrders || userOrders.length === 0) {
-            if (emptyOrdersMessage) {
-                emptyOrdersMessage.style.display = 'block';
-            }
-            ordersItemsContainer.innerHTML = '<div class="empty-cart" id="empty-orders">Vous n\'avez pas encore de commandes</div>';
-        } else {
-            if (emptyOrdersMessage) {
-                emptyOrdersMessage.style.display = 'none';
-            }
-            
-            let ordersHTML = '';
-            userOrders.forEach((order, index) => {
-                // Vérifier et utiliser des valeurs par défaut si nécessaire
-                const orderId = order.orderId || order._id || `ORDRE-${index + 1}`;
-                const productName = order.productName || 'Produit non spécifié';
-                const quantity = order.quantity || 0;
-                const totalPrice = order.totalPrice !== undefined ? Number(order.totalPrice).toFixed(2) : '0.00';
-                const status = order.status || 'En cours de traitement';
-                
-                ordersHTML += `
-                    <div class="cart-item">
-                        <div class="cart-item-info">
-                            <div class="cart-item-name"><strong>Commande #${orderId}</strong></div>
-                            <div class="cart-item-detail">Produit: ${productName}</div>
-                            <div class="cart-item-detail">Quantité: ${quantity} g</div>
-                            <div class="cart-item-price">Total: ${totalPrice}€</div>
-                            <div class="cart-item-status">Statut: ${status}</div>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            ordersItemsContainer.innerHTML = ordersHTML;
-        }
-        
-        ordersModal.classList.add('open');
-        overlay.classList.add('active');
-    }
 
     // Filtrage des produits par catégorie
     function filterProductsByCategory(category) {
@@ -1408,25 +1333,28 @@ async function processOrder() {
     }
 
     // Configuration des événements
-    function setupEventListeners() {
-        const ordersButton = document.getElementById('orders-button');
-        if (ordersButton) {
-            ordersButton.addEventListener('click', displayOrders);
-        }
-        
-        // Configurer le bouton de profil
-        const profileButton = document.getElementById('profile-button');
-        if (profileButton) {
-            profileButton.addEventListener('click', () => {
-                window.location.href = '/profil.html';
-            });
-        }
-        
-        // Configurer le panier
-        setupCart();
-        
-        // Configurer la barre latérale
-        setupSidebar();
+function setupEventListeners() {
+    const ordersButton = document.getElementById('orders-button');
+    if (ordersButton) {
+        // Rediriger directement vers la page des commandes au lieu d'afficher le modal
+        ordersButton.addEventListener('click', () => {
+            window.location.href = '/commandes';
+        });
+    }
+    
+    // Configurer le bouton de profil
+    const profileButton = document.getElementById('profile-button');
+    if (profileButton) {
+        profileButton.addEventListener('click', () => {
+            window.location.href = '/profil.html';
+        });
+    }
+    
+    // Configurer le panier
+    setupCart();
+    
+    // Configurer la barre latérale
+    setupSidebar();
         
        // Ajouter des écouteurs d'événements pour le panier
     document.addEventListener('click', function(event) {
