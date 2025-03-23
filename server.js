@@ -293,71 +293,290 @@ app.post('/api/products', isAuthenticated, async (req, res) => {
     }
 });
 
-// Route pour récupérer les commandes de l'utilisateur connecté
+// ========================== ROUTES POUR LES COMMANDES ==========================
+
+// Route pour récupérer toutes les commandes de l'utilisateur connecté
 app.get('/api/orders/user', isAuthenticated, async (req, res) => {
     try {
-        const orders = await Order.find({ user: req.session.user.id });
+        // Trouver toutes les commandes pour l'utilisateur connecté
+        const orders = await Order.find({ user: req.session.user.id })
+            .sort({ createdAt: -1 }); // Tri par date décroissante
+        
         res.status(200).json({ success: true, orders });
     } catch (error) {
         console.error('Erreur lors de la récupération des commandes:', error);
         res.status(500).json({ success: false, message: 'Erreur lors de la récupération des commandes' });
     }
 });
-// Route pour mettre à jour un produit (protégée, admin seulement)
-app.put('/api/products/:id', isAuthenticated, async (req, res) => {
-    // Vérifier si l'utilisateur est admin
-    if (req.session.user.role !== 'admin') {
-        return res.status(403).json({ success: false, message: 'Accès non autorisé' });
-    }
-    
+
+// Route pour récupérer une commande spécifique
+app.get('/api/orders/:id', isAuthenticated, async (req, res) => {
     try {
-        const { name, description, category, pricePerGram, thcContent, videoUrl, inStock } = req.body;
+        const order = await Order.findOne({
+            _id: req.params.id,
+            user: req.session.user.id // S'assurer que la commande appartient à l'utilisateur
+        });
         
-        const updatedProduct = await Product.findByIdAndUpdate(
-            req.params.id,
-            {
-                name,
-                description,
-                category,
-                pricePerGram,
-                thcContent,
-                videoUrl,
-                inStock
-            },
-            { new: true, runValidators: true }
-        );
-        
-        if (!updatedProduct) {
-            return res.status(404).json({ success: false, message: 'Produit non trouvé' });
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Commande non trouvée' });
         }
         
-        res.status(200).json({ success: true, product: updatedProduct });
+        res.status(200).json({ success: true, order });
     } catch (error) {
-        console.error('Erreur lors de la mise à jour du produit:', error);
-        res.status(500).json({ success: false, message: 'Erreur lors de la mise à jour du produit' });
+        console.error('Erreur lors de la récupération de la commande:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération de la commande' });
     }
 });
 
-// Route pour supprimer un produit (protégée, admin seulement)
-app.delete('/api/products/:id', isAuthenticated, async (req, res) => {
-    // Vérifier si l'utilisateur est admin
-    if (req.session.user.role !== 'admin') {
-        return res.status(403).json({ success: false, message: 'Accès non autorisé' });
-    }
-    
+// Route pour créer une nouvelle commande
+app.post('/api/orders', isAuthenticated, async (req, res) => {
     try {
-        const deletedProduct = await Product.findByIdAndDelete(req.params.id);
+        const { productName, quantity, totalPrice } = req.body;
         
-        if (!deletedProduct) {
-            return res.status(404).json({ success: false, message: 'Produit non trouvé' });
+        // Validation des données
+        if (!productName || !quantity || !totalPrice) {
+            return res.status(400).json({ success: false, message: 'Tous les champs sont requis' });
         }
         
-        res.status(200).json({ success: true, message: 'Produit supprimé avec succès' });
+        // Création de la commande
+        const newOrder = new Order({
+            user: req.session.user.id,
+            productName,
+            quantity,
+            totalPrice,
+            status: 'En attente'
+        });
+        
+        await newOrder.save();
+        
+        res.status(201).json({ success: true, order: newOrder });
     } catch (error) {
-        console.error('Erreur lors de la suppression du produit:', error);
-        res.status(500).json({ success: false, message: 'Erreur lors de la suppression du produit' });
+        console.error('Erreur lors de la création de la commande:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la création de la commande' });
     }
 });
+
+// Route pour mettre à jour le statut d'une commande
+app.put('/api/orders/:id/status', isAuthenticated, async (req, res) => {
+    try {
+        const { status } = req.body;
+        
+        if (!status) {
+            return res.status(400).json({ success: false, message: 'Le statut est requis' });
+        }
+        
+        // Vérifier si l'utilisateur est admin pour cette action
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Action non autorisée' });
+        }
+        
+        const order = await Order.findByIdAndUpdate(
+            req.params.id,
+            { status },
+            { new: true }
+        );
+        
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Commande non trouvée' });
+        }
+        
+        res.status(200).json({ success: true, order });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du statut:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la mise à jour du statut' });
+    }
+});
+
+// Route pour annuler une commande
+app.put('/api/orders/:id/cancel', isAuthenticated, async (req, res) => {
+    try {
+        const order = await Order.findOne({
+            _id: req.params.id,
+            user: req.session.user.id
+        });
+        
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Commande non trouvée' });
+        }
+        
+        // Vérifier si la commande peut être annulée (seulement si elle est en attente ou en préparation)
+        if (order.status !== 'En attente' && order.status !== 'En préparation') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Cette commande ne peut plus être annulée'
+            });
+        }
+        
+        order.status = 'Annulé';
+        await order.save();
+        
+        res.status(200).json({ success: true, order });
+    } catch (error) {
+        console.error('Erreur lors de l\'annulation de la commande:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de l\'annulation de la commande' });
+    }
+});
+
+// Route pour récupérer les messages de chat d'une commande
+app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
+    try {
+        // Si vous implémentez un système de chat réel, vous devriez avoir un modèle ChatMessage
+        // Pour l'instant, renvoyez des données fictives
+        res.status(200).json({ 
+            success: true, 
+            messages: [
+                {
+                    sender: 'system',
+                    content: 'Début de la conversation avec votre livreur.',
+                    timestamp: new Date()
+                },
+                {
+                    sender: 'livreur',
+                    content: 'Bonjour ! Je suis votre livreur pour cette commande. Je vous contacterai dès que votre commande sera prête à être livrée.',
+                    timestamp: new Date()
+                }
+            ]
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des messages:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des messages' });
+    }
+});
+
+// Route pour envoyer un message dans le chat d'une commande
+app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
+    try {
+        const { message } = req.body;
+        
+        if (!message) {
+            return res.status(400).json({ success: false, message: 'Le message est requis' });
+        }
+        
+        // Vérifier si la commande appartient à l'utilisateur
+        const order = await Order.findOne({
+            _id: req.params.id,
+            user: req.session.user.id
+        });
+        
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Commande non trouvée' });
+        }
+        
+        // Si vous implémentez un système de chat réel, enregistrez le message ici
+        // Pour l'instant, simulez une réponse
+        
+        res.status(200).json({ 
+            success: true, 
+            message: {
+                sender: 'utilisateur',
+                content: message,
+                timestamp: new Date()
+            },
+            response: {
+                sender: 'livreur',
+                content: 'Merci pour votre message. Je suis actuellement en train de préparer votre commande.',
+                timestamp: new Date(Date.now() + 1000) // 1 seconde plus tard
+            }
+        });
+    } catch (error) {
+        console.error('Erreur lors de l\'envoi du message:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de l\'envoi du message' });
+    }
+});
+
+// ========================== ROUTES POUR L'ADMINISTRATEUR ==========================
+
+// Route pour récupérer toutes les commandes (admin seulement)
+app.get('/api/admin/orders', isAuthenticated, async (req, res) => {
+    try {
+        // Vérifier si l'utilisateur est admin
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+        }
+        
+        const orders = await Order.find({})
+            .sort({ createdAt: -1 })
+            .populate('user', 'username telegramId'); // Récupérer les informations de l'utilisateur
+        
+        res.status(200).json({ success: true, orders });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des commandes:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des commandes' });
+    }
+});
+
+// Route pour les statistiques des commandes (admin seulement)
+app.get('/api/admin/orders/stats', isAuthenticated, async (req, res) => {
+    try {
+        // Vérifier si l'utilisateur est admin
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+        }
+        
+        // Statistiques des commandes
+        const totalOrders = await Order.countDocuments({});
+        const pendingOrders = await Order.countDocuments({ status: 'En attente' });
+        const processingOrders = await Order.countDocuments({ status: 'En préparation' });
+        const shippedOrders = await Order.countDocuments({ status: 'Expédié' });
+        const deliveredOrders = await Order.countDocuments({ status: 'Livré' });
+        const cancelledOrders = await Order.countDocuments({ status: 'Annulé' });
+        
+        // Total des ventes
+        const totalSales = await Order.aggregate([
+            {
+                $match: { status: { $ne: 'Annulé' } }
+            },
+            {
+                $group: {
+                    _id: null,
+                    total: { $sum: '$totalPrice' }
+                }
+            }
+        ]);
+        
+        // Ventes par jour (pour les 30 derniers jours)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const salesByDay = await Order.aggregate([
+            {
+                $match: {
+                    status: { $ne: 'Annulé' },
+                    createdAt: { $gte: thirtyDaysAgo }
+                }
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                    total: { $sum: '$totalPrice' },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+        
+        res.status(200).json({
+            success: true,
+            stats: {
+                totalOrders,
+                pendingOrders,
+                processingOrders,
+                shippedOrders,
+                deliveredOrders,
+                cancelledOrders,
+                totalSales: totalSales.length > 0 ? totalSales[0].total : 0,
+                salesByDay
+            }
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des statistiques:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des statistiques' });
+    }
+});
+
+// ========================== ROUTE POUR LA PAGE DES COMMANDES ==========================
 
 // Vérifie l'adresse IP du serveur
 axios.get('https://api.ipify.org?format=json')
