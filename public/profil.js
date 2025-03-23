@@ -2,68 +2,44 @@
 let currentUser = null;
 
 // Fonction pour récupérer les informations de l'utilisateur
+// Fonction pour récupérer les informations de l'utilisateur
 async function getUserProfile() {
     try {
-        // Vérifier d'abord si l'utilisateur est authentifié
-        const authStatusResponse = await fetch('/api/auth/status', {
-            credentials: 'include' // Important pour envoyer les cookies de session
+        // Utiliser la nouvelle route API
+        const response = await fetch('/api/user', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'  // Important pour envoyer les cookies de session
         });
         
-        if (!authStatusResponse.ok) {
-            console.error('Erreur HTTP lors de la vérification du statut:', authStatusResponse.status);
-            showNotification('Erreur de connexion au serveur', 'error');
-            return false;
-        }
-        
-        const authStatus = await authStatusResponse.json();
-        
-        if (!authStatus.authenticated) {
+        if (response.status === 401) {
             console.warn('Session utilisateur non authentifiée');
-            // Au lieu de rediriger immédiatement, nous afficherons une notification
             showNotification('Session expirée, veuillez vous reconnecter', 'error');
             
-            // Attendre un peu avant de rediriger pour que l'utilisateur puisse voir la notification
             setTimeout(() => {
                 window.location.href = '/login.html';
             }, 2000);
             
-            return false; // Indiquer que la récupération a échoué
+            return false;
         }
         
-        // Récupérer les informations de profil avec les credentials
-        const response = await fetch('/api/user/profile', {
-            credentials: 'include' // Important pour envoyer les cookies de session
-        });
-        
         if (!response.ok) {
-            if (response.status === 401) {
-                // Problème d'authentification
-                showNotification('Session expirée, veuillez vous reconnecter', 'error');
-                setTimeout(() => {
-                    window.location.href = '/login.html';
-                }, 2000);
-                return false;
-            }
-            
-            const errorText = await response.text();
-            console.error('Erreur HTTP:', response.status, errorText);
             throw new Error(`Erreur HTTP: ${response.status}`);
         }
         
-        const data = await response.json();
+        const userData = await response.json();
+        console.log("Données utilisateur reçues:", userData);
         
-        if (!data.success) {
-            throw new Error(data.message || 'Erreur lors de la récupération du profil');
-        }
-        
-        console.log("Données utilisateur reçues:", data.user);
-        currentUser = data.user;
+        // Mettre à jour l'utilisateur actuel
+        currentUser = userData;
         updateProfileUI(currentUser);
-        return true; // Indiquer que la récupération a réussi
+        return true;
     } catch (error) {
         console.error('Erreur lors de la récupération du profil:', error);
         showNotification('Erreur lors du chargement du profil', 'error');
-        return false; // Indiquer que la récupération a échoué
+        return false;
     }
 }
 
