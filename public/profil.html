@@ -825,10 +825,18 @@
                 <div class="profile-detail-label">Type de compte</div>
                 <div class="profile-detail-value" id="profile-account-type">Chargement...</div>
             </div>
-            <div class="profile-detail">
-                <div class="profile-detail-label">Clé Telegram</div>
-                <div class="profile-detail-value" id="profile-telegram-key">•••••••••••••</div>
-            </div>
+<div class="profile-detail">
+    <div class="profile-detail-label">Clé Telegram</div>
+    <div class="profile-detail-value telegram-key-container">
+        <span id="profile-telegram-key">•••••••••••••</span>
+        <button id="toggle-key-btn" class="icon-btn" title="Afficher/Masquer la clé">
+            <span id="eye-icon">👁️</span>
+        </button>
+        <button id="regenerate-key-btn" class="icon-btn regenerate-btn" title="Régénérer la clé">
+            🔄
+        </button>
+    </div>
+</div>
             
             <button class="edit-profile-btn">
                 <span>✏️</span> Modifier mon profil
@@ -921,8 +929,45 @@
         </div>
     </div>
     
-    <!-- Overlay -->
-    <div class="overlay" id="overlay"></div>
+<div id="username-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Modifier le nom d'utilisateur</h3>
+            <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="new-username">Nouveau nom d'utilisateur</label>
+                <input type="text" id="new-username" class="form-control" placeholder="Entrez un nouveau nom d'utilisateur">
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-username-btn" class="cancel-btn">Annuler</button>
+                <button id="save-username-btn" class="save-btn">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour confirmation de régénération de clé -->
+<div id="regenerate-key-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Régénérer la clé Telegram</h3>
+            <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p>Êtes-vous sûr de vouloir régénérer votre clé Telegram? Cette action est irréversible.</p>
+            <p class="warning-text">Vous devrez utiliser la nouvelle clé pour vous connecter à l'avenir.</p>
+            <div class="modal-actions">
+                <button id="cancel-regenerate-btn" class="cancel-btn">Annuler</button>
+                <button id="confirm-regenerate-btn" class="confirm-btn">Régénérer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overlay pour les modals -->
+<div id="modal-overlay" class="modal-overlay"></div>
     <script src="profil.js"></script>
 </body>
 </html>
