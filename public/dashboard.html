@@ -406,6 +406,442 @@ display: grid;
 grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 gap: 20px;
 }
+        /* Styles pour la file d'attente de livraison */
+.queue-container {
+    background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 15px 0;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.queue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.queue-title {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--dark-blue);
+    display: flex;
+    align-items: center;
+}
+
+.queue-icon {
+    margin-right: 10px;
+    font-size: 1.3rem;
+}
+
+.queue-status {
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+}
+
+.queue-status-waiting {
+    background-color: rgba(255, 193, 7, 0.15);
+    color: #d39e00;
+}
+
+.queue-status-preparing {
+    background-color: rgba(13, 110, 253, 0.15);
+    color: #0a58ca;
+}
+
+.queue-status-shipping {
+    background-color: rgba(111, 66, 193, 0.15);
+    color: #6f42c1;
+}
+
+.queue-info {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+}
+
+.queue-info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    padding: 10px;
+    position: relative;
+}
+
+.queue-info-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background-color: rgba(0,0,0,0.1);
+}
+
+.queue-info-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--dark-blue);
+    margin-bottom: 5px;
+}
+
+.queue-info-label {
+    font-size: 0.8rem;
+    color: #666;
+    text-align: center;
+}
+
+.queue-progress {
+    margin: 25px 0 15px;
+}
+
+.progress-container {
+    height: 8px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-blue), var(--accent-green));
+    border-radius: 4px;
+    width: 0;
+    transition: width 1.5s ease;
+}
+
+.progress-markers {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin-top: -4px;
+}
+
+.progress-marker {
+    position: relative;
+    width: 16px;
+    height: 16px;
+    background-color: #e9ecef;
+    border: 2px solid #adb5bd;
+    border-radius: 50%;
+    z-index: 2;
+}
+
+.progress-marker.active {
+    background-color: var(--primary-blue);
+    border-color: var(--dark-blue);
+}
+
+.progress-marker.completed {
+    background-color: var(--accent-green);
+    border-color: #2bb967;
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+
+.progress-label {
+    font-size: 0.75rem;
+    color: #666;
+    text-align: center;
+    width: 70px;
+    margin-left: -35px; /* center under the marker */
+}
+
+/* Animation de chargement */
+.loading-dots {
+    display: inline-flex;
+    align-items: center;
+    height: 1.5em;
+}
+
+.loading-dots span {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+    margin: 0 2px;
+    opacity: 0.6;
+    animation: loadingDots 1.4s infinite;
+}
+
+.loading-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes loadingDots {
+    0%, 100% {
+        transform: scale(0.6);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Notification visuelle */
+.queue-notification {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+}
+
+.queue-notification-icon {
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+
+.queue-notification-info {
+    background-color: rgba(13, 202, 240, 0.15);
+    color: #0aa2c0;
+}
+
+.queue-notification-success {
+    background-color: rgba(25, 135, 84, 0.15);
+    color: #146c43;
+}
+
+.queue-notification-warning {
+    background-color: rgba(255, 193, 7, 0.15);
+    color: #d39e00;
+}
+
+/* Animation pour attirer l'attention sur les mises à jour */
+.queue-update {
+    animation: queueUpdate 2s ease;
+}
+
+@keyframes queueUpdate {
+    0% {
+        background-color: rgba(var(--primary-blue-rgb), 0.2);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+/* Styles responsifs */
+@media (max-width: 768px) {
+    .queue-info {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .queue-info-item {
+        padding: 8px 0;
+    }
+    
+    .queue-info-item::after {
+        display: none;
+    }
+    
+    .queue-info-item::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 20%;
+        width: 60%;
+        height: 1px;
+        background-color: rgba(0,0,0,0.1);
+    }
+    
+    .queue-info-item:last-child::before {
+        display: none;
+    }
+    
+    .progress-labels {
+        display: none;
+    }
+}
+
+/* Admin Panel Queue Styles */
+.admin-queue-container {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+.admin-queue-header {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-queue-title {
+    font-weight: bold;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+}
+
+.admin-queue-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.admin-queue-actions button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+}
+
+.admin-queue-actions button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.admin-queue-actions button i {
+    margin-right: 5px;
+}
+
+.admin-queue-list {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+}
+
+.admin-queue-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    transition: background 0.3s;
+}
+
+.admin-queue-item:hover {
+    background-color: #f8f9fa;
+}
+
+.admin-queue-position {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background-color: var(--primary-blue);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    margin-right: 15px;
+}
+
+.admin-queue-info {
+    flex: 1;
+}
+
+.admin-queue-primary {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.admin-queue-secondary {
+    font-size: 0.85rem;
+    color: #666;
+    display: flex;
+    gap: 15px;
+}
+
+.admin-queue-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-right: 10px;
+}
+
+.admin-queue-badge-waiting {
+    background-color: rgba(255, 193, 7, 0.15);
+    color: #d39e00;
+}
+
+.admin-queue-badge-preparing {
+    background-color: rgba(13, 110, 253, 0.15);
+    color: #0a58ca;
+}
+
+.admin-queue-badge-shipping {
+    background-color: rgba(111, 66, 193, 0.15);
+    color: #6f42c1;
+}
+
+.admin-queue-actions-item {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+}
+
+.admin-queue-btn {
+    border: none;
+    background-color: #f0f0f0;
+    color: #333;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+}
+
+.admin-queue-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.admin-queue-btn-status {
+    background-color: var(--primary-blue);
+    color: white;
+}
+
+.admin-queue-btn-status:hover {
+    background-color: var(--dark-blue);
+}
+
+.admin-queue-drag {
+    cursor: move;
+    margin-right: 10px;
+    color: #aaa;
+}
+
+.admin-queue-item.dragging {
+    opacity: 0.5;
+    background-color: #f0f0f0;
+}
+
+.admin-queue-empty {
+    padding: 30px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
 
 .product-card {
 background-color: white;
