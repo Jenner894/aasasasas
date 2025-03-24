@@ -940,7 +940,7 @@ app.post('/api/auth/login', async (req, res) => {
             // Déterminer l'URL de redirection en fonction du rôle
             let redirectUrl = '/dashboard';
             if (user.role === 'admin') {
-                redirectUrl = '/admin-dashboard.html';
+                redirectUrl = '/admin-panel';
             }
             
             // Retourner les informations de l'utilisateur et l'URL de redirection
@@ -1229,6 +1229,9 @@ app.get('/', (req, res) => {
 });
 app.get('/dashboard', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+app.get('/admin-panel', isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin-panel.html'));
 });
 app.get('/commandes', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'commandes.html'));
