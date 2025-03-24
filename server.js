@@ -292,19 +292,39 @@ app.post('/api/products', isAuthenticated, async (req, res) => {
     }
     
     try {
-        const { name, description, category, pricePerGram, thcContent, videoUrl, inStock } = req.body;
+        const { 
+            name, 
+            description, 
+            category, 
+            priceOptions, 
+            thcContent, 
+            videoUrl, 
+            inStock 
+        } = req.body;
         
         // Validation des données
-        if (!name || !description || !category || !pricePerGram || thcContent === undefined || !videoUrl) {
-            return res.status(400).json({ success: false, message: 'Tous les champs sont requis' });
+        if (!name || !description || !category || !priceOptions || !videoUrl) {
+            return res.status(400).json({ success: false, message: 'Tous les champs obligatoires doivent être remplis' });
         }
         
+        // Vérification que les options de prix sont valides
+        if (!Array.isArray(priceOptions) || priceOptions.length === 0) {
+            return res.status(400).json({ success: false, message: 'Au moins une option de prix est requise' });
+        }
+        
+        for (const option of priceOptions) {
+            if (!option.quantity || !option.price || option.quantity <= 0 || option.price <= 0) {
+                return res.status(400).json({ success: false, message: 'Options de prix invalides' });
+            }
+        }
+        
+        // Création du nouveau produit
         const newProduct = new Product({
             name,
             description,
             category,
-            pricePerGram,
-            thcContent,
+            priceOptions,
+            thcContent: thcContent || 0,
             videoUrl,
             inStock: inStock !== undefined ? inStock : true
         });
@@ -315,6 +335,153 @@ app.post('/api/products', isAuthenticated, async (req, res) => {
     } catch (error) {
         console.error('Erreur lors de la création du produit:', error);
         res.status(500).json({ success: false, message: 'Erreur lors de la création du produit' });
+    }
+});
+
+// Route pour mettre à jour un produit (protégée, admin seulement)
+app.put('/api/products/:id', isAuthenticated, async (req, res) => {
+    // Vérifier si l'utilisateur est admin
+    if (req.session.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+    }
+    
+    try {
+        const { 
+            name, 
+            description, 
+            category, 
+            priceOptions, 
+            thcContent, 
+            videoUrl, 
+            inStock 
+        } = req.body;
+        
+        // Validation des données
+        if (!name || !description || !category || !priceOptions || !videoUrl) {
+            return res.status(400).json({ success: false, message: 'Tous les champs obligatoires doivent être remplis' });
+        }
+        
+        // Vérification que les options de prix sont valides
+        if (!Array.isArray(priceOptions) || priceOptions.length === 0) {
+            return res.status(400).json({ success: false, message: 'Au moins une option de prix est requise' });
+        }
+        
+        for (const option of priceOptions) {
+            if (!option.quantity || !option.price || option.quantity <= 0 || option.price <= 0) {
+                return res.status(400).json({ success: false, message: 'Options de prix invalides' });
+            }
+        }
+        
+        // Trouver et mettre à jour le produit
+        const updatedProduct = await Product.findByIdAndUpdate(
+            req.params.id,
+            {
+                name,
+                description,
+                category,
+                priceOptions,
+                thcContent: thcContent || 0,
+                videoUrl,
+                inStock: inStock !== undefined ? inStock : true,
+                updatedAt: Date.now()
+            },
+            { new: true } // Retourner le document mis à jour
+        );
+        
+        if (!updatedProduct) {
+            return res.status(404).json({ success: false, message: 'Produit non trouvé' });
+        }
+        
+        res.status(200).json({ success: true, product: updatedProduct });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du produit:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la mise à jour du produit' });
+    }
+});
+
+// Route pour supprimer un produit (protégée, admin seulement)
+app.delete('/api/products/:id', isAuthenticated, async (req, res) => {
+    // Vérifier si l'utilisateur est admin
+    if (req.session.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+    }
+    
+    try {
+        // Vérifier si le produit existe
+        const product = await Product.findById(req.params.id);
+        
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'Produit non trouvé' });
+        }
+        
+        // Vérifier si le produit est utilisé dans des commandes
+        const orderWithProduct = await Order.findOne({ productName: product.name });
+        
+        if (orderWithProduct) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Ce produit ne peut pas être supprimé car il est associé à des commandes existantes' 
+            });
+        }
+        
+        // Supprimer le produit
+        await Product.findByIdAndDelete(req.params.id);
+        
+        res.status(200).json({ success: true, message: 'Produit supprimé avec succès' });
+    } catch (error) {
+        console.error('Erreur lors de la suppression du produit:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la suppression du produit' });
+    }
+});
+
+// Route pour rechercher des produits
+app.get('/api/products/search', async (req, res) => {
+    try {
+        const { query, category } = req.query;
+        
+        // Construire les critères de recherche
+        const searchCriteria = {};
+        
+        if (category) {
+            searchCriteria.category = category;
+        }
+        
+        if (query) {
+            searchCriteria.$or = [
+                { name: { $regex: query, $options: 'i' } },
+                { description: { $regex: query, $options: 'i' } }
+            ];
+        }
+        
+        // Exécuter la recherche
+        const products = await Product.find(searchCriteria);
+        
+        res.status(200).json({ success: true, products });
+    } catch (error) {
+        console.error('Erreur lors de la recherche des produits:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la recherche des produits' });
+    }
+});
+
+// Route pour récupérer les produits en stock
+app.get('/api/products/filter/in-stock', async (req, res) => {
+    try {
+        const products = await Product.find({ inStock: true });
+        res.status(200).json({ success: true, products });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des produits en stock:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des produits en stock' });
+    }
+});
+
+// Route pour récupérer les produits par catégorie
+app.get('/api/products/category/:category', async (req, res) => {
+    try {
+        const products = await Product.find({ category: req.params.category });
+        res.status(200).json({ success: true, products });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des produits par catégorie:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des produits par catégorie' });
     }
 });
 
@@ -1529,6 +1696,9 @@ app.get('/dashboard', isAuthenticated, (req, res) => {
 });
 app.get('/admin-panel', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin-panel.html'));
+});
+app.get('/admin-produit', isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin-produit.html'));
 });
 app.get('/commandes', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'commandes.html'));
