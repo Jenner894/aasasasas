@@ -1164,6 +1164,229 @@
             gap: 5px;
         }
     }
+        #delivery-queue-section {
+    margin-bottom: 30px;
+}
+
+/* Cards d'informations */
+.queue-info {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.queue-card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    padding: 15px;
+    flex: 1;
+    min-width: 150px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.queue-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+.queue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.queue-title {
+    font-weight: bold;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+}
+
+.queue-icon {
+    font-size: 1.5rem;
+}
+
+.queue-body {
+    text-align: center;
+}
+
+.queue-position {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--primary-blue);
+    margin-bottom: 5px;
+}
+
+.queue-time {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: var(--primary-blue);
+    margin-bottom: 5px;
+}
+
+.queue-status {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.queue-status.status-pending {
+    color: var(--status-pending);
+}
+
+.queue-status.status-processing {
+    color: var(--status-processing);
+}
+
+.queue-status.status-shipped {
+    color: var(--status-shipped);
+}
+
+.queue-status.status-delivered {
+    color: var(--status-delivered);
+}
+
+.queue-label {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* Visualisation de la file d'attente */
+.queue-visualization {
+    background-color: white;
+    border-radius: 15px;
+    padding: 30px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.queue-line {
+    height: 6px;
+    background-color: #e0e0e0;
+    border-radius: 3px;
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.queue-progress {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: linear-gradient(to right, var(--primary-blue), var(--accent-green));
+    border-radius: 3px;
+    width: 25%; /* À modifier par JavaScript selon l'étape */
+    transition: width 0.5s ease-in-out;
+}
+
+.queue-markers {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+}
+
+.queue-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    width: 60px;
+    opacity: 0.6;
+    transition: all 0.3s;
+}
+
+.queue-marker.active {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.marker-icon {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    background: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s;
+}
+
+.queue-marker.active .marker-icon {
+    border-color: var(--accent-green);
+    background-color: rgba(78, 255, 141, 0.1);
+}
+
+.marker-label {
+    font-size: 0.8rem;
+    text-align: center;
+    color: #666;
+}
+
+.queue-refresh {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.refresh-icon {
+    margin-right: 8px;
+}
+
+.last-updated {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 10px;
+}
+
+/* Animations */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.queue-card:hover .queue-position,
+.queue-card:hover .queue-time,
+.queue-card:hover .queue-status {
+    animation: pulse 1s infinite;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .queue-info {
+        flex-direction: column;
+    }
+    
+    .queue-card {
+        width: 100%;
+    }
+    
+    .queue-markers {
+        padding: 0;
+    }
+    
+    .marker-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 1.2rem;
+    }
+    
+    .marker-label {
+        font-size: 0.7rem;
+    }
+}
     </style>
 </head>
 <body>
