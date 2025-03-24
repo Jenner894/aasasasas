@@ -100,8 +100,16 @@ const OrderSchema = new mongoose.Schema({
                 return this.delivery.type === 'instant' ? new Date() : null;
             }
         }
+    },
+    // Nouveau: informations de file d'attente
+    queueInfo: {
+        position: { type: Number, default: null },
+        estimatedTime: { type: Number, default: null }, // en minutes
+        enteredQueueAt: { type: Date, default: null },
+        lastUpdated: { type: Date, default: null }
     }
 });
+
 
 
 // Middleware pour mettre à jour la liste des commandes de l'utilisateur
@@ -255,7 +263,256 @@ app.use(session({
 }));
 
 
+async function updateDeliveryQueue() {
+    try {
+        // Récupérer toutes les commandes non livrées et non annulées
+        const pendingOrders = await Order.find({
+            status: { $in: ['En attente', 'En préparation', 'Expédié'] }
+        }).sort({ createdAt: 1 }); // Tri par ordre de création (FIFO)
+        
+        // Pour chaque commande, mettre à jour la position et le temps estimé
+        for (let i = 0; i < pendingOrders.length; i++) {
+            const order = pendingOrders[i];
+            
+            // Si la commande n'est pas encore dans la file d'attente, l'ajouter
+            if (!order.queueInfo.enteredQueueAt) {
+                order.queueInfo.enteredQueueAt = new Date();
+            }
+            
+            // Mise à jour de la position
+            order.queueInfo.position = i + 1;
+            
+            // Calcul du temps estimé (chaque commande prend environ 15 minutes)
+            // Ajuster ces valeurs selon les données réelles
+            const baseDeliveryTime = 15; // minutes par commande
+            let estimatedTime;
+            
+            if (order.status === 'En attente') {
+                estimatedTime = i * baseDeliveryTime;
+            } else if (order.status === 'En préparation') {
+                estimatedTime = i * baseDeliveryTime / 2; // Préparation déjà commencée
+            } else if (order.status === 'Expédié') {
+                estimatedTime = 5; // Presque arrivé
+            }
+            
+            order.queueInfo.estimatedTime = estimatedTime;
+            order.queueInfo.lastUpdated = new Date();
+            
+            await order.save();
+        }
+        
+        console.log(`File d'attente mise à jour: ${pendingOrders.length} commandes`);
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour de la file d\'attente:', error);
+    }
+}
 
+// 3. Middleware pour mettre à jour la file d'attente après chaque changement de statut
+OrderSchema.post('save', async function() {
+    // Vérifier si le statut a changé
+    if (this.isModified('status')) {
+        // Mettre à jour la file d'attente
+        setTimeout(updateDeliveryQueue, 0); // Exécuter de manière asynchrone
+    }
+});
+
+// Également déclencher une mise à jour périodique (toutes les 5 minutes)
+setInterval(updateDeliveryQueue, 5 * 60 * 1000);
+
+// 4. Créer des routes API pour la file d'attente
+
+// Route pour obtenir les informations de file d'attente d'une commande spécifique
+app.get('/api/orders/:id/queue', isAuthenticated, async (req, res) => {
+    try {
+        const order = await Order.findOne({
+            _id: req.params.id,
+            user: req.session.user.id
+        });
+        
+        if (!order) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Commande non trouvée' 
+            });
+        }
+        
+        // Si la commande est livrée ou annulée, elle n'est plus dans la file d'attente
+        if (order.status === 'Livré' || order.status === 'Annulé') {
+            return res.status(200).json({
+                success: true,
+                inQueue: false,
+                message: order.status === 'Livré' ? 'Commande livrée' : 'Commande annulée'
+            });
+        }
+        
+        // Récupérer les informations de file d'attente
+        res.status(200).json({
+            success: true,
+            inQueue: true,
+            queueInfo: order.queueInfo,
+            status: order.status
+        });
+        
+    } catch (error) {
+        console.error('Erreur lors de la récupération des informations de file d\'attente:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la récupération des informations de file d\'attente' 
+        });
+    }
+});
+
+// Route pour obtenir un résumé de la file d'attente (pour l'administrateur)
+app.get('/api/admin/delivery-queue', isAuthenticated, async (req, res) => {
+    try {
+        // Vérifier si l'utilisateur est admin
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+        }
+        
+        // Récupérer toutes les commandes dans la file d'attente
+        const queuedOrders = await Order.find({
+            status: { $in: ['En attente', 'En préparation', 'Expédié'] }
+        })
+        .sort({ 'queueInfo.position': 1 })
+        .populate('user', 'username telegramId');
+        
+        // Construire la réponse
+        const queueSummary = queuedOrders.map(order => ({
+            orderId: order._id,
+            status: order.status,
+            username: order.user.username,
+            telegramId: order.user.telegramId,
+            productName: order.productName,
+            deliveryType: order.delivery.type,
+            address: order.delivery.address,
+            position: order.queueInfo.position,
+            estimatedTime: order.queueInfo.estimatedTime,
+            createdAt: order.createdAt
+        }));
+        
+        res.status(200).json({
+            success: true,
+            queueLength: queuedOrders.length,
+            queue: queueSummary
+        });
+        
+    } catch (error) {
+        console.error('Erreur lors de la récupération de la file d\'attente:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la récupération de la file d\'attente' 
+        });
+    }
+});
+
+// Route pour mettre à jour manuellement la file d'attente (pour l'administrateur)
+app.post('/api/admin/update-queue', isAuthenticated, async (req, res) => {
+    try {
+        // Vérifier si l'utilisateur est admin
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+        }
+        
+        // Déclencher la mise à jour de la file d'attente
+        await updateDeliveryQueue();
+        
+        res.status(200).json({
+            success: true,
+            message: 'File d\'attente mise à jour avec succès'
+        });
+        
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour de la file d\'attente:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la mise à jour de la file d\'attente' 
+        });
+    }
+});
+
+// Route pour réorganiser manuellement la file d'attente (pour l'administrateur)
+app.post('/api/admin/reorder-queue', isAuthenticated, async (req, res) => {
+    try {
+        // Vérifier si l'utilisateur est admin
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+        }
+        
+        const { orderId, newPosition } = req.body;
+        
+        if (!orderId || !newPosition) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'ID de commande et nouvelle position requis' 
+            });
+        }
+        
+        // Récupérer l'ordre à déplacer
+        const orderToMove = await Order.findById(orderId);
+        
+        if (!orderToMove) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Commande non trouvée' 
+            });
+        }
+        
+        // Récupérer toutes les commandes dans la file d'attente
+        const queuedOrders = await Order.find({
+            status: { $in: ['En attente', 'En préparation', 'Expédié'] }
+        }).sort({ 'queueInfo.position': 1 });
+        
+        // Vérifier que la nouvelle position est valide
+        if (newPosition < 1 || newPosition > queuedOrders.length) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Position invalide' 
+            });
+        }
+        
+        // Mettre à jour les positions
+        const currentPosition = orderToMove.queueInfo.position;
+        
+        // Si déplacement vers le bas
+        if (newPosition > currentPosition) {
+            for (const order of queuedOrders) {
+                if (order.queueInfo.position > currentPosition && order.queueInfo.position <= newPosition) {
+                    order.queueInfo.position--;
+                    await order.save();
+                }
+            }
+        } 
+        // Si déplacement vers le haut
+        else if (newPosition < currentPosition) {
+            for (const order of queuedOrders) {
+                if (order.queueInfo.position >= newPosition && order.queueInfo.position < currentPosition) {
+                    order.queueInfo.position++;
+                    await order.save();
+                }
+            }
+        }
+        
+        // Mettre à jour la position de la commande déplacée
+        orderToMove.queueInfo.position = newPosition;
+        await orderToMove.save();
+        
+        // Mettre à jour les temps estimés
+        await updateDeliveryQueue();
+        
+        res.status(200).json({
+            success: true,
+            message: 'File d\'attente réorganisée avec succès'
+        });
+        
+    } catch (error) {
+        console.error('Erreur lors de la réorganisation de la file d\'attente:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la réorganisation de la file d\'attente' 
+        });
+    }
+});
 ////////////    Dashboard ////////////////
 
 
