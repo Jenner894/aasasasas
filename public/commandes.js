@@ -15,6 +15,47 @@ document.addEventListener('DOMContentLoaded', function() {
     initChatModal();
 });
 
+function App() {
+  const [queueInfo, setQueueInfo] = useState(null);
+
+  useEffect(() => {
+    // Récupérer les informations de la file d'attente
+    const fetchQueueInfo = async () => {
+      try {
+        const response = await fetch('/api/orders/queue', {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        if (data.success) {
+          setQueueInfo(data.queueInfo);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération des informations de file d\'attente:', error);
+      }
+    };
+
+    // Mettre à jour les informations toutes les 30 secondes
+    fetchQueueInfo();
+    const interval = setInterval(fetchQueueInfo, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      {queueInfo && (
+        <div className="fixed top-4 right-4 bg-white p-4 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-2">File d'attente</h3>
+          <div className="text-sm">
+            <p>Position: {queueInfo.position}</p>
+            <p>Temps estimé: {queueInfo.estimatedTime} min</p>
+          </div>
+        </div>
+      )}
+      <p>Start prompting (or editing) to see magic happen :)</p>
+    </div>
+  );
+}
 // Vérifier si l'utilisateur est authentifié
 function checkAuthStatus() {
     fetch('/api/auth/status')
