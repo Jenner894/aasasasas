@@ -793,7 +793,304 @@ app.put('/api/orders/:id/delivery', isAuthenticated, async (req, res) => {
 });
 
 // ===================== ROUTES POUR ADMINISTRATEURS =====================
+// ===================== ROUTES POUR ADMINISTRATION DES LIVRAISONS =====================
 
+// Route pour récupérer toutes les commandes avec leurs détails de livraison (pour admin)
+app.get('/api/admin/orders', isAuthenticated, async (req, res) => {
+    try {
+        // Vérifier si l'utilisateur est admin
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+        }
+        
+        // Récupérer toutes les commandes avec peuplement des informations utilisateur
+        const orders = await Order.find({})
+            .sort({ createdAt: -1 })
+            .populate('user', 'username telegramId');
+        
+        res.status(200).json({ success: true, orders });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des commandes:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des commandes' });
+    }
+});
+
+// Route pour obtenir les statistiques des livraisons (pour admin)
+app.get('/api/admin/deliveries/stats', isAuthenticated, async (req, res) => {
+    try {
+        // Vérifier si l'utilisateur est admin
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+        }
+        
+        // Compter les commandes par statut
+        const pendingCount = await Order.countDocuments({ status: 'En attente' });
+        const processingCount = await Order.countDocuments({ status: 'En préparation' });
+        const shippedCount = await Order.countDocuments({ status: 'Expédié' });
+        const deliveredCount = await Order.countDocuments({ status: 'Livré' });
+        const cancelledCount = await Order.countDocuments({ status: 'Annulé' });
+        
+        // Compter les livraisons planifiées
+        const scheduledCount = await Order.countDocuments({ 'delivery.type': 'scheduled' });
+        
+        // Livraisons aujourd'hui
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const todayDeliveries = await Order.countDocuments({
+            createdAt: { $gte: today, $lt: tomorrow }
+        });
+        
+        res.status(200).json({
+            success: true,
+            stats: {
+                pending: pendingCount,
+                processing: processingCount,
+                shipped: shippedCount,
+                delivered: deliveredCount,
+                cancelled: cancelledCount,
+                scheduled: scheduledCount,
+                today: todayDeliveries
+            }
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des statistiques:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des statistiques' });
+    }
+});
+
+// Route pour mettre à jour le statut d'une commande (pour admin)
+app.put('/api/orders/:id/status', isAuthenticated, async (req, res) => {
+    try {
+        const { status } = req.body;
+        
+        if (!status) {
+            return res.status(400).json({ success: false, message: 'Le statut est requis' });
+        }
+        
+        // Vérifier si l'utilisateur est admin
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Action non autorisée' });
+        }
+        
+        // Vérifier si le statut est valide
+        const validStatuses = ['En attente', 'En préparation', 'Expédié', 'Livré', 'Annulé'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ success: false, message: 'Statut invalide' });
+        }
+        
+        // Mettre à jour la commande
+        const order = await Order.findByIdAndUpdate(
+            req.params.id,
+            { status },
+            { new: true }
+        );
+        
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Commande non trouvée' });
+        }
+        
+        res.status(200).json({ success: true, order });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du statut:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la mise à jour du statut' });
+    }
+});
+
+// Route pour obtenir les messages de chat d'une commande (pour admin)
+app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
+    try {
+        // Vérifier si l'utilisateur est admin
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+        }
+        
+        // Vérifier si la commande existe
+        const order = await Order.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Commande non trouvée' });
+        }
+        
+        // Simuler des messages (normalement vous les récupéreriez d'une collection de messages)
+        const messages = [
+            {
+                sender: 'system',
+                content: 'Début de la conversation avec le client.',
+                timestamp: new Date(Date.now() - 3600000) // 1 heure dans le passé
+            },
+            {
+                sender: 'livreur',
+                content: 'Bonjour ! Je suis votre livreur pour cette commande. Je vous contacterai dès que votre commande sera prête à être livrée.',
+                timestamp: new Date(Date.now() - 3500000) // 58 minutes dans le passé
+            },
+            {
+                sender: 'client',
+                content: 'D\'accord, merci. Est-ce que vous avez une estimation du temps de livraison ?',
+                timestamp: new Date(Date.now() - 3400000) // 56 minutes dans le passé
+            },
+            {
+                sender: 'livreur',
+                content: 'Pour le moment, votre commande est en préparation. Je pense pouvoir vous livrer dans environ 30 minutes.',
+                timestamp: new Date(Date.now() - 3300000) // 55 minutes dans le passé
+            }
+        ];
+        
+        res.status(200).json({ success: true, messages });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des messages:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des messages' });
+    }
+});
+
+// Route pour envoyer un message dans le chat d'une commande (pour admin)
+app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
+    try {
+        const { message } = req.body;
+        
+        if (!message) {
+            return res.status(400).json({ success: false, message: 'Le message est requis' });
+        }
+        
+        // Vérifier si l'utilisateur est admin
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+        }
+        
+        // Vérifier si la commande existe
+        const order = await Order.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Commande non trouvée' });
+        }
+        
+        // Simuler la sauvegarde du message et une réponse
+        // (normalement vous les enregistreriez dans une collection de messages)
+        const now = new Date();
+        
+        const newMessage = {
+            sender: 'livreur',
+            content: message,
+            timestamp: now
+        };
+        
+        // Simuler une réponse du client
+        const responses = [
+            'D\'accord, merci pour l\'info !',
+            'Est-ce que vous pourriez me donner plus de détails ?',
+            'Parfait, j\'attends votre arrivée.',
+            'Merci pour votre réponse rapide.',
+            'Je suis disponible à cette adresse dès maintenant.'
+        ];
+        
+        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        
+        const clientResponse = {
+            sender: 'client',
+            content: randomResponse,
+            timestamp: new Date(now.getTime() + 1000) // 1 seconde plus tard
+        };
+        
+        res.status(200).json({ 
+            success: true, 
+            messages: [newMessage, clientResponse]
+        });
+    } catch (error) {
+        console.error('Erreur lors de l\'envoi du message:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de l\'envoi du message' });
+    }
+});
+
+// Route pour obtenir les détails d'une commande spécifique (pour admin)
+app.get('/api/admin/orders/:id', isAuthenticated, async (req, res) => {
+    try {
+        // Vérifier si l'utilisateur est admin
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+        }
+        
+        // Récupérer la commande avec les informations utilisateur
+        const order = await Order.findById(req.params.id)
+            .populate('user', 'username telegramId');
+        
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Commande non trouvée' });
+        }
+        
+        res.status(200).json({ success: true, order });
+    } catch (error) {
+        console.error('Erreur lors de la récupération de la commande:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération de la commande' });
+    }
+});
+
+// Route pour rechercher des commandes (pour admin)
+app.get('/api/admin/orders/search', isAuthenticated, async (req, res) => {
+    try {
+        // Vérifier si l'utilisateur est admin
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+        }
+        
+        const { query, status, type } = req.query;
+        
+        // Construire les critères de recherche
+        const searchCriteria = {};
+        
+        // Filtrer par statut si spécifié
+        if (status && status !== 'all') {
+            searchCriteria.status = status;
+        }
+        
+        // Filtrer par type de livraison si spécifié
+        if (type && type !== 'all') {
+            searchCriteria['delivery.type'] = type;
+        }
+        
+        // Recherche textuelle si spécifiée
+        let orders = [];
+        if (query) {
+            // Recherche dans les champs pertinents
+            const textSearchCriteria = {
+                ...searchCriteria,
+                $or: [
+                    { productName: { $regex: query, $options: 'i' } },
+                    { 'delivery.address': { $regex: query, $options: 'i' } },
+                    { _id: { $regex: query, $options: 'i' } }
+                ]
+            };
+            
+            // Recherche par utilisateur (nécessite un traitement spécial)
+            const users = await User.find({
+                $or: [
+                    { username: { $regex: query, $options: 'i' } },
+                    { telegramId: { $regex: query, $options: 'i' } }
+                ]
+            });
+            
+            const userIds = users.map(user => user._id);
+            
+            // Si des utilisateurs correspondent, ajouter un critère pour les inclure
+            if (userIds.length > 0) {
+                textSearchCriteria.$or.push({ user: { $in: userIds } });
+            }
+            
+            orders = await Order.find(textSearchCriteria)
+                .sort({ createdAt: -1 })
+                .populate('user', 'username telegramId');
+        } else {
+            // Si pas de recherche textuelle, récupérer selon les critères de filtre uniquement
+            orders = await Order.find(searchCriteria)
+                .sort({ createdAt: -1 })
+                .populate('user', 'username telegramId');
+        }
+        
+        res.status(200).json({ success: true, orders });
+    } catch (error) {
+        console.error('Erreur lors de la recherche des commandes:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la recherche des commandes' });
+    }
+});
 // ========================== ROUTES POUR L'ADMINISTRATEUR ==========================
 
 // Route pour récupérer toutes les commandes (admin seulement)
