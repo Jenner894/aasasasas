@@ -89,7 +89,155 @@ function initQueueModal() {
         });
     }
 }
+function updateQueueStepMarkers(status) {
+    // Récupérer tous les marqueurs d'étape dans le modal
+    const markers = document.querySelectorAll('#queue-modal .queue-marker');
+    
+    // Réinitialiser tous les marqueurs (enlever la classe active)
+    markers.forEach(marker => {
+        marker.classList.remove('active');
+    });
+    
+    // Activer les marqueurs appropriés en fonction du statut sélectionné
+    switch(status) {
+        case 'En attente':
+            // Activer uniquement le premier marqueur (Confirmation)
+            markers[0].classList.add('active');
+            break;
+            
+        case 'En préparation':
+            // Activer les deux premiers marqueurs (Confirmation et Préparation)
+            markers[0].classList.add('active');
+            markers[1].classList.add('active');
+            break;
+            
+        case 'Expédié':
+        case 'En route':
+        case 'Prête pour livraison':
+            // Activer les trois premiers marqueurs (Confirmation, Préparation, En route)
+            markers[0].classList.add('active');
+            markers[1].classList.add('active');
+            markers[2].classList.add('active');
+            break;
+            
+        case 'Livré':
+            // Activer tous les marqueurs (commande complète)
+            markers.forEach(marker => {
+                marker.classList.add('active');
+            });
+            break;
+            
+        case 'Annulé':
+            // Pour les commandes annulées, vous pourriez vouloir une visualisation spéciale
+            // Par défaut, on garde juste le premier marqueur actif
+            markers[0].classList.add('active');
+            break;
+            
+        default:
+            // Par défaut, activer seulement le premier marqueur
+            markers[0].classList.add('active');
+    }
+    
+    // Mettre à jour la barre de progression en fonction du statut
+    let progressPercentage = 0;
+    
+    switch(status) {
+        case 'En attente':
+            progressPercentage = 25;
+            break;
+        case 'En préparation':
+            progressPercentage = 50;
+            break;
+        case 'Expédié':
+        case 'En route':
+        case 'Prête pour livraison':
+            progressPercentage = 75;
+            break;
+        case 'Livré':
+            progressPercentage = 100;
+            break;
+        case 'Annulé':
+            progressPercentage = 25; // Pour les commandes annulées, on garde une progression minimale
+            break;
+        default:
+            progressPercentage = 25;
+    }
+    
+    // Mettre à jour la barre de progression
+    const progressBar = document.getElementById('modal-queue-progress');
+    if (progressBar) {
+        progressBar.style.width = `${progressPercentage}%`;
+    }
+    
+    // Mettre à jour l'affichage du statut dans le modal
+    const statusElement = document.getElementById('modal-queue-status');
+    if (statusElement) {
+        statusElement.textContent = status;
+        
+        // Mettre à jour la classe du statut
+        statusElement.className = 'queue-status';
+        switch(status) {
+            case 'En attente':
+                statusElement.classList.add('status-pending');
+                break;
+            case 'En préparation':
+                statusElement.classList.add('status-processing');
+                break;
+            case 'Expédié':
+            case 'En route':
+            case 'Prête pour livraison':
+                statusElement.classList.add('status-shipped');
+                break;
+            case 'Livré':
+                statusElement.classList.add('status-delivered');
+                break;
+            case 'Annulé':
+                statusElement.classList.add('status-cancelled');
+                break;
+        }
+    }
+    
+    // Mettre à jour l'affichage du temps estimé en fonction du statut
+    updateEstimatedTimeDisplay(status);
+}
 
+/**
+ * Met à jour l'affichage du temps estimé en fonction du statut
+ * @param {string} status - Le statut sélectionné par l'admin
+ */
+function updateEstimatedTimeDisplay(status) {
+    const timeElement = document.getElementById('modal-queue-time');
+    if (!timeElement) return;
+    
+    // Définir le temps estimé en fonction du statut
+    switch(status) {
+        case 'En attente':
+            // Pour les commandes en attente, on peut estimer un temps plus long
+            timeElement.textContent = '45-60 min';
+            break;
+        case 'En préparation':
+            // Pour les commandes en préparation, on réduit le temps estimé
+            timeElement.textContent = '20-30 min';
+            break;
+        case 'Expédié':
+        case 'En route':
+        case 'Prête pour livraison':
+            // Pour les commandes en route, le temps est encore plus court
+            timeElement.textContent = '5-10 min';
+            break;
+        case 'Livré':
+            // Pour les commandes livrées, on change le texte
+            timeElement.textContent = 'Terminé';
+            break;
+        case 'Annulé':
+            // Pour les commandes annulées, on indique l'annulation
+            timeElement.textContent = 'Annulé';
+            break;
+        default:
+            // Par défaut, on garde un temps estimé général
+            timeElement.textContent = '30-45 min';
+    }
+}
 // Fonction pour initialiser l'aperçu de la file d'attente dans les cartes de commande
 function initQueuePreview() {
     // Récupérer toutes les commandes actives
