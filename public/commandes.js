@@ -28,6 +28,7 @@ function initQueueModal() {
         // Ajouter les événements pour les boutons de file d'attente
         document.querySelectorAll('.queue-btn').forEach(button => {
             button.addEventListener('click', function(e) {
+                e.preventDefault(); // Empêcher le comportement par défaut
                 e.stopPropagation(); // Empêcher l'ouverture/fermeture de la carte
                 
                 const orderId = this.getAttribute('data-order');
@@ -53,6 +54,7 @@ function initQueueModal() {
         });
     }
 }
+
 // Fonction pour initialiser l'aperçu de la file d'attente dans les cartes de commande
 function initQueuePreview() {
     // Récupérer toutes les commandes actives
