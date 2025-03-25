@@ -12,60 +12,277 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialiser le modal de chat
     initChatModal();
-
+    removeIndependentQueueSection();
+    enhanceModalAnimations();
+    setupPeriodicQueueUpdates();
+    setupStatusChangeNotifications();
     // Initialiser l'aperçu de la file d'attente
     initQueuePreview();
 });
-
-// Initialiser l'aperçu de la file d'attente
-function initQueuePreview() {
-    // Créer l'élément d'aperçu de la file d'attente s'il n'existe pas
-    let queuePreview = document.getElementById('queue-preview');
-    if (!queuePreview) {
-        queuePreview = document.createElement('div');
-        queuePreview.id = 'queue-preview';
-        queuePreview.className = 'queue-info';
-        queuePreview.innerHTML = `
-            <h3 class="queue-info-header">File d'attente</h3>
-            <div class="queue-info-content">
-                <div class="queue-position">
-                    <span>Position: </span>
-                    <span id="queue-position-value">-</span>
-                </div>
-                <div class="queue-time">
-                    <span>Temps estimé: </span>
-                    <span id="queue-time-value">-</span>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(queuePreview);
-    }
-
-    // Fonction pour mettre à jour les informations de la file d'attente
-    async function updateQueueInfo() {
-        try {
-            const response = await fetch('/api/orders/queue', {
-                credentials: 'include'
-            });
-            const data = await response.json();
-            
-            if (data.success && data.queueInfo) {
-                document.getElementById('queue-position-value').textContent = data.queueInfo.position;
-                document.getElementById('queue-time-value').textContent = `${data.queueInfo.estimatedTime} min`;
-                queuePreview.style.display = 'block';
-            } else {
-                queuePreview.style.display = 'none';
-            }
-        } catch (error) {
-            console.error('Erreur lors de la récupération des informations de file d\'attente:', error);
-            queuePreview.style.display = 'none';
+///////////////////////////////////////////////////////////////////////////////////
+// Fonction pour modifier l'interface utilisateur de la commande
+function updateOrderUI(orderId, position, estimatedTime, status) {
+    // Trouver la carte de commande correspondante
+    const orderCards = document.querySelectorAll('.order-card');
+    let targetCard = null;
+    
+    orderCards.forEach(card => {
+        const cardOrderId = card.querySelector('.order-header .order-id').textContent.split('#')[1].trim();
+        if (cardOrderId === orderId) {
+            targetCard = card;
         }
+    });
+    
+    if (!targetCard) return;
+    
+    // Ajouter ou mettre à jour l'indicateur de position dans l'en-tête de la commande
+    let positionIndicator = targetCard.querySelector('.queue-position-indicator');
+    
+    if (!positionIndicator) {
+        // Créer l'élément s'il n'existe pas
+        positionIndicator = document.createElement('div');
+        positionIndicator.className = 'queue-position-indicator';
+        
+        // Insérer avant l'icône d'expansion
+        const expandIcon = targetCard.querySelector('.expand-icon');
+        targetCard.querySelector('.order-header').insertBefore(positionIndicator, expandIcon);
     }
-
-    // Mettre à jour les informations immédiatement et toutes les 30 secondes
-    updateQueueInfo();
-    setInterval(updateQueueInfo, 30000);
+    
+    // Mettre à jour le contenu
+    positionIndicator.innerHTML = `
+        <span class="position-icon">🚶</span>
+        <span>Position: ${position}</span>
+    `;
+    
+    // Mettre à jour le style en fonction de la position
+    if (position <= 2) {
+        positionIndicator.style.color = 'var(--status-shipped)';
+        positionIndicator.style.fontWeight = 'bold';
+    } else if (position <= 5) {
+        positionIndicator.style.color = 'var(--status-processing)';
+    } else {
+        positionIndicator.style.color = 'var(--text-dark)';
+    }
 }
+
+// Fonction pour simuler la mise à jour périodique des informations de file d'attente
+function setupPeriodicQueueUpdates() {
+    // Pour chaque commande active (non livrée), simuler des mises à jour
+    const activeOrders = document.querySelectorAll('.order-card:not([data-status="delivered"])');
+    
+    activeOrders.forEach(orderCard => {
+        // Obtenir l'ID de la commande
+        const orderId = orderCard.querySelector('.order-header .order-id').textContent.split('#')[1].trim();
+        
+        // Générer une position initiale aléatoire
+        const initialPosition = Math.floor(Math.random() * 10) + 1;
+        
+        // Stocker la position dans un attribut de données
+        orderCard.setAttribute('data-queue-position', initialPosition);
+        
+        // Calculer le temps estimé
+        const estimatedTime = initialPosition * (5 + Math.floor(Math.random() * 5));
+        
+        // Déterminer le statut
+        let status;
+        if (initialPosition <= 2) {
+            status = "En route";
+        } else if (initialPosition <= 5) {
+            status = "En préparation";
+        } else {
+            status = "En attente";
+        }
+        
+        // Mettre à jour l'UI
+        updateOrderUI(orderId, initialPosition, estimatedTime, status);
+    });
+    
+    // Configurer une mise à jour périodique (toutes les 60-120 secondes)
+    setInterval(() => {
+        activeOrders.forEach(orderCard => {
+            // Obtenir l'ID de la commande
+            const orderId = orderCard.querySelector('.order-header .order-id').textContent.split('#')[1].trim();
+            
+            // Récupérer la position actuelle
+            let position = parseInt(orderCard.getAttribute('data-queue-position'));
+            
+            // Réduire la position aléatoirement (simulation d'avancement dans la file d'attente)
+            const reduction = Math.random() > 0.7 ? 1 : 0;
+            position = Math.max(1, position - reduction);
+            
+            // Mettre à jour la position dans l'attribut de données
+            orderCard.setAttribute('data-queue-position', position);
+            
+            // Calculer le temps estimé
+            const estimatedTime = position * (5 + Math.floor(Math.random() * 5));
+            
+            // Déterminer le statut
+            let status;
+            if (position <= 2) {
+                status = "En route";
+            } else if (position <= 5) {
+                status = "En préparation";
+            } else {
+                status = "En attente";
+            }
+            
+            // Mettre à jour l'UI
+            updateOrderUI(orderId, position, estimatedTime, status);
+        });
+    }, 60000 + Math.random() * 60000); // Entre 60 et 120 secondes
+}
+
+// Fonction pour améliorer l'animation du modal
+function enhanceModalAnimations() {
+    // Ajouter des transitions plus fluides pour l'ouverture et la fermeture du modal
+    const modalStyle = document.createElement('style');
+    modalStyle.textContent = `
+        .modal {
+            transition: opacity 0.4s ease-out, visibility 0.4s ease-out;
+        }
+        
+        .modal .modal-content {
+            transform: translateY(20px);
+            opacity: 0;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+        }
+        
+        .modal.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .queue-progress {
+            transition: width 1s ease-in-out;
+        }
+        
+        .queue-marker {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        }
+        
+        .queue-marker.active {
+            transform: scale(1.1);
+        }
+    `;
+    document.head.appendChild(modalStyle);
+}
+
+// Fonction pour ajouter des notifications de changement de statut
+function setupStatusChangeNotifications() {
+    // Stocker les statuts initiaux des commandes
+    const orderStatuses = {};
+    
+    document.querySelectorAll('.order-card').forEach(card => {
+        const orderId = card.querySelector('.order-header .order-id').textContent.split('#')[1].trim();
+        const statusText = card.querySelector('.order-status').textContent;
+        orderStatuses[orderId] = statusText;
+    });
+    
+    // Vérifier périodiquement les changements de statut (toutes les 2 minutes)
+    setInterval(() => {
+        document.querySelectorAll('.order-card').forEach(card => {
+            const orderId = card.querySelector('.order-header .order-id').textContent.split('#')[1].trim();
+            const currentStatus = card.querySelector('.order-status').textContent;
+            
+            // Si le statut a changé
+            if (orderStatuses[orderId] && orderStatuses[orderId] !== currentStatus) {
+                // Créer une notification
+                showStatusChangeNotification(orderId, orderStatuses[orderId], currentStatus);
+                
+                // Mettre à jour le statut stocké
+                orderStatuses[orderId] = currentStatus;
+            }
+        });
+    }, 120000);
+}
+
+// Fonction pour afficher une notification de changement de statut
+function showStatusChangeNotification(orderId, oldStatus, newStatus) {
+    // Créer l'élément de notification
+    const notification = document.createElement('div');
+    notification.className = 'status-notification';
+    notification.innerHTML = `
+        <div class="notification-icon">🔔</div>
+        <div class="notification-content">
+            <div class="notification-title">Commande #${orderId}</div>
+            <div class="notification-message">Statut changé de "${oldStatus}" à "${newStatus}"</div>
+        </div>
+        <div class="notification-close">×</div>
+    `;
+    
+    // Styles pour la notification
+    notification.style.position = 'fixed';
+    notification.style.bottom = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = 'white';
+    notification.style.borderRadius = '10px';
+    notification.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
+    notification.style.padding = '15px';
+    notification.style.display = 'flex';
+    notification.style.alignItems = 'center';
+    notification.style.zIndex = '2000';
+    notification.style.maxWidth = '350px';
+    notification.style.animation = 'slideIn 0.5s forwards';
+    
+    // Ajouter l'animation CSS
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Styles pour les éléments internes
+    notification.querySelector('.notification-icon').style.fontSize = '24px';
+    notification.querySelector('.notification-icon').style.marginRight = '15px';
+    notification.querySelector('.notification-content').style.flex = '1';
+    notification.querySelector('.notification-title').style.fontWeight = 'bold';
+    notification.querySelector('.notification-title').style.marginBottom = '5px';
+    notification.querySelector('.notification-close').style.cursor = 'pointer';
+    notification.querySelector('.notification-close').style.fontSize = '20px';
+    
+    // Fermer la notification lors du clic sur le bouton de fermeture
+    notification.querySelector('.notification-close').addEventListener('click', () => {
+        notification.style.animation = 'slideOut 0.5s forwards';
+        setTimeout(() => {
+            notification.remove();
+        }, 500);
+    });
+    
+    // Ajouter la notification au DOM
+    document.body.appendChild(notification);
+    
+    // Fermer automatiquement après 5 secondes
+    setTimeout(() => {
+        if (document.body.contains(notification)) {
+            notification.style.animation = 'slideOut 0.5s forwards';
+            setTimeout(() => {
+                notification.remove();
+            }, 500);
+        }
+    }, 5000);
+}
+
+///////////////////////////////////////////////////////////////////////////////////
 // Vérifier si l'utilisateur est authentifié
 function checkAuthStatus() {
     fetch('/api/auth/status')
