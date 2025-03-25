@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initFilterButtons();
     initExpandButtons();
     setupSearchOrder();
-    
+        // Initialiser le modal de file d'attente
+    initQueueModal();
     // Initialiser le modal de chat
     initChatModal();
     removeIndependentQueueSection();
@@ -18,10 +19,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialiser l'aperçu de la file d'attente
     initQueuePreview();
 });
-///////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////// fileee d'attente //////////////////////// 
 // Fonction pour initialiser le modal de file d'attente
 function initQueueModal() {
-    // Vérifier si le modal de file d'attente existe déjà
+    // Vérifier si le modal existe déjà
     const queueModal = document.getElementById('queue-modal');
     
     if (queueModal) {
@@ -33,7 +34,7 @@ function initQueueModal() {
                 const orderId = this.getAttribute('data-order');
                 document.getElementById('queue-order-id').textContent = orderId;
                 
-                // Simuler les données de file d'attente pour cette commande
+                // Charger les données réelles de file d'attente
                 updateQueueModal(orderId);
                 
                 // Afficher le modal
@@ -53,6 +54,183 @@ function initQueueModal() {
         });
     }
 }
+// Fonction pour initialiser l'aperçu de la file d'attente dans les cartes de commande
+function initQueuePreview() {
+    // Récupérer toutes les commandes actives
+    const orderCards = document.querySelectorAll('.order-card:not([data-status="delivered"]):not([data-status="cancelled"])');
+    
+    orderCards.forEach(card => {
+        // Extraire l'ID de la commande depuis la carte
+        const orderIdElement = card.querySelector('.order-id');
+        if (!orderIdElement) return;
+        
+        const orderIdText = orderIdElement.textContent;
+        const match = orderIdText.match(/Commande #([A-Z0-9]+)/);
+        if (!match) return;
+        
+        const orderDisplayId = match[1];
+        const orderDataId = card.getAttribute('data-order-id');
+        
+        // Utiliser l'ID stocké dans data-order-id s'il existe, sinon utiliser l'ID affiché
+        const orderId = orderDataId || orderDisplayId;
+        
+        // Afficher des valeurs de chargement pour l'indicateur de position
+        let queueIndicator = card.querySelector('.queue-position-indicator');
+        
+        if (!queueIndicator) {
+            // Créer l'élément s'il n'existe pas
+            queueIndicator = document.createElement('div');
+            queueIndicator.className = 'queue-position-indicator';
+            
+            // Insérer avant l'icône d'expansion
+            const expandIcon = card.querySelector('.expand-icon');
+            if (expandIcon && expandIcon.parentNode) {
+                expandIcon.parentNode.insertBefore(queueIndicator, expandIcon);
+            }
+        }
+        
+        queueIndicator.innerHTML = `
+            <span class="position-icon">🔄</span>
+            <span>Chargement...</span>
+        `;
+        
+        // Charger les informations de file d'attente pour chaque commande
+        fetchQueueInfo(orderId, card);
+    });
+    
+    // Configurer le rafraîchissement périodique des informations (toutes les 2 minutes)
+    setInterval(() => {
+        orderCards.forEach(card => {
+            const orderIdElement = card.querySelector('.order-id');
+            if (!orderIdElement) return;
+            
+            const orderIdText = orderIdElement.textContent;
+            const match = orderIdText.match(/Commande #([A-Z0-9]+)/);
+            if (!match) return;
+            
+            const orderDisplayId = match[1];
+            const orderDataId = card.getAttribute('data-order-id');
+            const orderId = orderDataId || orderDisplayId;
+            
+            fetchQueueInfo(orderId, card);
+        });
+    }, 120000); // 2 minutes
+}
+
+// Fonction pour récupérer les informations de file d'attente d'une commande
+function fetchQueueInfo(orderId, orderCard) {
+    fetch(`/api/orders/${orderId}/queue`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.inQueue) {
+                // Obtenir l'indicateur de position
+                const queueIndicator = orderCard.querySelector('.queue-position-indicator');
+                if (!queueIndicator) return;
+                
+                // Mettre à jour le contenu avec la position réelle
+                queueIndicator.innerHTML = `
+                    <span class="position-icon">🚶</span>
+                    <span>Position: ${data.queueInfo.position}</span>
+                `;
+                
+                // Mettre à jour le style en fonction de la position
+                if (data.queueInfo.position <= 2) {
+                    queueIndicator.style.color = 'var(--status-shipped)';
+                    queueIndicator.style.fontWeight = 'bold';
+                } else if (data.queueInfo.position <= 5) {
+                    queueIndicator.style.color = 'var(--status-processing)';
+                } else {
+                    queueIndicator.style.color = 'var(--text-dark)';
+                }
+                
+                // Stocker la position dans l'attribut data pour une utilisation ultérieure
+                orderCard.setAttribute('data-queue-position', data.queueInfo.position);
+                
+                // Mettre à jour le statut de la commande si nécessaire
+                const statusElement = orderCard.querySelector('.order-status');
+                if (statusElement && statusElement.textContent !== data.status) {
+                    statusElement.textContent = data.status;
+                    
+                    // Mettre à jour la classe de statut
+                    statusElement.className = 'order-status';
+                    switch(data.status) {
+                        case 'En attente':
+                            statusElement.classList.add('status-pending');
+                            break;
+                        case 'En préparation':
+                            statusElement.classList.add('status-processing');
+                            break;
+                        case 'Expédié':
+                            statusElement.classList.add('status-shipped');
+                            break;
+                        case 'Livré':
+                            statusElement.classList.add('status-delivered');
+                            break;
+                    }
+                    
+                    // Mettre à jour l'attribut data-status de la carte
+                    orderCard.setAttribute('data-status', getStatusClass(data.status));
+                    
+                    // Afficher une notification de changement de statut
+                    showStatusChangeNotification(orderId, statusElement.textContent, data.status);
+                }
+            } else if (!data.inQueue) {
+                // La commande n'est plus dans la file d'attente, masquer l'indicateur
+                const queueIndicator = orderCard.querySelector('.queue-position-indicator');
+                if (queueIndicator) {
+                    queueIndicator.style.display = 'none';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la récupération des informations de file d\'attente:', error);
+            
+            // Afficher un message d'erreur dans l'indicateur
+            const queueIndicator = orderCard.querySelector('.queue-position-indicator');
+            if (queueIndicator) {
+                queueIndicator.innerHTML = `
+                    <span class="position-icon">⚠️</span>
+                    <span>Erreur</span>
+                `;
+            }
+        });
+}
+
+// Fonction auxiliaire pour obtenir la classe CSS correspondant au statut
+function getStatusClass(status) {
+    switch(status) {
+        case 'En attente':
+            return 'pending';
+        case 'En préparation':
+            return 'processing';
+        case 'Expédié':
+            return 'shipped';
+        case 'Livré':
+            return 'delivered';
+        case 'Annulé':
+            return 'cancelled';
+        default:
+            return 'pending';
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Fonction pour modifier l'interface utilisateur de la commande
 function updateOrderUI(orderId, position, estimatedTime, status) {
