@@ -1,4 +1,3 @@
-// Script pour la page des commandes (commandes.js)
 document.addEventListener('DOMContentLoaded', function() {
     // Vérifier l'état d'authentification
     checkAuthStatus();
@@ -13,48 +12,59 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialiser le modal de chat
     initChatModal();
+
+    // Initialiser l'aperçu de la file d'attente
+    initQueuePreview();
 });
 
-function App() {
-  const [queueInfo, setQueueInfo] = useState(null);
+// Initialiser l'aperçu de la file d'attente
+function initQueuePreview() {
+    // Créer l'élément d'aperçu de la file d'attente s'il n'existe pas
+    let queuePreview = document.getElementById('queue-preview');
+    if (!queuePreview) {
+        queuePreview = document.createElement('div');
+        queuePreview.id = 'queue-preview';
+        queuePreview.className = 'queue-info';
+        queuePreview.innerHTML = `
+            <h3 class="queue-info-header">File d'attente</h3>
+            <div class="queue-info-content">
+                <div class="queue-position">
+                    <span>Position: </span>
+                    <span id="queue-position-value">-</span>
+                </div>
+                <div class="queue-time">
+                    <span>Temps estimé: </span>
+                    <span id="queue-time-value">-</span>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(queuePreview);
+    }
 
-  useEffect(() => {
-    // Récupérer les informations de la file d'attente
-    const fetchQueueInfo = async () => {
-      try {
-        const response = await fetch('/api/orders/queue', {
-          credentials: 'include'
-        });
-        const data = await response.json();
-        if (data.success) {
-          setQueueInfo(data.queueInfo);
+    // Fonction pour mettre à jour les informations de la file d'attente
+    async function updateQueueInfo() {
+        try {
+            const response = await fetch('/api/orders/queue', {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            
+            if (data.success && data.queueInfo) {
+                document.getElementById('queue-position-value').textContent = data.queueInfo.position;
+                document.getElementById('queue-time-value').textContent = `${data.queueInfo.estimatedTime} min`;
+                queuePreview.style.display = 'block';
+            } else {
+                queuePreview.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Erreur lors de la récupération des informations de file d\'attente:', error);
+            queuePreview.style.display = 'none';
         }
-      } catch (error) {
-        console.error('Erreur lors de la récupération des informations de file d\'attente:', error);
-      }
-    };
+    }
 
-    // Mettre à jour les informations toutes les 30 secondes
-    fetchQueueInfo();
-    const interval = setInterval(fetchQueueInfo, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      {queueInfo && (
-        <div className="fixed top-4 right-4 bg-white p-4 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-2">File d'attente</h3>
-          <div className="text-sm">
-            <p>Position: {queueInfo.position}</p>
-            <p>Temps estimé: {queueInfo.estimatedTime} min</p>
-          </div>
-        </div>
-      )}
-      <p>Start prompting (or editing) to see magic happen :)</p>
-    </div>
-  );
+    // Mettre à jour les informations immédiatement et toutes les 30 secondes
+    updateQueueInfo();
+    setInterval(updateQueueInfo, 30000);
 }
 // Vérifier si l'utilisateur est authentifié
 function checkAuthStatus() {
