@@ -256,6 +256,99 @@ function showOrderConfirmationPopup(orderId) {
     fetchQueueStatus(orderId);
 }
 
+// Fonction pour récupérer le statut de la file d'attente
+async function fetchQueueStatus(orderId) {
+    try {
+        const response = await fetch(`/api/orders/${orderId}/queue`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erreur lors de la récupération des informations de file d\'attente');
+        }
+        
+        const queueData = await response.json();
+        displayQueueStatus(queueData);
+    } catch (error) {
+        console.error('Erreur:', error);
+        displayQueueError();
+    }
+}
+
+// Fonction pour afficher le statut de la file d'attente
+function displayQueueStatus(queueData) {
+    const queueStatusContent = document.getElementById('queue-status-content');
+    
+    if (!queueStatusContent) return;
+    
+    if (!queueData.success) {
+        displayQueueError();
+        return;
+    }
+    
+    // Si la commande n'est plus dans la file d'attente (livrée ou annulée)
+    if (!queueData.inQueue) {
+        queueStatusContent.innerHTML = `
+            <div class="queue-message">
+                <p>${queueData.message}</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Si la commande est dans la file d'attente
+    const { position, estimatedTime } = queueData.queueInfo;
+    const status = queueData.status;
+    
+    // Déterminer le message en fonction de la position et du statut
+    let statusMessage = '';
+    let estimatedText = '';
+    
+    if (position === 1) {
+        // Premier dans la file
+        if (status === 'En attente') {
+            statusMessage = 'Votre commande est la prochaine à être préparée!';
+        } else if (status === 'En préparation') {
+            statusMessage = 'Votre commande est en cours de préparation!';
+        } else if (status === 'Expédié') {
+            statusMessage = 'Votre commande est en route!';
+        }
+        estimatedText = estimatedTime > 0 ? `Estimation: environ ${estimatedTime} minutes` : 'Livraison imminente!';
+    } else {
+        // En attente dans la file
+        statusMessage = `Votre commande est en position ${position} dans la file d'attente.`;
+        estimatedText = `Temps d'attente estimé: environ ${estimatedTime} minutes`;
+    }
+    
+    // Construire l'interface
+    queueStatusContent.innerHTML = `
+        <div class="queue-info">
+            <div class="queue-position">
+                <span class="position-number">${position}</span>
+                <span class="position-label">Position</span>
+            </div>
+            <div class="queue-details">
+                <p class="status-message">${statusMessage}</p>
+                <p class="estimated-time">${estimatedText}</p>
+                <p class="status-label">Status: <span class="status-${status.toLowerCase().replace(' ', '-')}">${status}</span></p>
+            </div>
+        </div>
+    `;
+}
+
+// Fonction pour afficher une erreur de file d'attente
+function displayQueueError() {
+    const queueStatusContent = document.getElementById('queue-status-content');
+    
+    if (queueStatusContent) {
+        queueStatusContent.innerHTML = `
+            <div class="queue-error">
+                <p>Impossible de récupérer les informations de la file d'attente.</p>
+                <p>Vous pouvez vérifier le statut de votre commande dans la section "Mes Commandes".</p>
+            </div>
+        `;
+    }
+}
 
     // Création du modal de livraison
 function createDeliveryModal() {
