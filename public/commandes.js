@@ -19,6 +19,100 @@ document.addEventListener('DOMContentLoaded', function() {
     initQueuePreview();
 });
 /////////////////////////////////////////////////////////////////////////////////// fileee d'attente //////////////////////// 
+function createQueueModal() {
+    console.log('Création du modal de file d\'attente');
+    
+    // Vérifier si le modal existe déjà
+    if (document.getElementById('queue-modal')) {
+        console.log('Le modal existe déjà');
+        return;
+    }
+    
+    // Créer l'élément modal
+    const modal = document.createElement('div');
+    modal.id = 'queue-modal';
+    modal.className = 'modal';
+    
+    // Définir le contenu HTML du modal
+    modal.innerHTML = `
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">File d'attente - Commande #<span id="queue-order-id"></span></div>
+            <button class="modal-close" id="close-queue-modal">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="queue-info">
+                <div class="queue-card">
+                    <div class="queue-header">
+                        <div class="queue-title">Votre position</div>
+                        <div class="queue-icon">🚶</div>
+                    </div>
+                    <div class="queue-body">
+                        <div class="queue-position" id="modal-queue-position">3</div>
+                        <div class="queue-label">dans la file d'attente</div>
+                    </div>
+                </div>
+                
+                <div class="queue-card">
+                    <div class="queue-header">
+                        <div class="queue-title">Temps estimé</div>
+                        <div class="queue-icon">⏱️</div>
+                    </div>
+                    <div class="queue-body">
+                        <div class="queue-time" id="modal-queue-time">45 min</div>
+                        <div class="queue-label">avant livraison</div>
+                    </div>
+                </div>
+                
+                <div class="queue-card">
+                    <div class="queue-header">
+                        <div class="queue-title">Statut actuel</div>
+                        <div class="queue-icon">📋</div>
+                    </div>
+                    <div class="queue-body">
+                        <div class="queue-status status-processing" id="modal-queue-status">En préparation</div>
+                        <div class="queue-label">de votre commande</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="queue-visualization">
+                <div class="queue-line">
+                    <div class="queue-progress" id="modal-queue-progress" style="width: 50%;"></div>
+                </div>
+                <div class="queue-markers">
+                    <div class="queue-marker active">
+                        <div class="marker-icon">📋</div>
+                        <div class="marker-label">Confirmation</div>
+                    </div>
+                    <div class="queue-marker active">
+                        <div class="marker-icon">👨‍🍳</div>
+                        <div class="marker-label">Préparation</div>
+                    </div>
+                    <div class="queue-marker">
+                        <div class="marker-icon">🚚</div>
+                        <div class="marker-label">En route</div>
+                    </div>
+                    <div class="queue-marker">
+                        <div class="marker-icon">🎁</div>
+                        <div class="marker-label">Livraison</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="queue-refresh">
+                <button id="modal-refresh-queue" class="action-btn secondary">
+                    <span class="refresh-icon">🔄</span> Actualiser le statut
+                </button>
+                <div class="last-updated" id="modal-last-updated">Dernière mise à jour: 14:35</div>
+            </div>
+        </div>
+    </div>`;
+    
+    // Ajouter le modal au corps du document
+    document.body.appendChild(modal);
+    console.log('Modal de file d\'attente créé et ajouté au DOM');
+}
 // Fonction pour initialiser le modal de file d'attente
 function initQueueModal() {
     // Créer le modal s'il n'existe pas
