@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initQueueModal();
     // Initialiser le modal de chat
     initChatModal();
-    removeIndependentQueueSection();
     enhanceModalAnimations();
     setupStatusChangeNotifications();
     // Initialiser l'aperçu de la file d'attente
