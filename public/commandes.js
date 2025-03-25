@@ -20,27 +20,29 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 /////////////////////////////////////////////////////////////////////////////////// fileee d'attente //////////////////////// 
 // Fonction pour initialiser le modal de file d'attente
-// Modifiez la fonction initQueueModal pour déboguer
 function initQueueModal() {
-    // Vérifier si le modal existe déjà
+    // Créer le modal s'il n'existe pas
+    createQueueModal();
+    
+    // Vérifier si le modal existe maintenant
     const queueModal = document.getElementById('queue-modal');
     
     if (queueModal) {
-        console.log('Modal de file d\'attente trouvé'); // Ajout pour déboguer
+        console.log('Modal de file d\'attente trouvé');
         
         // Compter combien de boutons de file d'attente existent
         const queueButtons = document.querySelectorAll('.queue-btn');
         console.log('Nombre de boutons de file d\'attente:', queueButtons.length); // Ajout pour déboguer
         
         // Ajouter les événements pour les boutons de file d'attente
-        queueButtons.forEach(button => {
+        document.querySelectorAll('.queue-btn').forEach(button => {
             button.addEventListener('click', function(e) {
-                console.log('Bouton de file d\'attente cliqué'); // Ajout pour déboguer
-                e.preventDefault(); // Empêcher le comportement par défaut
-                e.stopPropagation(); // Empêcher l'ouverture/fermeture de la carte
+                console.log('Bouton de file d\'attente cliqué');
+                e.preventDefault(); 
+                e.stopPropagation();
                 
                 const orderId = this.getAttribute('data-order');
-                console.log('OrderID:', orderId); // Ajout pour déboguer
+                console.log('OrderID:', orderId);
                 
                 document.getElementById('queue-order-id').textContent = orderId;
                 
@@ -63,7 +65,7 @@ function initQueueModal() {
             updateQueueModal(orderId);
         });
     } else {
-        console.log('Modal de file d\'attente NON trouvé'); // Ajout pour déboguer
+        console.error('Impossible de trouver ou de créer le modal de file d\'attente');
     }
 }
 function updateQueueModal(orderId) {
