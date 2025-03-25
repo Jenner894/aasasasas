@@ -54,6 +54,41 @@ function initQueueModal() {
         });
     }
 }
+// Fonction pour initialiser le modal de file d'attente
+function initQueueModal() {
+    // Vérifier si le modal existe déjà
+    const queueModal = document.getElementById('queue-modal');
+    
+    if (queueModal) {
+        // Ajouter les événements pour les boutons de file d'attente
+        document.querySelectorAll('.queue-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault(); // Empêcher le comportement par défaut
+                e.stopPropagation(); // Empêcher l'ouverture/fermeture de la carte
+                
+                const orderId = this.getAttribute('data-order');
+                document.getElementById('queue-order-id').textContent = orderId;
+                
+                // Charger les données réelles de file d'attente
+                updateQueueModal(orderId);
+                
+                // Afficher le modal
+                queueModal.classList.add('active');
+            });
+        });
+        
+        // Fermer le modal
+        document.getElementById('close-queue-modal').addEventListener('click', function() {
+            queueModal.classList.remove('active');
+        });
+        
+        // Bouton de rafraîchissement dans le modal
+        document.getElementById('modal-refresh-queue').addEventListener('click', function() {
+            const orderId = document.getElementById('queue-order-id').textContent;
+            updateQueueModal(orderId);
+        });
+    }
+}
 
 // Fonction pour initialiser l'aperçu de la file d'attente dans les cartes de commande
 function initQueuePreview() {
