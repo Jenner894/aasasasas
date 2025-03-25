@@ -14,12 +14,46 @@ document.addEventListener('DOMContentLoaded', function() {
     initChatModal();
     removeIndependentQueueSection();
     enhanceModalAnimations();
-    setupPeriodicQueueUpdates();
     setupStatusChangeNotifications();
     // Initialiser l'aperçu de la file d'attente
     initQueuePreview();
 });
 ///////////////////////////////////////////////////////////////////////////////////
+// Fonction pour initialiser le modal de file d'attente
+function initQueueModal() {
+    // Vérifier si le modal de file d'attente existe déjà
+    const queueModal = document.getElementById('queue-modal');
+    
+    if (queueModal) {
+        // Ajouter les événements pour les boutons de file d'attente
+        document.querySelectorAll('.queue-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation(); // Empêcher l'ouverture/fermeture de la carte
+                
+                const orderId = this.getAttribute('data-order');
+                document.getElementById('queue-order-id').textContent = orderId;
+                
+                // Simuler les données de file d'attente pour cette commande
+                updateQueueModal(orderId);
+                
+                // Afficher le modal
+                queueModal.classList.add('active');
+            });
+        });
+        
+        // Fermer le modal
+        document.getElementById('close-queue-modal').addEventListener('click', function() {
+            queueModal.classList.remove('active');
+        });
+        
+        // Bouton de rafraîchissement dans le modal
+        document.getElementById('modal-refresh-queue').addEventListener('click', function() {
+            const orderId = document.getElementById('queue-order-id').textContent;
+            updateQueueModal(orderId);
+        });
+    }
+}
+
 // Fonction pour modifier l'interface utilisateur de la commande
 function updateOrderUI(orderId, position, estimatedTime, status) {
     // Trouver la carte de commande correspondante
@@ -63,73 +97,6 @@ function updateOrderUI(orderId, position, estimatedTime, status) {
     } else {
         positionIndicator.style.color = 'var(--text-dark)';
     }
-}
-
-// Fonction pour simuler la mise à jour périodique des informations de file d'attente
-function setupPeriodicQueueUpdates() {
-    // Pour chaque commande active (non livrée), simuler des mises à jour
-    const activeOrders = document.querySelectorAll('.order-card:not([data-status="delivered"])');
-    
-    activeOrders.forEach(orderCard => {
-        // Obtenir l'ID de la commande
-        const orderId = orderCard.querySelector('.order-header .order-id').textContent.split('#')[1].trim();
-        
-        // Générer une position initiale aléatoire
-        const initialPosition = Math.floor(Math.random() * 10) + 1;
-        
-        // Stocker la position dans un attribut de données
-        orderCard.setAttribute('data-queue-position', initialPosition);
-        
-        // Calculer le temps estimé
-        const estimatedTime = initialPosition * (5 + Math.floor(Math.random() * 5));
-        
-        // Déterminer le statut
-        let status;
-        if (initialPosition <= 2) {
-            status = "En route";
-        } else if (initialPosition <= 5) {
-            status = "En préparation";
-        } else {
-            status = "En attente";
-        }
-        
-        // Mettre à jour l'UI
-        updateOrderUI(orderId, initialPosition, estimatedTime, status);
-    });
-    
-    // Configurer une mise à jour périodique (toutes les 60-120 secondes)
-    setInterval(() => {
-        activeOrders.forEach(orderCard => {
-            // Obtenir l'ID de la commande
-            const orderId = orderCard.querySelector('.order-header .order-id').textContent.split('#')[1].trim();
-            
-            // Récupérer la position actuelle
-            let position = parseInt(orderCard.getAttribute('data-queue-position'));
-            
-            // Réduire la position aléatoirement (simulation d'avancement dans la file d'attente)
-            const reduction = Math.random() > 0.7 ? 1 : 0;
-            position = Math.max(1, position - reduction);
-            
-            // Mettre à jour la position dans l'attribut de données
-            orderCard.setAttribute('data-queue-position', position);
-            
-            // Calculer le temps estimé
-            const estimatedTime = position * (5 + Math.floor(Math.random() * 5));
-            
-            // Déterminer le statut
-            let status;
-            if (position <= 2) {
-                status = "En route";
-            } else if (position <= 5) {
-                status = "En préparation";
-            } else {
-                status = "En attente";
-            }
-            
-            // Mettre à jour l'UI
-            updateOrderUI(orderId, position, estimatedTime, status);
-        });
-    }, 60000 + Math.random() * 60000); // Entre 60 et 120 secondes
 }
 
 // Fonction pour améliorer l'animation du modal
