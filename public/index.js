@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let products = [];
     let cart = []; // Panier d'achat
     
-    // Vérification de l'authentification
+
 // Vérification de l'authentification
 async function checkAuth() {
     try {
@@ -194,6 +194,67 @@ async function checkAuth() {
         });
     }
 
+// Fonction pour créer et afficher le popup de confirmation avec l'état de la file d'attente
+function showOrderConfirmationPopup(orderId) {
+    // Créer le popup s'il n'existe pas déjà
+    let confirmationPopup = document.getElementById('order-confirmation-popup');
+    
+    if (!confirmationPopup) {
+        confirmationPopup = document.createElement('div');
+        confirmationPopup.id = 'order-confirmation-popup';
+        confirmationPopup.className = 'confirmation-popup';
+        
+        document.body.appendChild(confirmationPopup);
+    }
+    
+    // Construire le contenu initial du popup
+    confirmationPopup.innerHTML = `
+        <div class="confirmation-popup-content">
+            <div class="confirmation-popup-header">
+                <h3>Commande confirmée</h3>
+                <button class="close-confirmation-popup">×</button>
+            </div>
+            <div class="confirmation-popup-body">
+                <div class="confirmation-message">
+                    <div class="confirmation-icon">✅</div>
+                    <p>Votre commande a été enregistrée avec succès!</p>
+                </div>
+                <div class="queue-status-container">
+                    <h4>État de la file d'attente</h4>
+                    <div class="queue-status" id="queue-status-content">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <p>Vérification de la file d'attente...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="confirmation-popup-footer">
+                <button class="primary-button" id="view-order-button">Voir ma commande</button>
+                <button class="secondary-button" id="continue-shopping-button">Continuer mes achats</button>
+            </div>
+        </div>
+    `;
+    
+    // Afficher le popup
+    confirmationPopup.classList.add('active');
+    
+    // Ajouter les écouteurs d'événements
+    document.querySelector('.close-confirmation-popup').addEventListener('click', function() {
+        confirmationPopup.classList.remove('active');
+    });
+    
+    document.getElementById('view-order-button').addEventListener('click', function() {
+        window.location.href = '/commandes';
+    });
+    
+    document.getElementById('continue-shopping-button').addEventListener('click', function() {
+        confirmationPopup.classList.remove('active');
+    });
+    
+    // Récupérer les informations de file d'attente
+    fetchQueueStatus(orderId);
+}
 
 
     // Création du modal de livraison
@@ -706,7 +767,7 @@ function goBackToPreviousStep() {
 }
 
 // Traiter la commande avec la livraison
-async function processOrderWithDelivery() {
+function processOrderWithDelivery() {
     if (!currentUser) {
         alert('Veuillez vous connecter pour passer commande.');
         return;
@@ -732,7 +793,7 @@ async function processOrderWithDelivery() {
         };
         
         // Envoyer la commande au serveur avec les données de livraison
-        const response = await fetch('/api/orders/delivery', {
+        fetch('/api/orders/delivery', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -744,41 +805,47 @@ async function processOrderWithDelivery() {
                 delivery: deliveryData
             }),
             credentials: 'include' // Important pour envoyer les cookies de session
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (!result.success) {
+                throw new Error(result.message || 'Erreur lors du traitement de la commande');
+            }
+            
+            // Vider le panier
+            cart = [];
+            saveCart();
+            updateCartCount();
+            
+            // Fermer le modal de livraison
+            closeDeliveryModal();
+            
+            // Fermer le modal du panier
+            const cartModal = document.getElementById('cart-modal');
+            const overlay = document.getElementById('overlay');
+            
+            if (cartModal) cartModal.classList.remove('open');
+            if (overlay) overlay.classList.remove('active');
+            
+            // Afficher le popup de confirmation avec les informations de file d'attente
+            // Utiliser la première commande créée pour obtenir les infos de file d'attente
+            if (result.orders && result.orders.length > 0) {
+                showOrderConfirmationPopup(result.orders[0]._id);
+            } else {
+                alert('Votre commande a été enregistrée avec succès! Un livreur va vous contacter bientôt.');
+                window.location.href = '/commandes';
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors du traitement de la commande:', error);
+            alert(`Erreur lors du traitement de la commande: ${error.message}`);
         });
-        
-        const result = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(result.message || 'Erreur lors du traitement de la commande');
-        }
-        
-        // Afficher un message de confirmation
-        alert('Votre commande a été enregistrée avec succès! Un livreur va vous contacter bientôt.');
-        
-        // Vider le panier
-        cart = [];
-        saveCart();
-        updateCartCount();
-        
-        // Fermer le modal de livraison
-        closeDeliveryModal();
-        
-        // Fermer le modal du panier
-        const cartModal = document.getElementById('cart-modal');
-        const overlay = document.getElementById('overlay');
-        
-        if (cartModal) cartModal.classList.remove('open');
-        if (overlay) overlay.classList.remove('active');
-        
-        // Rediriger vers la page des commandes
-        window.location.href = '/commandes';
-        
     } catch (error) {
         console.error('Erreur lors du traitement de la commande:', error);
         alert(`Erreur lors du traitement de la commande: ${error.message}`);
     }
 }
-
+    
 // Afficher le modal de livraison
 function showDeliveryModal() {
     // Créer ou récupérer le modal
