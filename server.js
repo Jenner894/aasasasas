@@ -262,7 +262,6 @@ app.use(session({
   }
 }));
 
-
 async function updateDeliveryQueue() {
     try {
         // Récupérer toutes les commandes non livrées et non annulées
@@ -270,27 +269,34 @@ async function updateDeliveryQueue() {
             status: { $in: ['En attente', 'En préparation', 'Expédié'] }
         }).sort({ createdAt: 1 }); // Tri par ordre de création (FIFO)
         
+        console.log(`Mise à jour de la file d'attente: ${pendingOrders.length} commandes trouvées`);
+        
         // Pour chaque commande, mettre à jour la position et le temps estimé
         for (let i = 0; i < pendingOrders.length; i++) {
             const order = pendingOrders[i];
+            
+            // S'assurer que queueInfo existe et a les valeurs par défaut
+            if (!order.queueInfo) {
+                order.queueInfo = {};
+            }
             
             // Si la commande n'est pas encore dans la file d'attente, l'ajouter
             if (!order.queueInfo.enteredQueueAt) {
                 order.queueInfo.enteredQueueAt = new Date();
             }
             
-            // Mise à jour de la position
+            // Mise à jour de la position (indexée à partir de 1)
             order.queueInfo.position = i + 1;
             
             // Calcul du temps estimé (chaque commande prend environ 15 minutes)
             // Ajuster ces valeurs selon les données réelles
-            const baseDeliveryTime = 15; // minutes par commande
+            const baseDeliveryTime = 10; // minutes par commande
             let estimatedTime;
             
             if (order.status === 'En attente') {
                 estimatedTime = i * baseDeliveryTime;
             } else if (order.status === 'En préparation') {
-                estimatedTime = i * baseDeliveryTime / 2; // Préparation déjà commencée
+                estimatedTime = Math.max(0, i * baseDeliveryTime / 2); // Préparation déjà commencée
             } else if (order.status === 'Expédié') {
                 estimatedTime = 5; // Presque arrivé
             }
@@ -298,7 +304,14 @@ async function updateDeliveryQueue() {
             order.queueInfo.estimatedTime = estimatedTime;
             order.queueInfo.lastUpdated = new Date();
             
-            await order.save();
+            // Utiliser findByIdAndUpdate pour éviter de déclencher le middleware save
+            // qui pourrait créer une boucle infinie
+            await Order.findByIdAndUpdate(order._id, {
+                'queueInfo.position': order.queueInfo.position,
+                'queueInfo.estimatedTime': order.queueInfo.estimatedTime,
+                'queueInfo.enteredQueueAt': order.queueInfo.enteredQueueAt,
+                'queueInfo.lastUpdated': order.queueInfo.lastUpdated
+            });
         }
         
         console.log(`File d'attente mise à jour: ${pendingOrders.length} commandes`);
@@ -306,13 +319,20 @@ async function updateDeliveryQueue() {
         console.error('Erreur lors de la mise à jour de la file d\'attente:', error);
     }
 }
-
 // 3. Middleware pour mettre à jour la file d'attente après chaque changement de statut
-OrderSchema.post('save', async function() {
-    // Vérifier si le statut a changé
-    if (this.isModified('status')) {
-        // Mettre à jour la file d'attente
-        setTimeout(updateDeliveryQueue, 0); // Exécuter de manière asynchrone
+OrderSchema.post('save', async function(doc) {
+    console.log(`Commande sauvegardée: ${doc._id}, statut: ${doc.status}`);
+    
+    // Mettre à jour la file d'attente même pour les nouvelles commandes
+    try {
+        // Utilisez setTimeout pour éviter les problèmes de contexte mongoose
+        setTimeout(() => {
+            updateDeliveryQueue().catch(err => 
+                console.error('Erreur dans updateDeliveryQueue après save:', err)
+            );
+        }, 0);
+    } catch (error) {
+        console.error('Erreur dans le middleware post-save de Order:', error);
     }
 });
 
@@ -345,6 +365,27 @@ app.get('/api/orders/:id/queue', isAuthenticated, async (req, res) => {
             });
         }
         
+        // S'assurer que queueInfo existe et a des valeurs par défaut
+        if (!order.queueInfo || !order.queueInfo.position) {
+            // Si les informations de file d'attente ne sont pas encore disponibles,
+            // déclencher une mise à jour de la file d'attente
+            await updateDeliveryQueue();
+            
+            // Récupérer la commande mise à jour
+            const updatedOrder = await Order.findById(order._id);
+            if (updatedOrder && updatedOrder.queueInfo) {
+                order.queueInfo = updatedOrder.queueInfo;
+            } else {
+                // Si toujours pas d'informations, utiliser des valeurs par défaut
+                order.queueInfo = {
+                    position: 1, // Si c'est la seule commande, elle est en première position
+                    estimatedTime: 0, // Livraison immédiate si première commande
+                    enteredQueueAt: new Date(),
+                    lastUpdated: new Date()
+                };
+            }
+        }
+        
         // Récupérer les informations de file d'attente
         res.status(200).json({
             success: true,
@@ -361,7 +402,6 @@ app.get('/api/orders/:id/queue', isAuthenticated, async (req, res) => {
         });
     }
 });
-
 // Route pour obtenir un résumé de la file d'attente (pour l'administrateur)
 app.get('/api/admin/delivery-queue', isAuthenticated, async (req, res) => {
     try {
@@ -965,8 +1005,6 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
     }
 });
 // ===================== ROUTES POUR LA COMMANDE AVEC LIVRAISON =====================
-
-// Route pour créer une nouvelle commande avec informations de livraison
 app.post('/api/orders/delivery', isAuthenticated, async (req, res) => {
     try {
         const { 
@@ -1012,12 +1050,20 @@ app.post('/api/orders/delivery', isAuthenticated, async (req, res) => {
                     type: delivery.type,
                     address: delivery.address,
                     timeSlot: delivery.timeSlot
+                },
+                // Initialisation de la file d'attente directement ici
+                queueInfo: {
+                    enteredQueueAt: new Date(),
+                    lastUpdated: new Date()
                 }
             });
             
             await newOrder.save();
             createdOrders.push(newOrder);
         }
+        
+        // Mettre à jour la file d'attente immédiatement après création
+        await updateDeliveryQueue();
         
         // Réponse avec les commandes créées
         res.status(201).json({ 
