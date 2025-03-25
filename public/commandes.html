@@ -1344,8 +1344,51 @@
     margin-top: 10px;
 }
 
-/* Animations */
-@keyframes pulse {
+/* Style pour le bouton de file d'attente */
+.queue-btn {
+    display: flex;
+    align-items: center;
+    background-color: #f0f0f0;
+    color: var(--text-dark);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.queue-btn:hover {
+    background-color: #e5e5e5;
+    transform: translateY(-2px);
+}
+
+.queue-btn-icon {
+    margin-right: 8px;
+    font-size: 1.1rem;
+}
+
+/* Ajustement des styles pour le modal */
+#queue-modal .modal-content {
+    max-width: 600px;
+}
+
+#queue-modal .queue-info {
+    margin-bottom: 20px;
+}
+
+#queue-modal .queue-card {
+    flex: 1;
+    min-width: 150px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+#queue-modal .queue-visualization {
+    margin-bottom: 20px;
+}
+
+/* Animation de pulsation pour les indicateurs de statut */
+@keyframes statusPulse {
     0% {
         transform: scale(1);
     }
@@ -1357,34 +1400,31 @@
     }
 }
 
-.queue-card:hover .queue-position,
-.queue-card:hover .queue-time,
-.queue-card:hover .queue-status {
-    animation: pulse 1s infinite;
+#queue-modal .queue-position,
+#queue-modal .queue-time,
+#queue-modal .queue-status {
+    animation: statusPulse 2s infinite;
 }
 
-/* Media Queries */
-@media (max-width: 768px) {
-    .queue-info {
+/* Style pour rendre le modal responsive */
+@media (max-width: 600px) {
+    #queue-modal .queue-info {
         flex-direction: column;
     }
     
-    .queue-card {
-        width: 100%;
+    #queue-modal .queue-card {
+        margin-bottom: 15px;
     }
     
-    .queue-markers {
-        padding: 0;
+    #queue-modal .queue-markers {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
     }
     
-    .marker-icon {
-        width: 30px;
-        height: 30px;
-        font-size: 1.2rem;
-    }
-    
-    .marker-label {
-        font-size: 0.7rem;
+    #queue-modal .queue-marker {
+        width: 40px;
+        margin-bottom: 10px;
     }
 }
     </style>
