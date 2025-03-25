@@ -20,18 +20,28 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 /////////////////////////////////////////////////////////////////////////////////// fileee d'attente //////////////////////// 
 // Fonction pour initialiser le modal de file d'attente
+// Modifiez la fonction initQueueModal pour déboguer
 function initQueueModal() {
     // Vérifier si le modal existe déjà
     const queueModal = document.getElementById('queue-modal');
     
     if (queueModal) {
+        console.log('Modal de file d\'attente trouvé'); // Ajout pour déboguer
+        
+        // Compter combien de boutons de file d'attente existent
+        const queueButtons = document.querySelectorAll('.queue-btn');
+        console.log('Nombre de boutons de file d\'attente:', queueButtons.length); // Ajout pour déboguer
+        
         // Ajouter les événements pour les boutons de file d'attente
-        document.querySelectorAll('.queue-btn').forEach(button => {
+        queueButtons.forEach(button => {
             button.addEventListener('click', function(e) {
+                console.log('Bouton de file d\'attente cliqué'); // Ajout pour déboguer
                 e.preventDefault(); // Empêcher le comportement par défaut
                 e.stopPropagation(); // Empêcher l'ouverture/fermeture de la carte
                 
                 const orderId = this.getAttribute('data-order');
+                console.log('OrderID:', orderId); // Ajout pour déboguer
+                
                 document.getElementById('queue-order-id').textContent = orderId;
                 
                 // Charger les données réelles de file d'attente
@@ -52,42 +62,113 @@ function initQueueModal() {
             const orderId = document.getElementById('queue-order-id').textContent;
             updateQueueModal(orderId);
         });
+    } else {
+        console.log('Modal de file d\'attente NON trouvé'); // Ajout pour déboguer
     }
 }
-// Fonction pour initialiser le modal de file d'attente
-function initQueueModal() {
-    // Vérifier si le modal existe déjà
-    const queueModal = document.getElementById('queue-modal');
+function updateQueueModal(orderId) {
+    console.log('Mise à jour du modal de file d\'attente pour la commande:', orderId);
     
-    if (queueModal) {
-        // Ajouter les événements pour les boutons de file d'attente
-        document.querySelectorAll('.queue-btn').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault(); // Empêcher le comportement par défaut
-                e.stopPropagation(); // Empêcher l'ouverture/fermeture de la carte
+    // Mettre à jour l'ID de commande dans le modal
+    document.getElementById('queue-order-id').textContent = orderId;
+    
+    // Simuler un chargement des données
+    document.getElementById('modal-queue-position').textContent = "...";
+    document.getElementById('modal-queue-time').textContent = "Chargement...";
+    document.getElementById('modal-queue-status').textContent = "Chargement...";
+    
+    // Dans une application réelle, vous feriez un appel API ici pour obtenir les données
+    // Par exemple:
+    fetch(`/api/orders/${orderId}/queue`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.inQueue) {
+                // Mettre à jour la position dans la file d'attente
+                document.getElementById('modal-queue-position').textContent = data.queueInfo.position;
                 
-                const orderId = this.getAttribute('data-order');
-                document.getElementById('queue-order-id').textContent = orderId;
+                // Mettre à jour le temps estimé
+                const estimatedTime = data.queueInfo.estimatedTime;
+                let timeDisplay = '30-45 min'; // Valeur par défaut
                 
-                // Charger les données réelles de file d'attente
-                updateQueueModal(orderId);
+                if (estimatedTime !== undefined) {
+                    if (estimatedTime <= 5) {
+                        timeDisplay = '5-10 min';
+                    } else if (estimatedTime <= 15) {
+                        timeDisplay = '10-20 min';
+                    } else if (estimatedTime <= 30) {
+                        timeDisplay = '20-30 min';
+                    } else if (estimatedTime <= 45) {
+                        timeDisplay = '30-45 min';
+                    } else {
+                        timeDisplay = '45-60 min';
+                    }
+                }
                 
-                // Afficher le modal
-                queueModal.classList.add('active');
-            });
+                document.getElementById('modal-queue-time').textContent = timeDisplay;
+                
+                // Mettre à jour le statut
+                document.getElementById('modal-queue-status').textContent = data.status;
+                
+                // Mettre à jour la classe CSS du statut
+                const statusElement = document.getElementById('modal-queue-status');
+                statusElement.className = 'queue-status';
+                switch(data.status) {
+                    case 'En attente':
+                        statusElement.classList.add('status-pending');
+                        break;
+                    case 'En préparation':
+                        statusElement.classList.add('status-processing');
+                        break;
+                    case 'Expédié':
+                    case 'En route':
+                    case 'Prête pour livraison':
+                        statusElement.classList.add('status-shipped');
+                        break;
+                    case 'Livré':
+                        statusElement.classList.add('status-delivered');
+                        break;
+                    case 'Annulé':
+                        statusElement.classList.add('status-cancelled');
+                        break;
+                }
+                
+                // Mettre à jour les marqueurs d'étape
+                updateQueueStepMarkers(data.status);
+                
+                // Mettre à jour l'heure de dernière mise à jour
+                const now = new Date();
+                const timeString = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
+                document.getElementById('modal-last-updated').textContent = 'Dernière mise à jour: ' + timeString;
+            } else {
+                // La commande n'est plus en file d'attente (livrée ou annulée)
+                document.getElementById('modal-queue-position').textContent = "-";
+                document.getElementById('modal-queue-time').textContent = data.status === 'Livré' ? "Terminé" : "Annulé";
+                document.getElementById('modal-queue-status').textContent = data.status;
+                
+                // Mettre à jour les marqueurs d'étape
+                updateQueueStepMarkers(data.status);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la récupération des informations de file d\'attente:', error);
+            
+            // En cas d'erreur, montrer des données fictives
+            document.getElementById('modal-queue-position').textContent = "3";
+            document.getElementById('modal-queue-time').textContent = "30-45 min";
+            document.getElementById('modal-queue-status').textContent = "En préparation";
+            
+            // Mettre à jour le style du statut
+            const statusElement = document.getElementById('modal-queue-status');
+            statusElement.className = 'queue-status status-processing';
+            
+            // Mettre à jour les marqueurs d'étape
+            updateQueueStepMarkers('En préparation');
+            
+            // Mettre à jour l'heure de dernière mise à jour
+            const now = new Date();
+            const timeString = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('modal-last-updated').textContent = 'Dernière mise à jour: ' + timeString;
         });
-        
-        // Fermer le modal
-        document.getElementById('close-queue-modal').addEventListener('click', function() {
-            queueModal.classList.remove('active');
-        });
-        
-        // Bouton de rafraîchissement dans le modal
-        document.getElementById('modal-refresh-queue').addEventListener('click', function() {
-            const orderId = document.getElementById('queue-order-id').textContent;
-            updateQueueModal(orderId);
-        });
-    }
 }
 function updateQueueStepMarkers(status) {
     // Récupérer tous les marqueurs d'étape dans le modal
