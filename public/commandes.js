@@ -129,7 +129,7 @@ function initQueueModal() {
         console.log('Nombre de boutons de file d\'attente:', queueButtons.length); // Ajout pour déboguer
         
         // Ajouter les événements pour les boutons de file d'attente
-        document.querySelectorAll('.queue-btn').forEach(button => {
+        document.querySelectorAll('.queue-modal').forEach(button => {
             button.addEventListener('click', function(e) {
                 console.log('Bouton de file d\'attente cliqué');
                 e.preventDefault(); 
