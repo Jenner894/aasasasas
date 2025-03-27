@@ -931,7 +931,7 @@ function createOrderElement(order) {
             </div>
             
             <div class="order-actions">
-                <button class="action-btn queue-modal" data-order="${displayOrderId}">
+                <button class="queue-modal" data-order="${displayOrderId}">
                     <span class="queue-btn-icon">🔢</span> File d'attente
                 </button>
                 <button class="action-btn chat-btn" data-order="${displayOrderId}">
