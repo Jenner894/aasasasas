@@ -125,7 +125,7 @@ function initQueueModal() {
         console.log('Modal de file d\'attente trouvé');
         
         // Compter combien de boutons de file d'attente existent
-        const queueButtons = document.querySelectorAll('.queue-btn');
+        const queueButtons = document.querySelectorAll('.queue-modal');
         console.log('Nombre de boutons de file d\'attente:', queueButtons.length); // Ajout pour déboguer
         
         // Ajouter les événements pour les boutons de file d'attente
