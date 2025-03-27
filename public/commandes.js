@@ -1,4 +1,36 @@
 document.addEventListener('DOMContentLoaded', function() {
+    function setupModals() {
+    // Configuration du modal de file d'attente
+    const queueModal = document.getElementById('queue-modal');
+    const closeQueueModal = document.getElementById('close-queue-modal');
+    if (queueModal && closeQueueModal) {
+        closeQueueModal.addEventListener('click', function() {
+            queueModal.classList.remove('active');
+        });
+    }
+    
+    // Configuration du modal de chat
+    const chatModal = document.getElementById('chat-modal');
+    const closeChatModal = document.getElementById('close-chat-modal');
+    if (chatModal && closeChatModal) {
+        closeChatModal.addEventListener('click', function() {
+            chatModal.classList.remove('active');
+        });
+    }
+    
+    // Fermer les modaux en cliquant en dehors
+    window.addEventListener('click', function(e) {
+        if (e.target === queueModal) {
+            queueModal.classList.remove('active');
+        }
+        if (e.target === chatModal) {
+            chatModal.classList.remove('active');
+        }
+    });
+}
+
+// Puis appeler cette fonction
+setupModals();
     // Vérifier l'état d'authentification
     checkAuthStatus();
     
@@ -17,6 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupStatusChangeNotifications();
     // Initialiser l'aperçu de la file d'attente
     initQueuePreview();
+    
 });
 /////////////////////////////////////////////////////////////////////////////////// fileee d'attente //////////////////////// 
 function createQueueModal() {
@@ -125,24 +158,24 @@ function initQueueModal() {
         console.log('Modal de file d\'attente trouvé');
         
         // Ajouter les événements pour les boutons de file d'attente
-        document.querySelectorAll('.action-btn.queue-modal').forEach(button => {
-            button.addEventListener('click', function(e) {
-                console.log('Bouton de file d\'attente cliqué');
-                e.preventDefault(); 
-                e.stopPropagation();
-                
-                const orderId = this.getAttribute('data-order');
-                console.log('OrderID:', orderId);
-                
-                document.getElementById('queue-order-id').textContent = orderId;
-                
-                // Charger les données réelles de file d'attente
-                updateQueueModal(orderId);
-                
-                // Afficher le modal
-                queueModal.classList.add('active');
-            });
-        });
+     document.querySelectorAll('.queue-btn').forEach(button => {
+    button.addEventListener('click', function(e) {
+        console.log('Bouton de file d\'attente cliqué');
+        e.preventDefault(); 
+        e.stopPropagation();
+        
+        const orderId = this.getAttribute('data-order');
+        console.log('OrderID:', orderId);
+        
+        document.getElementById('queue-order-id').textContent = orderId;
+        
+        // Charger les données réelles de file d'attente
+        updateQueueModal(orderId);
+        
+        // Afficher le modal
+        queueModal.classList.add('active');
+    });
+});
         
         // Fermer le modal
         document.getElementById('close-queue-modal').addEventListener('click', function() {
@@ -927,9 +960,9 @@ function createOrderElement(order) {
             </div>
             
             <div class="order-actions">
-                <button class="queue-modal" data-order="${displayOrderId}">
-                    <span class="queue-btn-icon">🔢</span> File d'attente
-                </button>
+               <button class="action-btn queue-btn" data-order="${displayOrderId}">
+                        <span class="queue-btn-icon">🔢</span> File d'attente
+                  </button>
                 <button class="action-btn chat-btn" data-order="${displayOrderId}">
                     <span class="chat-btn-icon">💬</span> Chatter avec le livreur
                 </button>
