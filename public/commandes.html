@@ -1427,6 +1427,67 @@
         margin-bottom: 10px;
     }
 }
+        /* Styles pour la section de file d'attente intégrée */
+.queue-section {
+    margin-top: 30px;
+}
+
+.no-queue-message {
+    position: relative;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    min-height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.blur-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(4px);
+    background-color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.no-queue-text {
+    text-align: center;
+    padding: 30px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.no-queue-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: #aaa;
+}
+
+.no-queue-text p {
+    font-size: 1.2rem;
+    color: #666;
+}
+
+.active-order-info {
+    margin-bottom: 20px;
+    background-color: #f0f8ff;
+    border-radius: 10px;
+    padding: 15px;
+    border-left: 4px solid var(--primary-blue);
+}
+
+.active-order-info h3 {
+    color: var(--dark-blue);
+    font-weight: bold;
+    margin: 0;
+}
     </style>
 </head>
 <body>
@@ -1660,15 +1721,28 @@
                     </div>
                     
 
-            
-<!-- Modal pour la file d'attente -->
-<div class="modal" id="queue-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <div class="modal-title">File d'attente - Commande #<span id="queue-order-id"></span></div>
-            <button class="modal-close" id="close-queue-modal">×</button>
+<!-- Section de file d'attente -->
+<div class="order-section queue-section" id="queue-section">
+    <h2>File d'attente en cours</h2>
+    
+    <!-- Contenu dynamique de la file d'attente -->
+    <div id="queue-content">
+        <!-- État par défaut: message "aucune commande" -->
+        <div class="no-queue-message" id="no-queue-message">
+            <div class="blur-overlay">
+                <div class="no-queue-text">
+                    <div class="no-queue-icon">🕐</div>
+                    <p>Aucune commande dans la file d'attente</p>
+                </div>
+            </div>
         </div>
-        <div class="modal-body">
+        
+        <!-- Contenu de la file d'attente (initialement caché) -->
+        <div class="queue-details" id="queue-details" style="display: none;">
+            <div class="active-order-info">
+                <h3>Commande #<span id="queue-active-order-id">BD2305</span></h3>
+            </div>
+            
             <div class="queue-info">
                 <div class="queue-card">
                     <div class="queue-header">
@@ -1676,7 +1750,7 @@
                         <div class="queue-icon">🚶</div>
                     </div>
                     <div class="queue-body">
-                        <div class="queue-position" id="modal-queue-position">3</div>
+                        <div class="queue-position" id="inline-queue-position">3</div>
                         <div class="queue-label">dans la file d'attente</div>
                     </div>
                 </div>
@@ -1687,7 +1761,7 @@
                         <div class="queue-icon">⏱️</div>
                     </div>
                     <div class="queue-body">
-                        <div class="queue-time" id="modal-queue-time">45 min</div>
+                        <div class="queue-time" id="inline-queue-time">45 min</div>
                         <div class="queue-label">avant livraison</div>
                     </div>
                 </div>
@@ -1698,7 +1772,7 @@
                         <div class="queue-icon">📋</div>
                     </div>
                     <div class="queue-body">
-                        <div class="queue-status status-processing" id="modal-queue-status">En préparation</div>
+                        <div class="queue-status status-processing" id="inline-queue-status">En préparation</div>
                         <div class="queue-label">de votre commande</div>
                     </div>
                 </div>
@@ -1706,7 +1780,7 @@
             
             <div class="queue-visualization">
                 <div class="queue-line">
-                    <div class="queue-progress" id="modal-queue-progress" style="width: 50%;"></div>
+                    <div class="queue-progress" id="inline-queue-progress" style="width: 50%;"></div>
                 </div>
                 <div class="queue-markers">
                     <div class="queue-marker active">
@@ -1729,10 +1803,10 @@
             </div>
             
             <div class="queue-refresh">
-                <button id="modal-refresh-queue" class="action-btn secondary">
+                <button id="inline-refresh-queue" class="action-btn secondary">
                     <span class="refresh-icon">🔄</span> Actualiser le statut
                 </button>
-                <div class="last-updated" id="modal-last-updated">Dernière mise à jour: 14:35</div>
+                <div class="last-updated" id="inline-last-updated">Dernière mise à jour: 14:35</div>
             </div>
         </div>
     </div>
