@@ -125,11 +125,11 @@ function initQueueModal() {
         console.log('Modal de file d\'attente trouvé');
         
         // Compter combien de boutons de file d'attente existent
-        const queueButtons = document.querySelectorAll('.queue-modal');
+        const queueButtons = document.querySelectorAll('.action-btn.queue-modal');
         console.log('Nombre de boutons de file d\'attente:', queueButtons.length); // Ajout pour déboguer
         
         // Ajouter les événements pour les boutons de file d'attente
-        document.querySelectorAll('.queue-modal').forEach(button => {
+        document.querySelectorAll('.action-btn.queue-modal').forEach(button => {
             button.addEventListener('click', function(e) {
                 console.log('Bouton de file d\'attente cliqué');
                 e.preventDefault(); 
