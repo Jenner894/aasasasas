@@ -1,14 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    function setupModals() {
-    // Configuration du modal de file d'attente
-    const queueModal = document.getElementById('queue-modal');
-    const closeQueueModal = document.getElementById('close-queue-modal');
-    if (queueModal && closeQueueModal) {
-        closeQueueModal.addEventListener('click', function() {
-            queueModal.classList.remove('active');
-        });
-    }
-    
+function setupModals() {
     // Configuration du modal de chat
     const chatModal = document.getElementById('chat-modal');
     const closeChatModal = document.getElementById('close-chat-modal');
@@ -18,198 +9,137 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Fermer les modaux en cliquant en dehors
+    // Fermer le modal en cliquant en dehors
     window.addEventListener('click', function(e) {
-        if (e.target === queueModal) {
-            queueModal.classList.remove('active');
-        }
         if (e.target === chatModal) {
             chatModal.classList.remove('active');
         }
     });
-}
-
-// Puis appeler cette fonction
-setupModals();
-    // Vérifier l'état d'authentification
-    checkAuthStatus();
     
-    // Charger les commandes de l'utilisateur
-    loadUserOrders();
-    
-    // Initialiser les filtres et écouteurs d'événements
-    initFilterButtons();
-    initExpandButtons();
-    setupSearchOrder();
-        // Initialiser le modal de file d'attente
-    initQueueModal();
-    // Initialiser le modal de chat
-    initChatModal();
-    enhanceModalAnimations();
-    setupStatusChangeNotifications();
-    // Initialiser l'aperçu de la file d'attente
-    initQueuePreview();
-    
-});
-/////////////////////////////////////////////////////////////////////////////////// fileee d'attente //////////////////////// 
-function createQueueModal() {
-    console.log('Création du modal de file d\'attente');
-    
-    // Vérifier si le modal existe déjà
-    if (document.getElementById('queue-modal')) {
-        console.log('Le modal existe déjà');
-        return;
-    }
-    
-    // Créer l'élément modal
-    const modal = document.createElement('div');
-    modal.id = 'queue-modal';
-    modal.className = 'modal';
-    
-    // Définir le contenu HTML du modal
-    modal.innerHTML = `
-    <div class="modal-content">
-        <div class="modal-header">
-            <div class="modal-title">File d'attente - Commande #<span id="queue-order-id"></span></div>
-            <button class="modal-close" id="close-queue-modal">×</button>
-        </div>
-        <div class="modal-body">
-            <div class="queue-info">
-                <div class="queue-card">
-                    <div class="queue-header">
-                        <div class="queue-title">Votre position</div>
-                        <div class="queue-icon">🚶</div>
-                    </div>
-                    <div class="queue-body">
-                        <div class="queue-position" id="modal-queue-position">3</div>
-                        <div class="queue-label">dans la file d'attente</div>
-                    </div>
-                </div>
-                
-                <div class="queue-card">
-                    <div class="queue-header">
-                        <div class="queue-title">Temps estimé</div>
-                        <div class="queue-icon">⏱️</div>
-                    </div>
-                    <div class="queue-body">
-                        <div class="queue-time" id="modal-queue-time">45 min</div>
-                        <div class="queue-label">avant livraison</div>
-                    </div>
-                </div>
-                
-                <div class="queue-card">
-                    <div class="queue-header">
-                        <div class="queue-title">Statut actuel</div>
-                        <div class="queue-icon">📋</div>
-                    </div>
-                    <div class="queue-body">
-                        <div class="queue-status status-processing" id="modal-queue-status">En préparation</div>
-                        <div class="queue-label">de votre commande</div>
-                    </div>
-                </div>
-            </div>
+    // Configurer les boutons qui ouvrent le modal de chat
+    document.querySelectorAll('.chat-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            console.log('Bouton de chat cliqué');
+            e.preventDefault(); 
+            e.stopPropagation();
             
-            <div class="queue-visualization">
-                <div class="queue-line">
-                    <div class="queue-progress" id="modal-queue-progress" style="width: 50%;"></div>
-                </div>
-                <div class="queue-markers">
-                    <div class="queue-marker active">
-                        <div class="marker-icon">📋</div>
-                        <div class="marker-label">Confirmation</div>
-                    </div>
-                    <div class="queue-marker active">
-                        <div class="marker-icon">👨‍🍳</div>
-                        <div class="marker-label">Préparation</div>
-                    </div>
-                    <div class="queue-marker">
-                        <div class="marker-icon">🚚</div>
-                        <div class="marker-label">En route</div>
-                    </div>
-                    <div class="queue-marker">
-                        <div class="marker-icon">🎁</div>
-                        <div class="marker-label">Livraison</div>
-                    </div>
-                </div>
-            </div>
+            const orderId = this.getAttribute('data-order');
+            document.getElementById('chat-order-id').textContent = orderId;
             
-            <div class="queue-refresh">
-                <button id="modal-refresh-queue" class="action-btn secondary">
-                    <span class="refresh-icon">🔄</span> Actualiser le statut
-                </button>
-                <div class="last-updated" id="modal-last-updated">Dernière mise à jour: 14:35</div>
-            </div>
-        </div>
-    </div>`;
-    
-    // Ajouter le modal au corps du document
-    document.body.appendChild(modal);
-    console.log('Modal de file d\'attente créé et ajouté au DOM');
-}
-// Fonction pour initialiser le modal de file d'attente
-function initQueueModal() {
-    // Créer le modal s'il n'existe pas
-    createQueueModal();
-    
-    // Vérifier si le modal existe maintenant
-    const queueModal = document.getElementById('queue-modal');
-    
-    if (queueModal) {
-        console.log('Modal de file d\'attente trouvé');
-        
-        // Ajouter les événements pour les boutons de file d'attente
-     document.querySelectorAll('.queue-btn').forEach(button => {
-    button.addEventListener('click', function(e) {
-        console.log('Bouton de file d\'attente cliqué');
-        e.preventDefault(); 
-        e.stopPropagation();
-        
-        const orderId = this.getAttribute('data-order');
-        console.log('OrderID:', orderId);
-        
-        document.getElementById('queue-order-id').textContent = orderId;
-        
-        // Charger les données réelles de file d'attente
-        updateQueueModal(orderId);
-        
-        // Afficher le modal
-        queueModal.classList.add('active');
+            // Charger les messages précédents
+            loadChatHistory(orderId);
+            
+            // Afficher le modal
+            chatModal.classList.add('active');
+        });
     });
-});
-        
-        // Fermer le modal
-        document.getElementById('close-queue-modal').addEventListener('click', function() {
-            queueModal.classList.remove('active');
+/////////////////////////////////////////////////////////////////////////////////// fileee d'attente //////////////////////// 
+    // Reconfigurer les boutons de la file d'attente pour mettre à jour la section intégrée
+    document.querySelectorAll('.queue-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            console.log('Bouton de file d\'attente cliqué');
+            e.preventDefault(); 
+            e.stopPropagation();
+            
+            const orderId = this.getAttribute('data-order');
+            console.log('OrderID:', orderId);
+            
+            // Mettre à jour et afficher la section intégrée
+            updateAndShowInlineQueueSection(orderId);
+            
+            // Faire défiler jusqu'à la section
+            document.getElementById('queue-section').scrollIntoView({ behavior: 'smooth' });
         });
-        
-        // Bouton de rafraîchissement dans le modal
-        document.getElementById('modal-refresh-queue').addEventListener('click', function() {
-            const orderId = document.getElementById('queue-order-id').textContent;
-            updateQueueModal(orderId);
-        });
+    });
+}
+ 
+function initInlineQueueSection() {
+    // Essayer de trouver une commande active dans la file d'attente
+    const activeOrders = findActiveOrdersInQueue();
+    
+    if (activeOrders.length > 0) {
+        // Prendre la commande la plus récente
+        const mostRecentOrder = activeOrders[0];
+        updateAndShowInlineQueueSection(mostRecentOrder.orderId);
     } else {
-        console.error('Impossible de trouver ou de créer le modal de file d\'attente');
+        // Afficher le message "aucune commande"
+        showNoQueueMessage();
+    }
+    
+    // Ajouter l'événement pour actualiser
+    const refreshButton = document.getElementById('inline-refresh-queue');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', function() {
+            const orderId = document.getElementById('queue-active-order-id').textContent;
+            updateInlineQueueData(orderId);
+        });
     }
 }
-function updateQueueModal(orderId) {
-    console.log('Mise à jour du modal de file d\'attente pour la commande:', orderId);
+    function findActiveOrdersInQueue() {
+    const activeOrders = [];
     
-    // Mettre à jour l'ID de commande dans le modal
-    document.getElementById('queue-order-id').textContent = orderId;
+    // Parcourir toutes les cartes de commande qui ne sont pas livrées ou annulées
+    document.querySelectorAll('.order-card').forEach(card => {
+        const status = card.getAttribute('data-status');
+        if (status !== 'delivered' && status !== 'cancelled') {
+            // Extraire l'ID de la commande
+            const orderIdElement = card.querySelector('.order-id');
+            if (orderIdElement) {
+                const match = orderIdElement.textContent.match(/Commande #([A-Z0-9]+)/);
+                if (match) {
+                    activeOrders.push({
+                        orderId: match[1],
+                        status: status,
+                        // La date pourrait être extraite pour trier par récence
+                        element: card
+                    });
+                }
+            }
+        }
+    });
     
-    // Simuler un chargement des données
-    document.getElementById('modal-queue-position').textContent = "...";
-    document.getElementById('modal-queue-time').textContent = "Chargement...";
-    document.getElementById('modal-queue-status').textContent = "Chargement...";
+    // Trier par statut (en priorité: processing, pending, shipped)
+    return activeOrders.sort((a, b) => {
+        const priority = {
+            'processing': 1,
+            'pending': 2,
+            'shipped': 3
+        };
+        return (priority[a.status] || 4) - (priority[b.status] || 4);
+    });
+}
+function showNoQueueMessage() {
+    document.getElementById('no-queue-message').style.display = 'flex';
+    document.getElementById('queue-details').style.display = 'none';
+}
+function updateAndShowInlineQueueSection(orderId) {
+    // Mettre à jour l'ID de commande affiché
+    document.getElementById('queue-active-order-id').textContent = orderId;
     
-    // Dans une application réelle, vous feriez un appel API ici pour obtenir les données
-    // Par exemple:
+    // Masquer le message "aucune commande"
+    document.getElementById('no-queue-message').style.display = 'none';
+    
+    // Afficher les détails de la file d'attente
+    document.getElementById('queue-details').style.display = 'block';
+    
+    // Charger les données réelles de la file d'attente
+    updateInlineQueueData(orderId);
+}
+function updateInlineQueueData(orderId) {
+    console.log('Mise à jour des données pour la commande:', orderId);
+    
+    // Afficher des valeurs de chargement
+    document.getElementById('inline-queue-position').textContent = "...";
+    document.getElementById('inline-queue-time').textContent = "Chargement...";
+    document.getElementById('inline-queue-status').textContent = "Chargement...";
+    
+    // Dans une application réelle, vous feriez un appel API ici
     fetch(`/api/orders/${orderId}/queue`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.inQueue) {
-                // Mettre à jour la position dans la file d'attente
-                document.getElementById('modal-queue-position').textContent = data.queueInfo.position;
+                // Mettre à jour les informations de file d'attente
+                document.getElementById('inline-queue-position').textContent = data.queueInfo.position;
                 
                 // Mettre à jour le temps estimé
                 const estimatedTime = data.queueInfo.estimatedTime;
@@ -229,13 +159,11 @@ function updateQueueModal(orderId) {
                     }
                 }
                 
-                document.getElementById('modal-queue-time').textContent = timeDisplay;
-                
-                // Mettre à jour le statut
-                document.getElementById('modal-queue-status').textContent = data.status;
+                document.getElementById('inline-queue-time').textContent = timeDisplay;
+                document.getElementById('inline-queue-status').textContent = data.status;
                 
                 // Mettre à jour la classe CSS du statut
-                const statusElement = document.getElementById('modal-queue-status');
+                const statusElement = document.getElementById('inline-queue-status');
                 statusElement.className = 'queue-status';
                 switch(data.status) {
                     case 'En attente':
@@ -257,54 +185,49 @@ function updateQueueModal(orderId) {
                         break;
                 }
                 
-                // Mettre à jour les marqueurs d'étape
-                updateQueueStepMarkers(data.status);
+                // Mettre à jour les marqueurs et la progression
+                updateInlineQueueStepMarkers(data.status);
                 
-                // Mettre à jour l'heure de dernière mise à jour
+                // Mettre à jour l'heure de la dernière mise à jour
                 const now = new Date();
                 const timeString = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
-                document.getElementById('modal-last-updated').textContent = 'Dernière mise à jour: ' + timeString;
+                document.getElementById('inline-last-updated').textContent = 'Dernière mise à jour: ' + timeString;
             } else {
-                // La commande n'est plus en file d'attente (livrée ou annulée)
-                document.getElementById('modal-queue-position').textContent = "-";
-                document.getElementById('modal-queue-time').textContent = data.status === 'Livré' ? "Terminé" : "Annulé";
-                document.getElementById('modal-queue-status').textContent = data.status;
-                
-                // Mettre à jour les marqueurs d'étape
-                updateQueueStepMarkers(data.status);
+                // La commande n'est plus dans la file d'attente, afficher le message "aucune commande"
+                showNoQueueMessage();
             }
         })
         .catch(error => {
             console.error('Erreur lors de la récupération des informations de file d\'attente:', error);
             
-            // En cas d'erreur, montrer des données fictives
-            document.getElementById('modal-queue-position').textContent = "3";
-            document.getElementById('modal-queue-time').textContent = "30-45 min";
-            document.getElementById('modal-queue-status').textContent = "En préparation";
+            // Afficher des données fictives en cas d'erreur
+            document.getElementById('inline-queue-position').textContent = "3";
+            document.getElementById('inline-queue-time').textContent = "30-45 min";
+            document.getElementById('inline-queue-status').textContent = "En préparation";
             
             // Mettre à jour le style du statut
-            const statusElement = document.getElementById('modal-queue-status');
+            const statusElement = document.getElementById('inline-queue-status');
             statusElement.className = 'queue-status status-processing';
             
-            // Mettre à jour les marqueurs d'étape
-            updateQueueStepMarkers('En préparation');
+            // Mettre à jour les marqueurs
+            updateInlineQueueStepMarkers('En préparation');
             
-            // Mettre à jour l'heure de dernière mise à jour
+            // Mettre à jour l'heure de la dernière mise à jour
             const now = new Date();
             const timeString = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
-            document.getElementById('modal-last-updated').textContent = 'Dernière mise à jour: ' + timeString;
+            document.getElementById('inline-last-updated').textContent = 'Dernière mise à jour: ' + timeString;
         });
 }
-function updateQueueStepMarkers(status) {
-    // Récupérer tous les marqueurs d'étape dans le modal
-    const markers = document.querySelectorAll('#queue-modal .queue-marker');
+function updateInlineQueueStepMarkers(status) {
+    // Récupérer tous les marqueurs d'étape
+    const markers = document.querySelectorAll('#queue-details .queue-marker');
     
-    // Réinitialiser tous les marqueurs (enlever la classe active)
+    // Réinitialiser tous les marqueurs
     markers.forEach(marker => {
         marker.classList.remove('active');
     });
     
-    // Activer les marqueurs appropriés en fonction du statut sélectionné
+    // Activer les marqueurs appropriés en fonction du statut
     switch(status) {
         case 'En attente':
             // Activer uniquement le premier marqueur (Confirmation)
@@ -320,22 +243,21 @@ function updateQueueStepMarkers(status) {
         case 'Expédié':
         case 'En route':
         case 'Prête pour livraison':
-            // Activer les trois premiers marqueurs (Confirmation, Préparation, En route)
+            // Activer les trois premiers marqueurs
             markers[0].classList.add('active');
             markers[1].classList.add('active');
             markers[2].classList.add('active');
             break;
             
         case 'Livré':
-            // Activer tous les marqueurs (commande complète)
+            // Activer tous les marqueurs
             markers.forEach(marker => {
                 marker.classList.add('active');
             });
             break;
             
         case 'Annulé':
-            // Pour les commandes annulées, vous pourriez vouloir une visualisation spéciale
-            // Par défaut, on garde juste le premier marqueur actif
+            // Pour les commandes annulées, garder juste le premier marqueur
             markers[0].classList.add('active');
             break;
             
@@ -344,7 +266,7 @@ function updateQueueStepMarkers(status) {
             markers[0].classList.add('active');
     }
     
-    // Mettre à jour la barre de progression en fonction du statut
+    // Mettre à jour la barre de progression
     let progressPercentage = 0;
     
     switch(status) {
@@ -363,87 +285,35 @@ function updateQueueStepMarkers(status) {
             progressPercentage = 100;
             break;
         case 'Annulé':
-            progressPercentage = 25; // Pour les commandes annulées, on garde une progression minimale
+            progressPercentage = 25;
             break;
         default:
             progressPercentage = 25;
     }
     
     // Mettre à jour la barre de progression
-    const progressBar = document.getElementById('modal-queue-progress');
+    const progressBar = document.getElementById('inline-queue-progress');
     if (progressBar) {
         progressBar.style.width = `${progressPercentage}%`;
     }
-    
-    // Mettre à jour l'affichage du statut dans le modal
-    const statusElement = document.getElementById('modal-queue-status');
-    if (statusElement) {
-        statusElement.textContent = status;
-        
-        // Mettre à jour la classe du statut
-        statusElement.className = 'queue-status';
-        switch(status) {
-            case 'En attente':
-                statusElement.classList.add('status-pending');
-                break;
-            case 'En préparation':
-                statusElement.classList.add('status-processing');
-                break;
-            case 'Expédié':
-            case 'En route':
-            case 'Prête pour livraison':
-                statusElement.classList.add('status-shipped');
-                break;
-            case 'Livré':
-                statusElement.classList.add('status-delivered');
-                break;
-            case 'Annulé':
-                statusElement.classList.add('status-cancelled');
-                break;
+}
+// Mise à jour périodique de la section de file d'attente (toutes les 2 minutes)
+setInterval(function() {
+    // Vérifier si la section est actuellement visible
+    if (document.getElementById('queue-details').style.display !== 'none') {
+        const orderId = document.getElementById('queue-active-order-id').textContent;
+        if (orderId) {
+            updateInlineQueueData(orderId);
+        }
+    } else {
+        // S'il n'y a pas de commande active, vérifier si de nouvelles commandes sont entrées en file d'attente
+        const activeOrders = findActiveOrdersInQueue();
+        if (activeOrders.length > 0) {
+            updateAndShowInlineQueueSection(activeOrders[0].orderId);
         }
     }
+}, 120000); // 2 minutes
     
-    // Mettre à jour l'affichage du temps estimé en fonction du statut
-    updateEstimatedTimeDisplay(status);
-}
-
-/**
- * Met à jour l'affichage du temps estimé en fonction du statut
- * @param {string} status - Le statut sélectionné par l'admin
- */
-function updateEstimatedTimeDisplay(status) {
-    const timeElement = document.getElementById('modal-queue-time');
-    if (!timeElement) return;
-    
-    // Définir le temps estimé en fonction du statut
-    switch(status) {
-        case 'En attente':
-            // Pour les commandes en attente, on peut estimer un temps plus long
-            timeElement.textContent = '45-60 min';
-            break;
-        case 'En préparation':
-            // Pour les commandes en préparation, on réduit le temps estimé
-            timeElement.textContent = '20-30 min';
-            break;
-        case 'Expédié':
-        case 'En route':
-        case 'Prête pour livraison':
-            // Pour les commandes en route, le temps est encore plus court
-            timeElement.textContent = '5-10 min';
-            break;
-        case 'Livré':
-            // Pour les commandes livrées, on change le texte
-            timeElement.textContent = 'Terminé';
-            break;
-        case 'Annulé':
-            // Pour les commandes annulées, on indique l'annulation
-            timeElement.textContent = 'Annulé';
-            break;
-        default:
-            // Par défaut, on garde un temps estimé général
-            timeElement.textContent = '30-45 min';
-    }
-}
 // Fonction pour initialiser l'aperçu de la file d'attente dans les cartes de commande
 function initQueuePreview() {
     // Récupérer toutes les commandes actives
