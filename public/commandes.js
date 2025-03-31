@@ -5,6 +5,13 @@ document.addEventListener('DOMContentLoaded', function() {
     initInlineQueueSection();
     initFilterButtons();
     setupSearchOrder();
+    initExpandButtons();
+    
+    // Créer le modal de chat s'il n'existe pas
+    initChatModal();
+    
+    // Améliorer les animations des modaux
+    enhanceModalAnimations();
 });
 
 // Vérifier le statut d'authentification de l'utilisateur
