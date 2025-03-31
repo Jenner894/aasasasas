@@ -1488,6 +1488,67 @@
     font-weight: bold;
     margin: 0;
 }
+        /* Styles pour la section de file d'attente intégrée */
+.queue-section {
+    margin-top: 30px;
+}
+
+.no-queue-message {
+    position: relative;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    min-height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.blur-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(4px);
+    background-color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.no-queue-text {
+    text-align: center;
+    padding: 30px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.no-queue-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: #aaa;
+}
+
+.no-queue-text p {
+    font-size: 1.2rem;
+    color: #666;
+}
+
+.active-order-info {
+    margin-bottom: 20px;
+    background-color: #f0f8ff;
+    border-radius: 10px;
+    padding: 15px;
+    border-left: 4px solid var(--primary-blue);
+}
+
+.active-order-info h3 {
+    color: var(--dark-blue);
+    font-weight: bold;
+    margin: 0;
+}
     </style>
 </head>
 <body>
