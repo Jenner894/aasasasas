@@ -12,11 +12,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Améliorer les animations des modaux
     enhanceModalAnimations();
     
-    // Initialiser la section de file d'attente
-    setTimeout(() => {
-        console.log("Initialisation de la section file d'attente après délai");
-        initInlineQueueSection();
-    }, 500);
+    // Initialiser la section de file d'attente immédiatement sans délai
+    initInlineQueueSection();
 });
 
 // Vérifier le statut d'authentification de l'utilisateur
@@ -307,7 +304,6 @@ function setupModals() {
         }
     });
 }
-
 function initInlineQueueSection() {
     console.log("Initialisation de la section file d'attente");
     
@@ -321,7 +317,7 @@ function initInlineQueueSection() {
         return;
     }
     
-    // Assurer que la section est visible
+    // Assurer que la section est visible - Correction ici
     queueSection.style.display = 'block';
     
     // Essayer de trouver une commande active dans la file d'attente
@@ -336,7 +332,8 @@ function initInlineQueueSection() {
         // Afficher le message "aucune commande"
         showNoQueueMessage();
     }
-  // Ajouter l'événement pour actualiser
+    
+    // Ajouter l'événement pour actualiser
     const refreshButton = document.getElementById('inline-refresh-queue');
     if (refreshButton) {
         refreshButton.addEventListener('click', function() {
@@ -724,16 +721,26 @@ function initFilterButtons() {
 
 // Initialiser les boutons d'expansion
 function initExpandButtons() {
+    // Supprimer d'abord tous les écouteurs d'événements existants pour éviter les doublons
+    const orderHeaders = document.querySelectorAll('.order-header');
+    orderHeaders.forEach(header => {
+        const newHeader = header.cloneNode(true);
+        header.parentNode.replaceChild(newHeader, header);
+    });
+
+    // Ajouter des écouteurs d'événements frais
     document.addEventListener('click', function(e) {
         const header = e.target.closest('.order-header');
         if (header) {
             const card = header.closest('.order-card');
             if (card) {
                 card.classList.toggle('expanded');
+                console.log('Card toggled:', card.classList.contains('expanded'));
             }
         }
     });
 }
+
 
 // Configurer la recherche de commandes
 function setupSearchOrder() {
