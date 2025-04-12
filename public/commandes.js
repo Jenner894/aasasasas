@@ -223,9 +223,9 @@ function createOrderElement(order) {
             </div>
             
             <div class="order-actions">
-                <button class="action-btn queue-btn" data-order="${displayOrderId}">
-                    <span class="queue-btn-icon">🔢</span> File d'attente
-                </button>
+<button class="action-btn queue-btn" data-order="${displayOrderId}" data-id="${order._id}">
+    <span class="queue-btn-icon">🔢</span> File d'attente
+</button>
                 <button class="action-btn chat-btn" data-order="${displayOrderId}">
                     <span class="chat-btn-icon">💬</span> Chatter avec le livreur
                 </button>
