@@ -1053,17 +1053,19 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
     }
 });
 // ===================== CHAT=====================
+// ===================== CHAT =====================
 // Route pour récupérer l'historique du chat d'une commande
-router.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
+app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
     try {
         // Vérifier si la commande appartient à l'utilisateur (sauf pour admin)
-        const order = await Order.findOne({
-            _id: req.params.id,
-            $or: [
-                { user: req.session.user.id },
-                { req.session.user.role: 'admin' }
-            ]
-        });
+        const query = { _id: req.params.id };
+        
+        // Si l'utilisateur n'est pas admin, on ajoute une restriction pour voir uniquement ses commandes
+        if (req.session.user.role !== 'admin') {
+            query.user = req.session.user.id;
+        }
+        
+        const order = await Order.findOne(query);
         
         if (!order) {
             return res.status(404).json({ 
@@ -1092,16 +1094,20 @@ router.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
             const deliveryMessage = new Message({
                 orderId: req.params.id,
                 sender: 'livreur',
-                content: `Bonjour ! Je suis votre livreur pour la commande #${order.orderNumber || req.params.id.substr(-6)}. Je vous contacterai dès que votre commande sera prête à être livrée.`,
+                content: `Bonjour ! Je suis votre livreur pour la commande #${order.orderNumber || req.params.id.toString().substr(-6)}. Je vous contacterai dès que votre commande sera prête à être livrée.`,
                 timestamp: new Date(Date.now() + 1000)
             });
             
             await deliveryMessage.save();
             
-            // Récupérer les messages à nouveau
+            // Récupérer les messages à nouveau pour les renvoyer
+            const initialMessages = await Message.find({ 
+                orderId: req.params.id 
+            }).sort({ timestamp: 1 });
+            
             return res.status(200).json({ 
                 success: true, 
-                messages: [welcomeMessage, deliveryMessage]
+                messages: initialMessages
             });
         }
         
@@ -1123,16 +1129,16 @@ router.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
             messages: messages
         });
     } catch (error) {
-        console.error('Erreur lors de la récupération de l\'historique du chat:', error);
+        console.error('Erreur lors de la récupération des messages:', error);
         res.status(500).json({ 
             success: false, 
-            message: 'Erreur lors de la récupération de l\'historique du chat' 
+            message: 'Erreur lors de la récupération des messages' 
         });
     }
 });
 
 // Route pour envoyer un message dans le chat
-router.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
+app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
     try {
         const { content } = req.body;
         
@@ -1144,13 +1150,14 @@ router.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         }
         
         // Vérifier si la commande existe et appartient à l'utilisateur (sauf pour admin)
-        const order = await Order.findOne({
-            _id: req.params.id,
-            $or: [
-                { user: req.session.user.id },
-                { req.session.user.role: 'admin' }
-            ]
-        });
+        const query = { _id: req.params.id };
+        
+        // Si l'utilisateur n'est pas admin, on ajoute une restriction pour voir uniquement ses commandes
+        if (req.session.user.role !== 'admin') {
+            query.user = req.session.user.id;
+        }
+        
+        const order = await Order.findOne(query);
         
         if (!order) {
             return res.status(404).json({ 
@@ -1188,7 +1195,7 @@ router.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
 });
 
 // Route pour récupérer le nombre de messages non lus par commande
-router.get('/api/orders/:id/unread-messages', isAuthenticated, async (req, res) => {
+app.get('/api/orders/:id/unread-messages', isAuthenticated, async (req, res) => {
     try {
         // Déterminer le type de messages à compter (selon le rôle de l'utilisateur)
         const senderToCheck = req.session.user.role === 'admin' ? 'client' : 'livreur';
@@ -1214,7 +1221,7 @@ router.get('/api/orders/:id/unread-messages', isAuthenticated, async (req, res) 
 });
 
 // Route pour récupérer tous les chats non lus (pour l'admin/dashboard)
-router.get('/api/chats/unread', isAuthenticated, async (req, res) => {
+app.get('/api/chats/unread', isAuthenticated, async (req, res) => {
     // Vérifier si l'utilisateur est admin
     if (req.session.user.role !== 'admin') {
         return res.status(403).json({ 
@@ -1272,7 +1279,7 @@ router.get('/api/chats/unread', isAuthenticated, async (req, res) => {
         });
     }
 });
-
+// ===================== CHAT =====================
 // ===================== CHAT =====================
 
 
