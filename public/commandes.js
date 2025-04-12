@@ -721,23 +721,23 @@ function initFilterButtons() {
 
 // Initialiser les boutons d'expansion
 function initExpandButtons() {
-    // Supprimer d'abord tous les écouteurs d'événements existants pour éviter les doublons
+    // Cibler directement les en-têtes de commande
     const orderHeaders = document.querySelectorAll('.order-header');
+    
+    // Ajouter un écouteur d'événement à chaque en-tête individuellement
     orderHeaders.forEach(header => {
-        const newHeader = header.cloneNode(true);
-        header.parentNode.replaceChild(newHeader, header);
-    });
-
-    // Ajouter des écouteurs d'événements frais
-    document.addEventListener('click', function(e) {
-        const header = e.target.closest('.order-header');
-        if (header) {
-            const card = header.closest('.order-card');
+        header.addEventListener('click', function(e) {
+            // Empêcher la propagation de l'événement
+            e.stopPropagation();
+            
+            // Trouver la carte parente
+            const card = this.closest('.order-card');
             if (card) {
+                // Basculer la classe 'expanded'
                 card.classList.toggle('expanded');
                 console.log('Card toggled:', card.classList.contains('expanded'));
             }
-        }
+        });
     });
 }
 
