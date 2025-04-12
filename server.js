@@ -390,12 +390,30 @@ setInterval(updateDeliveryQueue, 5 * 60 * 1000);
 // 4. Créer des routes API pour la file d'attente
 
 // Route pour obtenir les informations de file d'attente d'une commande spécifique
+// Route pour obtenir les informations de file d'attente d'une commande spécifique
 app.get('/api/orders/:id/queue', isAuthenticated, async (req, res) => {
     try {
-        const order = await Order.findOne({
-            _id: req.params.id,
-            user: req.session.user.id
-        });
+        // Vérifier si l'ID est au format BD*, chercher la commande d'abord
+        let orderId = req.params.id;
+        
+        let order;
+        if (orderId.startsWith('BD')) {
+            // Trouver la commande par son numéro d'affichage
+            order = await Order.findOne({
+                $or: [
+                    { orderNumber: orderId },
+                    // Chercher aussi dans le champ _id au cas où
+                    { _id: orderId }
+                ],
+                user: req.session.user.id
+            });
+        } else {
+            // L'ID est peut-être déjà un ObjectId
+            order = await Order.findOne({
+                _id: orderId,
+                user: req.session.user.id
+            });
+        }
         
         if (!order) {
             return res.status(404).json({ 
