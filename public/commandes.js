@@ -54,6 +54,11 @@ function loadUserOrders() {
         .then(data => {
             if (data.success) {
                 displayOrders(data.orders);
+                
+                // Important: Réinitialiser la section de file d'attente après le chargement des commandes
+                setTimeout(() => {
+                    findAndDisplayActiveOrder();
+                }, 100);
             } else {
                 ordersList.innerHTML = '<div class="error-message">Erreur lors du chargement des commandes</div>';
             }
@@ -63,6 +68,7 @@ function loadUserOrders() {
             ordersList.innerHTML = '<div class="error-message">Erreur de connexion au serveur</div>';
         });
 }
+
 // Amélioration de la fonction pour trouver les commandes actives
 function findActiveOrdersInQueue() {
     const activeOrders = [];
@@ -110,6 +116,7 @@ function findActiveOrdersInQueue() {
     console.log(`Commandes actives triées: ${sortedOrders.length}`);
     return sortedOrders;
 }
+
 // Afficher les commandes dans l'interface
 function displayOrders(orders) {
     const ordersList = document.querySelector('.orders-list');
@@ -350,6 +357,25 @@ function setupModals() {
         }
     });
 }
+function findAndDisplayActiveOrder() {
+    console.log("Recherche de commandes actives...");
+    
+    // Essayer de trouver une commande active dans la file d'attente
+    const activeOrders = findActiveOrdersInQueue();
+    console.log("Commandes actives trouvées:", activeOrders);
+    
+    if (activeOrders.length > 0) {
+        // Prendre la commande la plus prioritaire
+        const mostRecentOrder = activeOrders[0];
+        updateAndShowInlineQueueSection(mostRecentOrder.orderId);
+        
+        // Mettre aussi à jour immédiatement les aperçus de file d'attente dans les cartes
+        initQueuePreview();
+    } else {
+        // Afficher le message "aucune commande"
+        showNoQueueMessage();
+    }
+}
 function initInlineQueueSection() {
     console.log("Initialisation de la section file d'attente");
     
@@ -363,20 +389,21 @@ function initInlineQueueSection() {
         return;
     }
     
-    // Assurer que la section est visible - Correction ici
+    // Assurer que la section est visible
     queueSection.style.display = 'block';
     
-    // Essayer de trouver une commande active dans la file d'attente
-    const activeOrders = findActiveOrdersInQueue();
-    console.log("Commandes actives trouvées:", activeOrders);
-    
-    if (activeOrders.length > 0) {
-        // Prendre la commande la plus récente
-        const mostRecentOrder = activeOrders[0];
-        updateAndShowInlineQueueSection(mostRecentOrder.orderId);
+    // Vérifier d'abord si les commandes sont chargées
+    const ordersList = document.querySelector('.orders-list');
+    if (!ordersList || !ordersList.children.length || ordersList.querySelector('.loading-indicator')) {
+        console.log("Les commandes ne sont pas encore chargées, attente...");
+        
+        // Si les commandes sont en cours de chargement, on attend un peu
+        setTimeout(function() {
+            findAndDisplayActiveOrder();
+        }, 500); // Attendre 500ms pour laisser le temps aux commandes de se charger
     } else {
-        // Afficher le message "aucune commande"
-        showNoQueueMessage();
+        // Les commandes sont déjà chargées, rechercher immédiatement
+        findAndDisplayActiveOrder();
     }
     
     // Ajouter l'événement pour actualiser
@@ -573,6 +600,8 @@ function updateInlineQueueStepMarkers(status) {
 
 // Initialiser les aperçus de file d'attente dans les cartes de commande
 function initQueuePreview() {
+    console.log("Initialisation des aperçus de file d'attente");
+    
     // Récupérer toutes les commandes actives
     const orderCards = document.querySelectorAll('.order-card:not([data-status="delivered"]):not([data-status="cancelled"])');
     
@@ -612,7 +641,10 @@ function initQueuePreview() {
         `;
         
         // Charger les informations de file d'attente pour chaque commande
-        fetchQueueInfo(orderId, card);
+        // Utiliser setTimeout pour éviter de bloquer le rendu
+        setTimeout(() => {
+            fetchQueueInfo(orderId, card);
+        }, 0);
     });
 }
 
