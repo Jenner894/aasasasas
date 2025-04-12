@@ -186,6 +186,54 @@ const UserSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model('User', UserSchema);
+
+
+
+const MessageSchema = new mongoose.Schema({
+    orderId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Order', 
+        required: true 
+    },
+    sender: { 
+        type: String, 
+        enum: ['client', 'livreur', 'system'],
+        required: true 
+    },
+    content: { 
+        type: String, 
+        required: true 
+    },
+    timestamp: { 
+        type: Date, 
+        default: Date.now 
+    },
+    isRead: {
+        type: Boolean,
+        default: false
+    },
+    // Référence optionnelle aux utilisateurs
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    deliveryPersonId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }
+});
+
+// Index pour des requêtes plus rapides
+MessageSchema.index({ orderId: 1, timestamp: 1 });
+
+// Méthode pour marquer un message comme lu
+MessageSchema.methods.markAsRead = function() {
+    this.isRead = true;
+    return this.save();
+};
+
+// Création du modèle Message
+const Message = mongoose.model('Message', MessageSchema);
 // Méthode pour régénérer la clé Telegram
 UserSchema.methods.regenerateKeys = function() {
     // Générer une nouvelle clé de 16 caractères
@@ -1004,6 +1052,231 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         res.status(500).json({ success: false, message: 'Erreur lors de l\'envoi du message' });
     }
 });
+// ===================== CHAT=====================
+// Route pour récupérer l'historique du chat d'une commande
+router.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
+    try {
+        // Vérifier si la commande appartient à l'utilisateur (sauf pour admin)
+        const order = await Order.findOne({
+            _id: req.params.id,
+            $or: [
+                { user: req.session.user.id },
+                { req.session.user.role: 'admin' }
+            ]
+        });
+        
+        if (!order) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Commande non trouvée ou accès non autorisé' 
+            });
+        }
+        
+        // Récupérer tous les messages pour cette commande
+        const messages = await Message.find({ 
+            orderId: req.params.id 
+        }).sort({ timestamp: 1 });
+        
+        // Si aucun message n'existe encore, créer un message système d'accueil
+        if (messages.length === 0) {
+            const welcomeMessage = new Message({
+                orderId: req.params.id,
+                sender: 'system',
+                content: 'Début de la conversation avec votre livreur.',
+                timestamp: new Date()
+            });
+            
+            await welcomeMessage.save();
+            
+            // Ajouter un message de bienvenue du livreur
+            const deliveryMessage = new Message({
+                orderId: req.params.id,
+                sender: 'livreur',
+                content: `Bonjour ! Je suis votre livreur pour la commande #${order.orderNumber || req.params.id.substr(-6)}. Je vous contacterai dès que votre commande sera prête à être livrée.`,
+                timestamp: new Date(Date.now() + 1000)
+            });
+            
+            await deliveryMessage.save();
+            
+            // Récupérer les messages à nouveau
+            return res.status(200).json({ 
+                success: true, 
+                messages: [welcomeMessage, deliveryMessage]
+            });
+        }
+        
+        // Marquer les messages non lus comme lus (seulement ceux destinés à l'utilisateur courant)
+        if (req.session.user.role === 'client') {
+            await Message.updateMany(
+                { orderId: req.params.id, sender: 'livreur', isRead: false },
+                { $set: { isRead: true } }
+            );
+        } else if (req.session.user.role === 'admin') {
+            await Message.updateMany(
+                { orderId: req.params.id, sender: 'client', isRead: false },
+                { $set: { isRead: true } }
+            );
+        }
+        
+        res.status(200).json({ 
+            success: true, 
+            messages: messages
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération de l\'historique du chat:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la récupération de l\'historique du chat' 
+        });
+    }
+});
+
+// Route pour envoyer un message dans le chat
+router.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
+    try {
+        const { content } = req.body;
+        
+        if (!content || content.trim() === '') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Le message ne peut pas être vide' 
+            });
+        }
+        
+        // Vérifier si la commande existe et appartient à l'utilisateur (sauf pour admin)
+        const order = await Order.findOne({
+            _id: req.params.id,
+            $or: [
+                { user: req.session.user.id },
+                { req.session.user.role: 'admin' }
+            ]
+        });
+        
+        if (!order) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Commande non trouvée ou accès non autorisé' 
+            });
+        }
+        
+        // Déterminer le type d'expéditeur
+        const sender = req.session.user.role === 'admin' ? 'livreur' : 'client';
+        
+        // Créer le nouveau message
+        const newMessage = new Message({
+            orderId: req.params.id,
+            sender: sender,
+            content: content.trim(),
+            timestamp: new Date(),
+            userId: req.session.user.id
+        });
+        
+        await newMessage.save();
+        
+        // Retourner le message créé
+        res.status(201).json({ 
+            success: true, 
+            message: newMessage
+        });
+    } catch (error) {
+        console.error('Erreur lors de l\'envoi du message:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de l\'envoi du message' 
+        });
+    }
+});
+
+// Route pour récupérer le nombre de messages non lus par commande
+router.get('/api/orders/:id/unread-messages', isAuthenticated, async (req, res) => {
+    try {
+        // Déterminer le type de messages à compter (selon le rôle de l'utilisateur)
+        const senderToCheck = req.session.user.role === 'admin' ? 'client' : 'livreur';
+        
+        // Compter les messages non lus
+        const unreadCount = await Message.countDocuments({
+            orderId: req.params.id,
+            sender: senderToCheck,
+            isRead: false
+        });
+        
+        res.status(200).json({ 
+            success: true, 
+            unreadCount: unreadCount
+        });
+    } catch (error) {
+        console.error('Erreur lors du comptage des messages non lus:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors du comptage des messages non lus' 
+        });
+    }
+});
+
+// Route pour récupérer tous les chats non lus (pour l'admin/dashboard)
+router.get('/api/chats/unread', isAuthenticated, async (req, res) => {
+    // Vérifier si l'utilisateur est admin
+    if (req.session.user.role !== 'admin') {
+        return res.status(403).json({ 
+            success: false, 
+            message: 'Accès non autorisé' 
+        });
+    }
+    
+    try {
+        // Trouver toutes les commandes avec des messages non lus du client
+        const ordersWithUnreadMessages = await Message.aggregate([
+            { 
+                $match: { 
+                    sender: 'client', 
+                    isRead: false 
+                } 
+            },
+            { 
+                $group: { 
+                    _id: '$orderId', 
+                    unreadCount: { $sum: 1 },
+                    lastMessage: { $last: '$content' },
+                    lastTimestamp: { $max: '$timestamp' }
+                } 
+            },
+            { $sort: { lastTimestamp: -1 } }
+        ]);
+        
+        // Récupérer les détails des commandes
+        const result = [];
+        for (const item of ordersWithUnreadMessages) {
+            const order = await Order.findById(item._id).populate('user', 'username');
+            if (order) {
+                result.push({
+                    orderId: item._id,
+                    orderNumber: order.orderNumber || item._id.toString().substr(-6),
+                    username: order.user.username,
+                    status: order.status,
+                    unreadCount: item.unreadCount,
+                    lastMessage: item.lastMessage,
+                    lastTimestamp: item.lastTimestamp
+                });
+            }
+        }
+        
+        res.status(200).json({ 
+            success: true, 
+            chats: result
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des chats non lus:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la récupération des chats non lus' 
+        });
+    }
+});
+
+// ===================== CHAT =====================
+
+
+
 // ===================== ROUTES POUR LA COMMANDE AVEC LIVRAISON =====================
 app.post('/api/orders/delivery', isAuthenticated, async (req, res) => {
     try {
