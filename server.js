@@ -1195,14 +1195,32 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
 });
 
 // Route pour récupérer le nombre de messages non lus par commande
+// Route pour récupérer le nombre de messages non lus pour une commande
 app.get('/api/orders/:id/unread-messages', isAuthenticated, async (req, res) => {
     try {
+        // Si l'ID est au format BD*, chercher la commande d'abord
+        let orderId = req.params.id;
+        
+        if (orderId.startsWith('BD')) {
+            // Trouver la commande par son numéro d'affichage
+            const order = await Order.findOne({ orderNumber: orderId });
+            if (order) {
+                orderId = order._id;
+            } else {
+                // Si la commande n'est pas trouvée, renvoyer 0 messages non lus
+                return res.status(200).json({ 
+                    success: true, 
+                    unreadCount: 0
+                });
+            }
+        }
+        
         // Déterminer le type de messages à compter (selon le rôle de l'utilisateur)
         const senderToCheck = req.session.user.role === 'admin' ? 'client' : 'livreur';
         
         // Compter les messages non lus
         const unreadCount = await Message.countDocuments({
-            orderId: req.params.id,
+            orderId: orderId,
             sender: senderToCheck,
             isRead: false
         });
