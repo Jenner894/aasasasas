@@ -8,7 +8,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Créer le modal de chat s'il n'existe pas
     initChatModal();
+        // Configurer les boutons de chat dans les cartes de commande
+    setupChatButtons();
     
+    // Configurer le bouton de chat dans la section de file d'attente
+    setupInlineChatButton();
+    
+    // Ajouter des compteurs de messages non lus
+    initUnreadMessageCounters();
+    
+    // Vérifier périodiquement les nouveaux messages (toutes les 30 secondes)
+    setInterval(checkForNewMessages, 5000);
     // Améliorer les animations des modaux
     enhanceModalAnimations();
     
@@ -809,119 +819,327 @@ function setupSearchOrder() {
         });
     }
 }
-// Charger l'historique du chat (simulation)
-function loadChatHistory(orderId) {
-    // Simulation d'une conversation
-    const chatMessages = document.getElementById('chat-messages');
+// Configurer les boutons de chat
+function setupChatButtons() {
+    // Utiliser une délégation d'événements pour gérer tous les boutons de chat
+    document.addEventListener('click', function(e) {
+        const chatButton = e.target.closest('.chat-btn');
+        if (chatButton) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const orderId = chatButton.getAttribute('data-order');
+            if (orderId) {
+                openChatModal(orderId);
+                
+                // Réinitialiser le compteur de messages non lus pour cette commande
+                resetUnreadCounter(orderId);
+            }
+        }
+    });
+}
+
+// Configurer le bouton de chat dans la file d'attente
+function setupInlineChatButton() {
+    const inlineChatBtn = document.getElementById('inline-chat-btn');
     
-    if (!chatMessages) return;
-    
-    // Conserver uniquement le message système et le premier message du livreur
-    chatMessages.innerHTML = `
-        <div class="system-message">
-            Début de la conversation avec votre livreur.
-        </div>
-        <div class="message message-other">
-            <div class="message-sender">Livreur</div>
-            Bonjour ! Je suis votre livreur pour la commande #${orderId}. Je vous contacterai dès que votre commande sera prête à être livrée.
-            <div class="message-time">Aujourd'hui, ${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}</div>
-        </div>
-    `;
-    
-    // Faire défiler jusqu'au bas
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    
-    // Configurer le bouton d'envoi de message s'il n'est pas déjà configuré
-    const sendButton = document.getElementById('send-message');
-    if (sendButton) {
-        // Supprimer les gestionnaires d'événements existants
-        const newSendButton = sendButton.cloneNode(true);
-        sendButton.parentNode.replaceChild(newSendButton, sendButton);
-        
-        // Ajouter le nouveau gestionnaire d'événement
-        newSendButton.addEventListener('click', sendChatMessage);
-    }
-    
-    // Configurer l'entrée de chat pour l'envoi de message sur la touche "Entrée"
-    const chatInput = document.getElementById('chat-input-text');
-    if (chatInput) {
-        // Supprimer les gestionnaires d'événements existants
-        const newChatInput = chatInput.cloneNode(true);
-        chatInput.parentNode.replaceChild(newChatInput, chatInput);
-        
-        // Ajouter le nouveau gestionnaire d'événement
-        newChatInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendChatMessage();
+    if (inlineChatBtn) {
+        inlineChatBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const orderId = document.getElementById('queue-active-order-id').textContent;
+            if (orderId) {
+                openChatModal(orderId);
+                
+                // Réinitialiser le compteur de messages non lus pour cette commande
+                resetUnreadCounter(orderId);
             }
         });
     }
 }
 
-// Envoyer un message dans le chat
+// Ouvrir le modal de chat et charger l'historique
+function openChatModal(orderId) {
+    const chatModal = document.getElementById('chat-modal');
+    if (!chatModal) return;
+    
+    // Définir l'ID de commande dans le modal
+    document.getElementById('chat-order-id').textContent = orderId;
+    
+    // Afficher le modal
+    chatModal.classList.add('active');
+    
+    // Charger l'historique du chat
+    loadChatHistory(orderId);
+}
+
+// Charger l'historique du chat depuis l'API
+function loadChatHistory(orderId) {
+    const chatMessages = document.getElementById('chat-messages');
+    if (!chatMessages) return;
+    
+    // Afficher un indicateur de chargement
+    chatMessages.innerHTML = '<div class="loading-indicator">Chargement des messages...</div>';
+    
+    // Appel à l'API pour récupérer l'historique
+    fetch(`/api/orders/${orderId}/chat`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayChatMessages(data.messages);
+            } else {
+                chatMessages.innerHTML = '<div class="error-message">Erreur lors du chargement des messages</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors du chargement des messages:', error);
+            chatMessages.innerHTML = '<div class="error-message">Erreur de connexion au serveur</div>';
+        });
+}
+
+// Afficher les messages du chat
+function displayChatMessages(messages) {
+    const chatMessages = document.getElementById('chat-messages');
+    if (!chatMessages) return;
+    
+    // Vider le conteneur
+    chatMessages.innerHTML = '';
+    
+    // Si aucun message, afficher un message par défaut
+    if (!messages || messages.length === 0) {
+        chatMessages.innerHTML = '<div class="system-message">Aucun message dans cette conversation.</div>';
+        return;
+    }
+    
+    // Afficher chaque message
+    messages.forEach(message => {
+        // Formater la date
+        const messageDate = new Date(message.timestamp);
+        const timeString = messageDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        const dateString = messageDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+        
+        // Créer l'élément HTML pour le message
+        let messageElement;
+        
+        if (message.sender === 'system') {
+            // Message système
+            messageElement = document.createElement('div');
+            messageElement.className = 'system-message';
+            messageElement.textContent = message.content;
+        } else {
+            // Message utilisateur ou livreur
+            messageElement = document.createElement('div');
+            messageElement.className = `message message-${message.sender === 'client' ? 'user' : 'other'}`;
+            
+            // Ajouter l'expéditeur pour les messages du livreur
+            if (message.sender === 'livreur') {
+                const senderDiv = document.createElement('div');
+                senderDiv.className = 'message-sender';
+                senderDiv.textContent = 'Livreur';
+                messageElement.appendChild(senderDiv);
+            }
+            
+            // Ajouter le contenu du message
+            const contentDiv = document.createElement('div');
+            contentDiv.textContent = message.content;
+            messageElement.appendChild(contentDiv);
+            
+            // Ajouter l'horodatage
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = `${dateString}, ${timeString}`;
+            messageElement.appendChild(timeDiv);
+        }
+        
+        // Ajouter le message au conteneur
+        chatMessages.appendChild(messageElement);
+    });
+    
+    // Faire défiler jusqu'au bas
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Envoyer un message
 function sendChatMessage() {
     const inputField = document.getElementById('chat-input-text');
     if (!inputField) return;
     
     const messageText = inputField.value.trim();
+    if (!messageText) return;
     
-    if (messageText) {
-        const chatMessages = document.getElementById('chat-messages');
-        if (!chatMessages) return;
-        
-        const time = `${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`;
-        
-        // Ajouter le message de l'utilisateur
-        chatMessages.innerHTML += `
-            <div class="message message-user">
-                <div class="message-sender">Vous</div>
-                ${messageText}
-                <div class="message-time">Aujourd'hui, ${time}</div>
-            </div>
-        `;
-        
-        // Effacer le champ de saisie
-        inputField.value = '';
-        
-        // Faire défiler jusqu'au bas
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        // Simuler une réponse du livreur après un court délai
-        setTimeout(function() {
-            simulateDeliveryResponse();
-        }, 1000 + Math.random() * 2000);
-    }
-}
-
-// Simuler une réponse du livreur
-function simulateDeliveryResponse() {
+    // Récupérer l'ID de la commande
+    const orderId = document.getElementById('chat-order-id').textContent;
+    if (!orderId) return;
+    
+    // Effacer le champ de saisie immédiatement
+    inputField.value = '';
+    
+    // Ajouter un message temporaire (optimistic UI)
     const chatMessages = document.getElementById('chat-messages');
     if (!chatMessages) return;
     
-    const responses = [
-        "Je viens de recevoir votre commande, je la prépare immédiatement.",
-        "Votre commande est en cours de préparation. Je vous tiens au courant.",
-        "Je serai dans votre secteur dans environ 30 minutes.",
-        "Je viens de terminer une livraison, je serai chez vous bientôt.",
-        "N'hésitez pas à me donner des indications précises pour vous trouver.",
-        "Je confirme avoir reçu votre message, à bientôt!"
-    ];
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const dateString = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
     
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-    const time = `${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}`;
-    
-    // Ajouter la réponse du livreur
-    chatMessages.innerHTML += `
-        <div class="message message-other">
-            <div class="message-sender">Livreur</div>
-            ${randomResponse}
-            <div class="message-time">Aujourd'hui, ${time}</div>
-        </div>
+    const tempMessageElement = document.createElement('div');
+    tempMessageElement.className = 'message message-user message-pending';
+    tempMessageElement.innerHTML = `
+        <div>${messageText}</div>
+        <div class="message-time">${dateString}, ${timeString} (envoi en cours...)</div>
     `;
     
-    // Faire défiler jusqu'au bas
+    chatMessages.appendChild(tempMessageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Envoyer le message au serveur
+    fetch(`/api/orders/${orderId}/chat`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: messageText })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Supprimer le message temporaire
+            tempMessageElement.remove();
+            
+            // Recharger tous les messages pour s'assurer qu'ils sont à jour
+            loadChatHistory(orderId);
+        } else {
+            // Marquer le message comme échoué
+            tempMessageElement.classList.add('message-error');
+            tempMessageElement.querySelector('.message-time').textContent = `${dateString}, ${timeString} (échec de l'envoi)`;
+        }
+    })
+    .catch(error => {
+        console.error('Erreur lors de l\'envoi du message:', error);
+        
+        // Marquer le message comme échoué
+        tempMessageElement.classList.add('message-error');
+        tempMessageElement.querySelector('.message-time').textContent = `${dateString}, ${timeString} (échec de l'envoi)`;
+    });
 }
+
+// Initialiser les compteurs de messages non lus
+function initUnreadMessageCounters() {
+    // Pour chaque carte de commande, ajouter un compteur de messages non lus
+    document.querySelectorAll('.order-card').forEach(card => {
+        const orderId = getChatOrderIdFromCard(card);
+        if (orderId) {
+            fetchUnreadCount(orderId, card);
+        }
+    });
+}
+
+// Obtenir l'ID de commande à partir d'une carte
+function getChatOrderIdFromCard(card) {
+    // Essayer d'abord data-order-id
+    let orderId = card.getAttribute('data-order-id');
+    
+    // Si non trouvé, essayer d'extraire de l'en-tête
+    if (!orderId) {
+        const orderIdElement = card.querySelector('.order-id');
+        if (orderIdElement) {
+            const match = orderIdElement.textContent.match(/Commande #([A-Z0-9]+)/);
+            if (match) {
+                orderId = match[1];
+            }
+        }
+    }
+    
+    return orderId;
+}
+
+// Récupérer le nombre de messages non lus pour une commande
+function fetchUnreadCount(orderId, card) {
+    fetch(`/api/orders/${orderId}/unread-messages`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.unreadCount > 0) {
+                // Ajouter un badge de notification sur le bouton de chat
+                const chatButton = card.querySelector('.chat-btn');
+                if (chatButton) {
+                    // Vérifier si un badge existe déjà
+                    let badge = chatButton.querySelector('.unread-badge');
+                    
+                    if (!badge) {
+                        // Créer un nouveau badge
+                        badge = document.createElement('div');
+                        badge.className = 'unread-badge';
+                        chatButton.appendChild(badge);
+                    }
+                    
+                    // Mettre à jour le compteur
+                    badge.textContent = data.unreadCount;
+                    badge.setAttribute('data-count', data.unreadCount);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la récupération des messages non lus:', error);
+        });
+}
+
+// Réinitialiser le compteur de messages non lus pour une commande
+function resetUnreadCounter(orderId) {
+    document.querySelectorAll('.order-card').forEach(card => {
+        const cardOrderId = getChatOrderIdFromCard(card);
+        if (cardOrderId === orderId) {
+            const chatButton = card.querySelector('.chat-btn');
+            if (chatButton) {
+                const badge = chatButton.querySelector('.unread-badge');
+                if (badge) {
+                    badge.remove();
+                }
+            }
+        }
+    });
+}
+
+// Vérifier s'il y a de nouveaux messages pour toutes les commandes visibles
+function checkForNewMessages() {
+    document.querySelectorAll('.order-card').forEach(card => {
+        const orderId = getChatOrderIdFromCard(card);
+        if (orderId) {
+            fetchUnreadCount(orderId, card);
+        }
+    });
+    
+    // Vérifier également pour la commande active dans la file d'attente
+    const queueOrderId = document.getElementById('queue-active-order-id');
+    if (queueOrderId && queueOrderId.textContent) {
+        const inlineChatBtn = document.getElementById('inline-chat-btn');
+        if (inlineChatBtn) {
+            fetch(`/api/orders/${queueOrderId.textContent}/unread-messages`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.unreadCount > 0) {
+                        // Ajouter un badge de notification sur le bouton de chat
+                        let badge = inlineChatBtn.querySelector('.unread-badge');
+                        
+                        if (!badge) {
+                            // Créer un nouveau badge
+                            badge = document.createElement('div');
+                            badge.className = 'unread-badge';
+                            inlineChatBtn.appendChild(badge);
+                        }
+                        
+                        // Mettre à jour le compteur
+                        badge.textContent = data.unreadCount;
+                        badge.setAttribute('data-count', data.unreadCount);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des messages non lus:', error);
+                });
+        }
+    }
+}
+
 
 // Mise à jour périodique des données de la file d'attente (toutes les 2 minutes)
 setInterval(function() {
@@ -1220,14 +1438,7 @@ function initChatModal() {
                 <div class="modal-body">
                     <div class="chat-container">
                         <div class="chat-messages" id="chat-messages">
-                            <div class="system-message">
-                                Début de la conversation avec votre livreur.
-                            </div>
-                            <div class="message message-other">
-                                <div class="message-sender">Livreur</div>
-                                Bonjour ! Je suis votre livreur pour la commande. Je vous contacterai dès que votre commande sera prête à être livrée.
-                                <div class="message-time">Aujourd'hui, ${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}</div>
-                            </div>
+                            <div class="loading-indicator">Chargement des messages...</div>
                         </div>
                         <div class="chat-input">
                             <input type="text" placeholder="Tapez votre message..." id="chat-input-text">
@@ -1246,10 +1457,24 @@ function initChatModal() {
         });
         
         // Gérer l'envoi de message
-        document.getElementById('send-message').addEventListener('click', sendChatMessage);
-        document.getElementById('chat-input-text').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendChatMessage();
+        const sendButton = document.getElementById('send-message');
+        if (sendButton) {
+            sendButton.addEventListener('click', sendChatMessage);
+        }
+        
+        const chatInput = document.getElementById('chat-input-text');
+        if (chatInput) {
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendChatMessage();
+                }
+            });
+        }
+        
+        // Fermer le modal en cliquant en dehors
+        window.addEventListener('click', function(e) {
+            if (e.target === chatModal) {
+                chatModal.classList.remove('active');
             }
         });
     }
