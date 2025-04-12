@@ -63,7 +63,53 @@ function loadUserOrders() {
             ordersList.innerHTML = '<div class="error-message">Erreur de connexion au serveur</div>';
         });
 }
-
+// Amélioration de la fonction pour trouver les commandes actives
+function findActiveOrdersInQueue() {
+    const activeOrders = [];
+    
+    console.log("Recherche des commandes actives...");
+    
+    // Parcourir toutes les cartes de commande qui ne sont pas livrées ou annulées
+    const orderCards = document.querySelectorAll('.order-card');
+    console.log(`Nombre de cartes de commande trouvées: ${orderCards.length}`);
+    
+    orderCards.forEach(card => {
+        const status = card.getAttribute('data-status');
+        console.log(`Commande avec statut: ${status}`);
+        
+        if (status && status !== 'delivered' && status !== 'cancelled') {
+            // Extraire l'ID de la commande
+            const orderIdElement = card.querySelector('.order-id');
+            if (orderIdElement) {
+                const orderIdText = orderIdElement.textContent;
+                console.log(`Texte ID de commande: ${orderIdText}`);
+                
+                const match = orderIdText.match(/Commande #([A-Z0-9]+)/);
+                if (match) {
+                    console.log(`Commande active trouvée: ${match[1]}`);
+                    activeOrders.push({
+                        orderId: match[1],
+                        status: status,
+                        element: card
+                    });
+                }
+            }
+        }
+    });
+    
+    // Trier par statut (priorité: processing, pending, shipped)
+    const sortedOrders = activeOrders.sort((a, b) => {
+        const priority = {
+            'processing': 1,
+            'pending': 2,
+            'shipped': 3
+        };
+        return (priority[a.status] || 4) - (priority[b.status] || 4);
+    });
+    
+    console.log(`Commandes actives triées: ${sortedOrders.length}`);
+    return sortedOrders;
+}
 // Afficher les commandes dans l'interface
 function displayOrders(orders) {
     const ordersList = document.querySelector('.orders-list');
@@ -343,53 +389,7 @@ function initInlineQueueSection() {
     }
 }
 
-// Amélioration de la fonction pour trouver les commandes actives
-function findActiveOrdersInQueue() {
-    const activeOrders = [];
-    
-    console.log("Recherche des commandes actives...");
-    
-    // Parcourir toutes les cartes de commande qui ne sont pas livrées ou annulées
-    const orderCards = document.querySelectorAll('.order-card');
-    console.log(`Nombre de cartes de commande trouvées: ${orderCards.length}`);
-    
-    orderCards.forEach(card => {
-        const status = card.getAttribute('data-status');
-        console.log(`Commande avec statut: ${status}`);
-        
-        if (status && status !== 'delivered' && status !== 'cancelled') {
-            // Extraire l'ID de la commande
-            const orderIdElement = card.querySelector('.order-id');
-            if (orderIdElement) {
-                const orderIdText = orderIdElement.textContent;
-                console.log(`Texte ID de commande: ${orderIdText}`);
-                
-                const match = orderIdText.match(/Commande #([A-Z0-9]+)/);
-                if (match) {
-                    console.log(`Commande active trouvée: ${match[1]}`);
-                    activeOrders.push({
-                        orderId: match[1],
-                        status: status,
-                        element: card
-                    });
-                }
-            }
-        }
-    });
-    
-    // Trier par statut (priorité: processing, pending, shipped)
-    const sortedOrders = activeOrders.sort((a, b) => {
-        const priority = {
-            'processing': 1,
-            'pending': 2,
-            'shipped': 3
-        };
-        return (priority[a.status] || 4) - (priority[b.status] || 4);
-    });
-    
-    console.log(`Commandes actives triées: ${sortedOrders.length}`);
-    return sortedOrders;
-}
+
 function updateAndShowInlineQueueSection(orderId) {
     console.log(`Mise à jour de la section file d'attente pour la commande: ${orderId}`);
     
