@@ -1909,6 +1909,97 @@
             </div>
         </div>
     </div>
+            <!-- Section de file d'attente en pied de page -->
+<div class="order-section queue-section" id="queue-section">
+    <h2>Statut de livraison en cours</h2>
+    
+    <!-- Contenu dynamique de la file d'attente -->
+    <div id="queue-content">
+        <!-- État par défaut: message "aucune commande" -->
+        <div class="no-queue-message" id="no-queue-message">
+            <div class="blur-overlay">
+                <div class="no-queue-text">
+                    <div class="no-queue-icon">🕐</div>
+                    <p>Aucune commande active dans la file d'attente</p>
+                    <p class="no-queue-subtext">Sélectionnez une commande en cours pour voir son statut de livraison</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contenu de la file d'attente (initialement caché) -->
+        <div class="queue-details" id="queue-details" style="display: none;">
+            <div class="active-order-info">
+                <h3>Commande #<span id="queue-active-order-id">BD2305</span></h3>
+            </div>
+            
+            <div class="queue-info">
+                <div class="queue-card">
+                    <div class="queue-header">
+                        <div class="queue-title">Votre position</div>
+                        <div class="queue-icon">🚶</div>
+                    </div>
+                    <div class="queue-body">
+                        <div class="queue-position" id="inline-queue-position">3</div>
+                        <div class="queue-label">dans la file d'attente</div>
+                    </div>
+                </div>
+                
+                <div class="queue-card">
+                    <div class="queue-header">
+                        <div class="queue-title">Temps estimé</div>
+                        <div class="queue-icon">⏱️</div>
+                    </div>
+                    <div class="queue-body">
+                        <div class="queue-time" id="inline-queue-time">45 min</div>
+                        <div class="queue-label">avant livraison</div>
+                    </div>
+                </div>
+                
+                <div class="queue-card">
+                    <div class="queue-header">
+                        <div class="queue-title">Statut actuel</div>
+                        <div class="queue-icon">📋</div>
+                    </div>
+                    <div class="queue-body">
+                        <div class="queue-status status-processing" id="inline-queue-status">En préparation</div>
+                        <div class="queue-label">de votre commande</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="queue-visualization">
+                <div class="queue-line">
+                    <div class="queue-progress" id="inline-queue-progress" style="width: 50%;"></div>
+                </div>
+                <div class="queue-markers">
+                    <div class="queue-marker active">
+                        <div class="marker-icon">📋</div>
+                        <div class="marker-label">Confirmation</div>
+                    </div>
+                    <div class="queue-marker active">
+                        <div class="marker-icon">👨‍🍳</div>
+                        <div class="marker-label">Préparation</div>
+                    </div>
+                    <div class="queue-marker">
+                        <div class="marker-icon">🚚</div>
+                        <div class="marker-label">En route</div>
+                    </div>
+                    <div class="queue-marker">
+                        <div class="marker-icon">🎁</div>
+                        <div class="marker-label">Livraison</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="queue-refresh">
+                <button id="inline-refresh-queue" class="action-btn secondary">
+                    <span class="refresh-icon">🔄</span> Actualiser le statut
+                </button>
+                <div class="last-updated" id="inline-last-updated">Dernière mise à jour: 14:35</div>
+            </div>
+        </div>
+    </div>
+</div>
       <script src="commandes.js"></script>
 </body>
 </html>
