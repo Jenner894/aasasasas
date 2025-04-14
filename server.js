@@ -1202,7 +1202,31 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         });
     }
 });
-
+// Route pour mettre à jour le numéro de commande
+app.post('/api/orders/:id/update-order-number', isAuthenticated, async (req, res) => {
+    try {
+        const { orderNumber } = req.body;
+        
+        if (!orderNumber) {
+            return res.status(400).json({ success: false, message: 'Numéro de commande requis' });
+        }
+        
+        const updatedOrder = await Order.findByIdAndUpdate(
+            req.params.id,
+            { orderNumber: orderNumber },
+            { new: true }
+        );
+        
+        if (!updatedOrder) {
+            return res.status(404).json({ success: false, message: 'Commande non trouvée' });
+        }
+        
+        res.status(200).json({ success: true, order: updatedOrder });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du numéro de commande:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de la mise à jour du numéro de commande' });
+    }
+});
 // ===================== CHAT=====================
 // ===================== CHAT =====================
 // Route pour récupérer l'historique du chat d'une commande
