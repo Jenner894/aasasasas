@@ -190,6 +190,11 @@ const User = mongoose.model('User', UserSchema);
 
 
 const MessageSchema = new mongoose.Schema({
+    conversationId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Conversation',
+        required: true
+    },
     orderId: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Order', 
@@ -234,6 +239,54 @@ MessageSchema.methods.markAsRead = function() {
 
 // Création du modèle Message
 const Message = mongoose.model('Message', MessageSchema);
+
+// Schéma pour les conversations
+const ConversationSchema = new mongoose.Schema({
+    orderId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Order', 
+        required: true,
+        unique: true // Une conversation unique par commande
+    },
+    createdAt: { 
+        type: Date, 
+        default: Date.now 
+    },
+    updatedAt: { 
+        type: Date, 
+        default: Date.now 
+    },
+    lastMessageAt: {
+        type: Date,
+        default: Date.now
+    },
+    participants: {
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        deliveryPerson: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }
+    },
+    // Compteurs de messages non lus pour chaque partie
+    unreadCount: {
+        user: { type: Number, default: 0 },
+        deliveryPerson: { type: Number, default: 0 }
+    }
+});
+
+// Middleware pour mettre à jour updatedAt à chaque modification
+ConversationSchema.pre('save', function(next) {
+    this.updatedAt = Date.now();
+    next();
+});
+
+// Création du modèle Conversation
+const Conversation = mongoose.model('Conversation', ConversationSchema);
+
+
 // Méthode pour régénérer la clé Telegram
 UserSchema.methods.regenerateKeys = function() {
     // Générer une nouvelle clé de 16 caractères
@@ -1005,28 +1058,120 @@ app.put('/api/orders/:id/cancel', isAuthenticated, async (req, res) => {
 });
 
 // Route pour récupérer les messages de chat d'une commande
-app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
+app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
     try {
-        // Si vous implémentez un système de chat réel, vous devriez avoir un modèle ChatMessage
-        // Pour l'instant, renvoyez des données fictives
-        res.status(200).json({ 
-            success: true, 
-            messages: [
-                {
-                    sender: 'system',
-                    content: 'Début de la conversation avec votre livreur.',
-                    timestamp: new Date()
+        const { content } = req.body;
+        
+        if (!content || content.trim() === '') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Le message ne peut pas être vide' 
+            });
+        }
+        
+        // Vérifier si l'ID est au format BD*, chercher la commande d'abord
+        let orderId = req.params.id;
+        let order;
+        
+        if (orderId.startsWith('BD')) {
+            // Trouver la commande par son numéro d'affichage
+            order = await Order.findOne({ 
+                $or: [
+                    { orderNumber: orderId },
+                    // Chercher aussi dans le champ _id au cas où
+                    { _id: orderId }
+                ]
+            });
+            
+            if (!order) {
+                return res.status(404).json({ 
+                    success: false, 
+                    message: 'Commande non trouvée ou accès non autorisé' 
+                });
+            }
+            
+            orderId = order._id;
+        } else {
+            // L'ID est peut-être déjà un ObjectId, vérifier la commande
+            const query = { _id: orderId };
+            
+            // Si l'utilisateur n'est pas admin, on ajoute une restriction
+            if (req.session.user.role !== 'admin') {
+                query.user = req.session.user.id;
+            }
+            
+            order = await Order.findOne(query);
+            
+            if (!order) {
+                return res.status(404).json({ 
+                    success: false, 
+                    message: 'Commande non trouvée ou accès non autorisé' 
+                });
+            }
+        }
+        
+        // Vérifier si la commande appartient à l'utilisateur (sauf pour admin)
+        if (req.session.user.role !== 'admin' && order.user.toString() !== req.session.user.id) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Vous n\'êtes pas autorisé à accéder à cette commande' 
+            });
+        }
+        
+        // Trouver ou créer la conversation
+        let conversation = await Conversation.findOne({ orderId: orderId });
+        
+        if (!conversation) {
+            conversation = new Conversation({
+                orderId: orderId,
+                participants: {
+                    user: order.user,
+                    // deliveryPerson sera défini lorsqu'un livreur sera assigné
                 },
-                {
-                    sender: 'livreur',
-                    content: 'Bonjour ! Je suis votre livreur pour cette commande. Je vous contacterai dès que votre commande sera prête à être livrée.',
-                    timestamp: new Date()
-                }
-            ]
+                lastMessageAt: new Date()
+            });
+            
+            await conversation.save();
+        }
+        
+        // Déterminer le type d'expéditeur
+        const sender = req.session.user.role === 'admin' ? 'livreur' : 'client';
+        
+        // Créer le nouveau message
+        const newMessage = new Message({
+            conversationId: conversation._id,
+            orderId: orderId,
+            sender: sender,
+            content: content.trim(),
+            timestamp: new Date(),
+            userId: req.session.user.id,
+            isRead: false
+        });
+        
+        await newMessage.save();
+        
+        // Mettre à jour le compteur de messages non lus dans la conversation
+        if (sender === 'client') {
+            conversation.unreadCount.deliveryPerson = (conversation.unreadCount.deliveryPerson || 0) + 1;
+        } else {
+            conversation.unreadCount.user = (conversation.unreadCount.user || 0) + 1;
+        }
+        
+        // Mettre à jour l'horodatage du dernier message
+        conversation.lastMessageAt = newMessage.timestamp;
+        await conversation.save();
+        
+        // Retourner le message créé
+        res.status(201).json({ 
+            success: true, 
+            message: newMessage
         });
     } catch (error) {
-        console.error('Erreur lors de la récupération des messages:', error);
-        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des messages' });
+        console.error('Erreur lors de l\'envoi du message:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de l\'envoi du message' 
+        });
     }
 });
 
@@ -1276,7 +1421,7 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         });
     }
 });
-// Route pour récupérer le nombre de messages non lus par commande
+
 // Route pour récupérer le nombre de messages non lus pour une commande
 app.get('/api/orders/:id/unread-messages', isAuthenticated, async (req, res) => {
     try {
@@ -1297,15 +1442,20 @@ app.get('/api/orders/:id/unread-messages', isAuthenticated, async (req, res) => 
             }
         }
         
-        // Déterminer le type de messages à compter (selon le rôle de l'utilisateur)
-        const senderToCheck = req.session.user.role === 'admin' ? 'client' : 'livreur';
+        // Trouver la conversation pour cette commande
+        const conversation = await Conversation.findOne({ orderId: orderId });
         
-        // Compter les messages non lus
-        const unreadCount = await Message.countDocuments({
-            orderId: orderId,
-            sender: senderToCheck,
-            isRead: false
-        });
+        if (!conversation) {
+            return res.status(200).json({ 
+                success: true, 
+                unreadCount: 0
+            });
+        }
+        
+        // Déterminer le compteur à renvoyer selon le rôle de l'utilisateur
+        const unreadCount = req.session.user.role === 'admin' 
+            ? conversation.unreadCount.deliveryPerson || 0
+            : conversation.unreadCount.user || 0;
         
         res.status(200).json({ 
             success: true, 
@@ -1533,8 +1683,27 @@ async function createInitialChat(orderId, userId) {
             return;
         }
         
+        // Vérifier si une conversation existe déjà pour cette commande
+        let conversation = await Conversation.findOne({ orderId: orderId });
+        
+        // Si aucune conversation n'existe, en créer une
+        if (!conversation) {
+            conversation = new Conversation({
+                orderId: orderId,
+                participants: {
+                    user: order.user._id,
+                    // deliveryPerson sera défini lorsqu'un livreur sera assigné
+                },
+                lastMessageAt: new Date()
+            });
+            
+            await conversation.save();
+            console.log(`Conversation créée pour la commande: ${orderId}`);
+        }
+        
         // Message de bienvenue du système
         const welcomeMessage = new Message({
+            conversationId: conversation._id,
             orderId: orderId,
             sender: 'system',
             content: 'Bienvenue dans votre conversation avec votre livreur.',
@@ -1546,6 +1715,7 @@ async function createInitialChat(orderId, userId) {
         // Message initial du livreur
         const orderNumber = order.orderNumber || orderId.toString().substr(-6);
         const deliveryMessage = new Message({
+            conversationId: conversation._id,
             orderId: orderId,
             sender: 'livreur',
             content: `Bonjour ${order.user.username} ! Je suis votre livreur pour la commande #${orderNumber}. Je vous contacterai dès que votre commande sera prête à être livrée.`,
@@ -1558,13 +1728,17 @@ async function createInitialChat(orderId, userId) {
         await welcomeMessage.save();
         await deliveryMessage.save();
         
+        // Mettre à jour les compteurs de messages non lus
+        conversation.unreadCount.user = 1; // Le message du livreur est non lu
+        conversation.lastMessageAt = deliveryMessage.timestamp;
+        await conversation.save();
+        
         console.log(`Chat initial créé pour la commande: ${orderId}`);
         
     } catch (error) {
         console.error('Erreur lors de la création du chat initial:', error);
     }
 }
-
 
 // Route pour une commande avec un seul article (alternative simplifiée)
 app.post('/api/orders/simple-delivery', isAuthenticated, async (req, res) => {
@@ -1856,9 +2030,10 @@ app.put('/api/orders/:id/status', isAuthenticated, async (req, res) => {
 });
 
 // Route pour obtenir les messages de chat d'une commande (pour admin)
+// Route pour récupérer l'historique du chat d'une commande
 app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
     try {
-        // Vérifier si l'ID est au format BD* ou un ObjectId
+        // Vérifier si l'ID est au format BD*, chercher la commande d'abord
         let orderId = req.params.id;
         let order;
         
@@ -1867,6 +2042,7 @@ app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
             order = await Order.findOne({ 
                 $or: [
                     { orderNumber: orderId },
+                    // Chercher aussi dans le champ _id au cas où
                     { _id: orderId }
                 ]
             });
@@ -1906,42 +2082,60 @@ app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
             });
         }
         
-        // Récupérer tous les messages pour cette commande
-        const messages = await Message.find({ 
-            orderId: orderId 
-        }).sort({ timestamp: 1 });
+        // Trouver la conversation correspondant à cette commande
+        let conversation = await Conversation.findOne({ orderId: orderId });
         
-        // Si aucun message n'existe encore, créer un message système d'accueil
-        if (messages.length === 0) {
-            // Création de la conversation si elle n'existe pas encore
+        // Si aucune conversation n'existe, la créer avec des messages d'accueil
+        if (!conversation) {
             await createInitialChat(orderId, req.session.user.id);
             
-            // Récupérer les messages nouvellement créés
-            const initialMessages = await Message.find({ 
-                orderId: orderId 
-            }).sort({ timestamp: 1 });
+            // Récupérer la conversation nouvellement créée
+            conversation = await Conversation.findOne({ orderId: orderId });
             
-            return res.status(200).json({ 
-                success: true, 
-                messages: initialMessages
-            });
+            if (!conversation) {
+                return res.status(500).json({
+                    success: false,
+                    message: 'Erreur lors de la création de la conversation'
+                });
+            }
         }
         
-        // Marquer les messages non lus comme lus (seulement ceux destinés à l'utilisateur courant)
+        // Récupérer tous les messages pour cette conversation
+        const messages = await Message.find({ 
+            conversationId: conversation._id 
+        }).sort({ timestamp: 1 });
+        
+        // Marquer les messages comme lus selon le rôle de l'utilisateur
         if (req.session.user.role === 'client') {
+            // Marquer les messages du livreur comme lus pour le client
             await Message.updateMany(
-                { orderId: orderId, sender: 'livreur', isRead: false },
+                { conversationId: conversation._id, sender: 'livreur', isRead: false },
                 { $set: { isRead: true } }
             );
+            
+            // Mettre à jour le compteur de messages non lus dans la conversation
+            conversation.unreadCount.user = 0;
+            await conversation.save();
         } else if (req.session.user.role === 'admin') {
+            // Marquer les messages du client comme lus pour l'admin/livreur
             await Message.updateMany(
-                { orderId: orderId, sender: 'client', isRead: false },
+                { conversationId: conversation._id, sender: 'client', isRead: false },
                 { $set: { isRead: true } }
             );
+            
+            // Mettre à jour le compteur de messages non lus dans la conversation
+            conversation.unreadCount.deliveryPerson = 0;
+            await conversation.save();
         }
         
         res.status(200).json({ 
             success: true, 
+            conversation: {
+                id: conversation._id,
+                createdAt: conversation.createdAt,
+                updatedAt: conversation.updatedAt,
+                lastMessageAt: conversation.lastMessageAt
+            },
             messages: messages
         });
     } catch (error) {
@@ -1952,7 +2146,6 @@ app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         });
     }
 });
-
 // Route pour envoyer un message dans le chat d'une commande (pour admin)
 app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
     try {
