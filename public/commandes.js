@@ -561,6 +561,7 @@ function updateInlineQueueData(orderId) {
         });
 }
 
+
 // Mettre à jour les marqueurs d'étape de la file d'attente
 function updateInlineQueueStepMarkers(status) {
     // Récupérer tous les marqueurs d'étape
@@ -696,12 +697,13 @@ function initQueuePreview() {
 
 // Récupérer les informations de file d'attente d'une commande
 function fetchQueueInfo(orderId, orderCard) {
-    // Si l'ID semble être un ID d'affichage (au format BDXXXXX), essayer d'utiliser l'ID MongoDB
-    if (orderId.startsWith('BD') && orderCard.getAttribute('data-order-id')) {
-        orderId = orderCard.getAttribute('data-order-id');
-    }
+    // Extraire l'ID MongoDB directement depuis l'attribut data-order-id
+    const mongoId = orderCard.getAttribute('data-order-id');
     
-    fetch(`/api/orders/${orderId}/queue`)
+    // Utiliser l'ID MongoDB s'il existe, sinon utiliser l'ID d'affichage
+    const idToUse = mongoId || orderId;
+    
+    fetch(`/api/orders/${idToUse}/queue`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.inQueue) {
