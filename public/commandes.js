@@ -933,11 +933,11 @@ function setupInlineChatButton() {
 
 // Ouvrir le modal de chat et charger l'historique
 function openChatModal(orderId, mongoId) {
-    const chatModal = document.getElementById('chat-modal');
-    if (!chatModal) {
-        // Si le modal n'existe pas, le créer
-        initChatModal();
-    }
+    console.log("Ouverture du modal de chat pour la commande:", orderId);
+    console.log("ID MongoDB fourni:", mongoId);
+    
+    // Initialiser le modal si nécessaire
+    initChatModal();
     
     const modal = document.getElementById('chat-modal');
     if (!modal) return;
@@ -946,9 +946,11 @@ function openChatModal(orderId, mongoId) {
     const orderIdSpan = document.getElementById('chat-order-id');
     if (orderIdSpan) {
         orderIdSpan.textContent = orderId;
-        // Stocker également l'ID MongoDB
+        
+        // Stocker également l'ID MongoDB s'il est fourni
         if (mongoId) {
             orderIdSpan.dataset.mongoId = mongoId;
+            console.log("ID MongoDB stocké dans le modal:", mongoId);
         }
     }
     
@@ -958,7 +960,7 @@ function openChatModal(orderId, mongoId) {
     // Charger l'historique du chat
     loadChatHistory(orderId);
     
-    // Réinitialiser le compteur de messages non lus pour cette commande
+    // Réinitialiser le compteur de messages non lus
     resetUnreadCounter(orderId);
 }
 
@@ -972,14 +974,19 @@ function loadChatHistory(orderId) {
     // Afficher un indicateur de chargement
     chatMessages.innerHTML = '<div class="loading-indicator">Chargement des messages...</div>';
     
-    // Récupérer également l'ID MongoDB depuis la carte de commande
-    let mongoId = null;
-    document.querySelectorAll('.order-card').forEach(card => {
-        const orderIdElement = card.querySelector('.order-id');
-        if (orderIdElement && orderIdElement.textContent.includes(orderId)) {
-            mongoId = card.getAttribute('data-order-id');
-        }
-    });
+    // Récupérer l'ID MongoDB depuis l'élément span s'il existe
+    const chatOrderIdElement = document.getElementById('chat-order-id');
+    let mongoId = chatOrderIdElement ? chatOrderIdElement.dataset.mongoId : null;
+    
+    // Si pas trouvé, chercher dans les cartes de commande
+    if (!mongoId) {
+        document.querySelectorAll('.order-card').forEach(card => {
+            const orderIdElement = card.querySelector('.order-id');
+            if (orderIdElement && orderIdElement.textContent.includes(orderId)) {
+                mongoId = card.getAttribute('data-order-id');
+            }
+        });
+    }
     
     // Utiliser l'ID MongoDB s'il est disponible
     const idToUse = mongoId || orderId;
@@ -987,27 +994,22 @@ function loadChatHistory(orderId) {
     
     // Appel à l'API pour récupérer l'historique
     fetch(`/api/orders/${idToUse}/chat`, {
-        credentials: 'include' // Assurer que les cookies de session sont envoyés
+        credentials: 'include'
     })
     .then(response => {
-        console.log("Réponse de l'API pour l'historique (statut):", response.status);
         if (!response.ok) {
             throw new Error(`Erreur HTTP: ${response.status}`);
         }
         return response.json();
     })
     .then(data => {
-        console.log("Données reçues de l'API pour l'historique:", data);
+        console.log("Données reçues pour l'historique:", data);
+        
         if (data.success) {
-            // Stocker l'ID de conversation si fourni
-            const chatOrderId = document.getElementById('chat-order-id');
-            if (chatOrderId && data.conversation) {
-                chatOrderId.dataset.conversationId = data.conversation.id;
-                // Stocker également l'ID MongoDB pour les futurs appels API
-                if (data.orderId) {
-                    chatOrderId.dataset.mongoId = data.orderId;
-                    console.log("ID MongoDB stocké:", data.orderId);
-                }
+            // Stocker l'ID MongoDB pour les futurs appels API
+            if (chatOrderIdElement && data.orderId) {
+                chatOrderIdElement.dataset.mongoId = data.orderId;
+                console.log("ID MongoDB stocké:", data.orderId);
             }
             
             // Afficher les messages
@@ -1095,30 +1097,15 @@ function sendChatMessage() {
     const orderIdElement = document.getElementById('chat-order-id');
     if (!orderIdElement) return;
     
-    // Utiliser l'ID MongoDB stocké dans data-mongo-id si disponible
+    // Récupérer l'ID visible (BD*) et l'ID MongoDB
     const visibleOrderId = orderIdElement.textContent;
     const mongoId = orderIdElement.dataset.mongoId;
-    const conversationId = orderIdElement.dataset.conversationId;
     
     console.log("Envoi du message pour la commande:", visibleOrderId);
     console.log("ID MongoDB:", mongoId);
-    console.log("ID de conversation:", conversationId);
     
-    // Si mongoId est manquant, essayer de le trouver dans les cartes de commande
-    let idToUse = mongoId;
-    if (!idToUse) {
-        document.querySelectorAll('.order-card').forEach(card => {
-            const orderIdElement = card.querySelector('.order-id');
-            if (orderIdElement && orderIdElement.textContent.includes(visibleOrderId)) {
-                idToUse = card.getAttribute('data-order-id');
-            }
-        });
-    }
-    
-    // Si toujours pas trouvé, utiliser l'ID visible (BD*)
-    if (!idToUse) {
-        idToUse = visibleOrderId;
-    }
+    // Utiliser l'ID MongoDB s'il existe, sinon utiliser l'ID visible
+    let idToUse = mongoId || visibleOrderId;
     
     console.log("ID utilisé pour l'envoi:", idToUse);
     
@@ -1148,29 +1135,23 @@ function sendChatMessage() {
         content: messageText
     };
     
-    // Si nous avons un ID de conversation, l'inclure dans les données
-    if (conversationId) {
-        messageData.conversationId = conversationId;
-    }
-    
-    // CORRECTION: Utiliser la nouvelle route spécifique au client
+    // Envoyer le message
     fetch(`/api/orders/${idToUse}/chat/client`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(messageData),
-        credentials: 'include' // Assurer que les cookies de session sont envoyés
+        credentials: 'include'
     })
     .then(response => {
-        console.log("Réponse de l'API (statut):", response.status);
         if (!response.ok) {
             throw new Error(`Erreur HTTP: ${response.status}`);
         }
         return response.json();
     })
     .then(data => {
-        console.log("Réponse de l'API (données):", data);
+        console.log("Réponse de l'API après envoi:", data);
         
         if (data.success) {
             // Supprimer le message temporaire
@@ -1179,21 +1160,15 @@ function sendChatMessage() {
             // Recharger tous les messages pour s'assurer qu'ils sont à jour
             loadChatHistory(visibleOrderId);
             
-            // Stocker l'ID MongoDB pour les futurs envois si ce n'était pas déjà fait
-            if (!orderIdElement.dataset.mongoId && data.message && data.message.orderId) {
+            // Stocker l'ID MongoDB si disponible
+            if (data.message && data.message.orderId && !orderIdElement.dataset.mongoId) {
                 orderIdElement.dataset.mongoId = data.message.orderId;
-            }
-            
-            // Stocker l'ID de conversation si renvoyé et pas déjà présent
-            if (!orderIdElement.dataset.conversationId && data.message && data.message.conversationId) {
-                orderIdElement.dataset.conversationId = data.message.conversationId;
             }
         } else {
             // Marquer le message comme échoué
             tempMessageElement.classList.add('message-error');
             tempMessageElement.querySelector('.message-time').textContent = 
                 `${dateString}, ${timeString} (échec de l'envoi: ${data.message || 'Erreur inconnue'})`;
-            console.error("Erreur d'envoi:", data.message);
         }
     })
     .catch(error => {
@@ -1205,6 +1180,7 @@ function sendChatMessage() {
             `${dateString}, ${timeString} (échec de l'envoi)`;
     });
 }
+
 // Initialiser les compteurs de messages non lus
 function initUnreadMessageCounters() {
     // Pour chaque carte de commande, ajouter un compteur de messages non lus
@@ -1663,19 +1639,17 @@ function initChatModal() {
             chatModal.classList.remove('active');
         });
         
-        // Gérer l'envoi de message
+        // IMPORTANT: Correction de l'événement d'envoi de message
         const sendButton = document.getElementById('send-message');
         if (sendButton) {
-            sendButton.addEventListener('click', function() {
-                sendChatMessage();
-            });
+            sendButton.addEventListener('click', sendChatMessage);
         }
         
         const chatInput = document.getElementById('chat-input-text');
         if (chatInput) {
             chatInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
-                    e.preventDefault(); // Empêcher le comportement par défaut de la touche Entrée
+                    e.preventDefault();
                     sendChatMessage();
                 }
             });
