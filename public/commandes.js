@@ -898,8 +898,10 @@ function setupChatButtons() {
             e.stopPropagation();
             
             const orderId = chatButton.getAttribute('data-order');
+            const mongoId = chatButton.getAttribute('data-mongo-id');
+            
             if (orderId) {
-                openChatModal(orderId);
+                openChatModal(orderId, mongoId);
                 
                 // Réinitialiser le compteur de messages non lus pour cette commande
                 resetUnreadCounter(orderId);
@@ -907,6 +909,7 @@ function setupChatButtons() {
         }
     });
 }
+
     
 // Configurer le bouton de chat dans la file d'attente
 function setupInlineChatButton() {
@@ -929,7 +932,7 @@ function setupInlineChatButton() {
 }
 
 // Ouvrir le modal de chat et charger l'historique
-function openChatModal(orderId) {
+function openChatModal(orderId, mongoId) {
     const chatModal = document.getElementById('chat-modal');
     if (!chatModal) {
         // Si le modal n'existe pas, le créer
@@ -943,6 +946,10 @@ function openChatModal(orderId) {
     const orderIdSpan = document.getElementById('chat-order-id');
     if (orderIdSpan) {
         orderIdSpan.textContent = orderId;
+        // Stocker également l'ID MongoDB
+        if (mongoId) {
+            orderIdSpan.dataset.mongoId = mongoId;
+        }
     }
     
     // Afficher le modal
@@ -954,6 +961,7 @@ function openChatModal(orderId) {
     // Réinitialiser le compteur de messages non lus pour cette commande
     resetUnreadCounter(orderId);
 }
+
 // Charger l'historique du chat depuis l'API
 function loadChatHistory(orderId) {
     const chatMessages = document.getElementById('chat-messages');
@@ -962,8 +970,20 @@ function loadChatHistory(orderId) {
     // Afficher un indicateur de chargement
     chatMessages.innerHTML = '<div class="loading-indicator">Chargement des messages...</div>';
     
+    // Récupérer également l'ID MongoDB depuis la carte de commande
+    let mongoId = null;
+    document.querySelectorAll('.order-card').forEach(card => {
+        const orderIdElement = card.querySelector('.order-id');
+        if (orderIdElement && orderIdElement.textContent.includes(orderId)) {
+            mongoId = orderIdElement.getAttribute('data-mongo-id');
+        }
+    });
+    
+    // Utiliser l'ID MongoDB s'il est disponible
+    const idToUse = mongoId || orderId;
+    
     // Appel à l'API pour récupérer l'historique
-    fetch(`/api/orders/${orderId}/chat`)
+    fetch(`/api/orders/${idToUse}/chat`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`Erreur HTTP: ${response.status}`);
@@ -972,14 +992,12 @@ function loadChatHistory(orderId) {
         })
         .then(data => {
             if (data.success) {
-                // Vérifier si nous avons des informations sur la conversation
-                if (data.conversation) {
-                    console.log("Conversation récupérée:", data.conversation);
-                    // Stocker l'ID de conversation si nécessaire
-                    const chatOrderId = document.getElementById('chat-order-id');
-                    if (chatOrderId) {
-                        chatOrderId.dataset.conversationId = data.conversation.id;
-                    }
+                // Stocker l'ID de conversation si nécessaire
+                const chatOrderId = document.getElementById('chat-order-id');
+                if (chatOrderId && data.conversation) {
+                    chatOrderId.dataset.conversationId = data.conversation.id;
+                    // Stocker également l'ID MongoDB pour les futurs appels API
+                    chatOrderId.dataset.mongoId = data.orderId;
                 }
                 
                 // Afficher les messages
@@ -1067,11 +1085,8 @@ function sendChatMessage() {
     const orderIdElement = document.getElementById('chat-order-id');
     if (!orderIdElement) return;
     
-    const orderId = orderIdElement.textContent;
-    if (!orderId) return;
-    
-    // Éventuellement récupérer l'ID de conversation s'il est stocké
-    const conversationId = orderIdElement.dataset.conversationId;
+    // Utiliser l'ID MongoDB stocké dans data-mongo-id si disponible
+    const orderId = orderIdElement.dataset.mongoId || orderIdElement.textContent;
     
     // Effacer le champ de saisie immédiatement
     inputField.value = '';
@@ -1100,8 +1115,8 @@ function sendChatMessage() {
     };
     
     // Si nous avons un ID de conversation, l'inclure dans les données
-    if (conversationId) {
-        messageData.conversationId = conversationId;
+    if (orderIdElement.dataset.conversationId) {
+        messageData.conversationId = orderIdElement.dataset.conversationId;
     }
     
     // Envoyer le message au serveur
@@ -1124,7 +1139,7 @@ function sendChatMessage() {
             tempMessageElement.remove();
             
             // Recharger tous les messages pour s'assurer qu'ils sont à jour
-            loadChatHistory(orderId);
+            loadChatHistory(orderIdElement.textContent); // Utiliser l'ID d'affichage pour la cohérence de l'interface
         } else {
             // Marquer le message comme échoué
             tempMessageElement.classList.add('message-error');
@@ -1139,7 +1154,6 @@ function sendChatMessage() {
         tempMessageElement.querySelector('.message-time').textContent = `${dateString}, ${timeString} (échec de l'envoi)`;
     });
 }
-
 // Initialiser les compteurs de messages non lus
 function initUnreadMessageCounters() {
     // Pour chaque carte de commande, ajouter un compteur de messages non lus
