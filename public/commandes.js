@@ -1085,121 +1085,70 @@ function displayChatMessages(messages) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-
-function sendChatMessage() {
-    const inputField = document.getElementById('chat-input-text');
-    if (!inputField) return;
+    const messageText = chatInputField.value.trim();
     
-    const messageText = inputField.value.trim();
     if (!messageText) return;
     
-    // Récupérer l'ID de la commande
-    const orderIdElement = document.getElementById('chat-order-id');
-    if (!orderIdElement) return;
+    // Désactiver le bouton d'envoi pendant la requête
+    sendChatMessageBtn.disabled = true;
     
-    // Utiliser l'ID MongoDB stocké dans data-mongo-id si disponible
-    const visibleOrderId = orderIdElement.textContent;
-    const mongoId = orderIdElement.dataset.mongoId;
-    const conversationId = orderIdElement.dataset.conversationId;
-    
-    // Si mongoId est manquant, essayer de le trouver dans les cartes de commande
-    let idToUse = mongoId;
-    if (!idToUse) {
-        document.querySelectorAll('.order-card').forEach(card => {
-            const orderIdElement = card.querySelector('.order-id');
-            if (orderIdElement && orderIdElement.textContent.includes(visibleOrderId)) {
-                idToUse = card.getAttribute('data-order-id');
-            }
-        });
-    }
-    
-    // Si toujours pas trouvé, utiliser l'ID visible (BD*)
-    if (!idToUse) {
-        idToUse = visibleOrderId;
-    }
-    
-    console.log("ID utilisé pour l'envoi du message:", idToUse);
-    
-    // Effacer le champ de saisie immédiatement
-    inputField.value = '';
-    
-    // Afficher un message temporaire (optimistic UI)
-    const chatMessages = document.getElementById('chat-messages');
-    if (!chatMessages) return;
-    
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const dateString = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
-    
-    const tempMessageElement = document.createElement('div');
-    tempMessageElement.className = 'message message-user message-pending';
-    tempMessageElement.innerHTML = `
-        <div class="message-content">${messageText}</div>
-        <div class="message-time">${dateString}, ${timeString} (envoi en cours...)</div>
-    `;
-    
-    chatMessages.appendChild(tempMessageElement);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    
-    // Préparer les données du message
-    const messageData = {
-        content: messageText,
-        sender: 'client'
-    };
-    
-    // Si nous avons un ID de conversation, l'inclure dans les données
-    if (conversationId) {
-        messageData.conversationId = conversationId;
-    }
-    
-    console.log("Données du message à envoyer:", messageData);
-    
-    // Envoyer le message au serveur
-    fetch(`/api/orders/${idToUse}/chat`, {
+    // Envoyer le message à l'API avec le bon nom de paramètre "content" au lieu de "message"
+    fetch(`/api/orders/${currentDeliveryId}/chat`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify(messageData),
-        credentials: 'include' // Assurer que les cookies de session sont envoyés
+        body: JSON.stringify({ content: messageText })
     })
-    .then(response => {
-        console.log("Réponse du serveur (statut):", response.status);
-        if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        console.log("Réponse du serveur (données):", data);
         if (data.success) {
-            // Supprimer le message temporaire
-            tempMessageElement.remove();
+            // Afficher le message que nous venons d'envoyer
+            // Nous utilisons data.message pour accéder aux données du message créé
+            const messageData = data.message;
+            addChatMessage('livreur', messageData.content, new Date(messageData.timestamp));
             
-            // Recharger tous les messages pour s'assurer qu'ils sont à jour
-            loadChatHistory(visibleOrderId);
+            // Vider le champ d'entrée
+            chatInputField.value = '';
             
-            // Stocker l'ID MongoDB pour les futurs envois si ce n'était pas déjà fait
-            if (!orderIdElement.dataset.mongoId && data.message && data.message.orderId) {
-                orderIdElement.dataset.mongoId = data.message.orderId;
-            }
+            // Faire défiler vers le bas
+            chatMessages.scrollTop = chatMessages.scrollHeight;
             
-            // Stocker l'ID de conversation si renvoyé et pas déjà présent
-            if (!orderIdElement.dataset.conversationId && data.message && data.message.conversationId) {
-                orderIdElement.dataset.conversationId = data.message.conversationId;
-            }
+            // Recharger les messages pour avoir la dernière version (facultatif)
+            // Cela permettrait de voir une réponse automatique si elle existe
+            // loadChatMessages(currentDeliveryId);
         } else {
-            // Marquer le message comme échoué
-            tempMessageElement.classList.add('message-error');
-            tempMessageElement.querySelector('.message-time').textContent = `${dateString}, ${timeString} (échec de l'envoi: ${data.message || 'Erreur inconnue'})`;
+            console.error('Erreur lors de l\'envoi du message:', data.message);
+            
+            // Afficher un message d'erreur
+            const errorNotification = document.createElement('div');
+            errorNotification.className = 'notification error';
+            errorNotification.textContent = `Erreur: ${data.message || 'Impossible d\'envoyer le message'}`;
+            document.body.appendChild(errorNotification);
+            
+            // Supprimer la notification après 3 secondes
+            setTimeout(() => {
+                errorNotification.remove();
+            }, 3000);
         }
     })
     .catch(error => {
         console.error('Erreur lors de l\'envoi du message:', error);
         
-        // Marquer le message comme échoué
-        tempMessageElement.classList.add('message-error');
-        tempMessageElement.querySelector('.message-time').textContent = `${dateString}, ${timeString} (échec de l'envoi)`;
+        // Afficher un message d'erreur
+        const errorNotification = document.createElement('div');
+        errorNotification.className = 'notification error';
+        errorNotification.textContent = 'Erreur de connexion. Veuillez réessayer.';
+        document.body.appendChild(errorNotification);
+        
+        // Supprimer la notification après 3 secondes
+        setTimeout(() => {
+            errorNotification.remove();
+        }, 3000);
+    })
+    .finally(() => {
+        // Réactiver le bouton d'envoi
+        sendChatMessageBtn.disabled = false;
     });
 }
 // Initialiser les compteurs de messages non lus
