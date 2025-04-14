@@ -1153,7 +1153,7 @@ function sendChatMessage() {
         messageData.conversationId = conversationId;
     }
     
-    // MODIFICATION: Utiliser la route spécifique au client
+    // CORRECTION: Utiliser la nouvelle route spécifique au client
     fetch(`/api/orders/${idToUse}/chat/client`, {
         method: 'POST',
         headers: {
@@ -1666,13 +1666,16 @@ function initChatModal() {
         // Gérer l'envoi de message
         const sendButton = document.getElementById('send-message');
         if (sendButton) {
-            sendButton.addEventListener('click', sendChatMessage);
+            sendButton.addEventListener('click', function() {
+                sendChatMessage();
+            });
         }
         
         const chatInput = document.getElementById('chat-input-text');
         if (chatInput) {
             chatInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
+                    e.preventDefault(); // Empêcher le comportement par défaut de la touche Entrée
                     sendChatMessage();
                 }
             });
@@ -1688,7 +1691,6 @@ function initChatModal() {
     
     return chatModal;
 }
-
 
 // Fonction pour améliorer l'animation du modal
 function enhanceModalAnimations() {
