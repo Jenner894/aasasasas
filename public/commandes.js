@@ -1074,6 +1074,7 @@ function displayChatMessages(messages) {
     // Faire défiler jusqu'au bas
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 function sendChatMessage() {
     const inputField = document.getElementById('chat-input-text');
     if (!inputField) return;
@@ -1086,12 +1087,29 @@ function sendChatMessage() {
     if (!orderIdElement) return;
     
     // Utiliser l'ID MongoDB stocké dans data-mongo-id si disponible
-    const orderId = orderIdElement.dataset.mongoId || orderIdElement.textContent;
+    const visibleOrderId = orderIdElement.textContent;
+    const mongoId = orderIdElement.dataset.mongoId;
+    
+    // Si mongoId est manquant, essayer de le trouver dans les cartes de commande
+    let idToUse = mongoId;
+    if (!idToUse) {
+        document.querySelectorAll('.order-card').forEach(card => {
+            const orderIdElement = card.querySelector('.order-id');
+            if (orderIdElement && orderIdElement.textContent.includes(visibleOrderId)) {
+                idToUse = card.getAttribute('data-order-id');
+            }
+        });
+    }
+    
+    // Si toujours pas trouvé, utiliser l'ID visible (BD*)
+    if (!idToUse) {
+        idToUse = visibleOrderId;
+    }
     
     // Effacer le champ de saisie immédiatement
     inputField.value = '';
     
-    // Ajouter un message temporaire (optimistic UI)
+    // Afficher un message temporaire (optimistic UI)
     const chatMessages = document.getElementById('chat-messages');
     if (!chatMessages) return;
     
@@ -1120,7 +1138,7 @@ function sendChatMessage() {
     }
     
     // Envoyer le message au serveur
-    fetch(`/api/orders/${orderId}/chat`, {
+    fetch(`/api/orders/${idToUse}/chat`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1139,7 +1157,12 @@ function sendChatMessage() {
             tempMessageElement.remove();
             
             // Recharger tous les messages pour s'assurer qu'ils sont à jour
-            loadChatHistory(orderIdElement.textContent); // Utiliser l'ID d'affichage pour la cohérence de l'interface
+            loadChatHistory(visibleOrderId);
+            
+            // Stocker l'ID MongoDB pour les futurs envois si ce n'était pas déjà fait
+            if (!orderIdElement.dataset.mongoId && data.message && data.message.orderId) {
+                orderIdElement.dataset.mongoId = data.message.orderId;
+            }
         } else {
             // Marquer le message comme échoué
             tempMessageElement.classList.add('message-error');
