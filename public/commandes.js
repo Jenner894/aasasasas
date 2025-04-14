@@ -965,7 +965,6 @@ function loadChatHistory(orderId) {
             chatMessages.innerHTML = '<div class="error-message">Erreur de connexion au serveur</div>';
         });
 }
-
     
 // Afficher les messages du chat
 function displayChatMessages(messages) {
