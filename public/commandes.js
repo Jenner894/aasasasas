@@ -944,6 +944,17 @@ function loadChatHistory(orderId) {
         })
         .then(data => {
             if (data.success) {
+                // Vérifier si nous avons des informations sur la conversation
+                if (data.conversation) {
+                    console.log("Conversation récupérée:", data.conversation);
+                    // Stocker l'ID de conversation si nécessaire
+                    const chatOrderId = document.getElementById('chat-order-id');
+                    if (chatOrderId) {
+                        chatOrderId.dataset.conversationId = data.conversation.id;
+                    }
+                }
+                
+                // Afficher les messages
                 displayChatMessages(data.messages);
             } else {
                 chatMessages.innerHTML = `<div class="error-message">${data.message || 'Erreur lors du chargement des messages'}</div>`;
@@ -954,6 +965,7 @@ function loadChatHistory(orderId) {
             chatMessages.innerHTML = '<div class="error-message">Erreur de connexion au serveur</div>';
         });
 }
+
     
 // Afficher les messages du chat
 function displayChatMessages(messages) {
@@ -1017,7 +1029,6 @@ function displayChatMessages(messages) {
     // Faire défiler jusqu'au bas
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
 function sendChatMessage() {
     const inputField = document.getElementById('chat-input-text');
     if (!inputField) return;
@@ -1026,8 +1037,14 @@ function sendChatMessage() {
     if (!messageText) return;
     
     // Récupérer l'ID de la commande
-    const orderId = document.getElementById('chat-order-id').textContent;
+    const orderIdElement = document.getElementById('chat-order-id');
+    if (!orderIdElement) return;
+    
+    const orderId = orderIdElement.textContent;
     if (!orderId) return;
+    
+    // Éventuellement récupérer l'ID de conversation s'il est stocké
+    const conversationId = orderIdElement.dataset.conversationId;
     
     // Effacer le champ de saisie immédiatement
     inputField.value = '';
@@ -1050,13 +1067,23 @@ function sendChatMessage() {
     chatMessages.appendChild(tempMessageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
+    // Préparer les données du message
+    const messageData = {
+        content: messageText
+    };
+    
+    // Si nous avons un ID de conversation, l'inclure dans les données
+    if (conversationId) {
+        messageData.conversationId = conversationId;
+    }
+    
     // Envoyer le message au serveur
     fetch(`/api/orders/${orderId}/chat`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: messageText })
+        body: JSON.stringify(messageData)
     })
     .then(response => {
         if (!response.ok) {
@@ -1085,6 +1112,7 @@ function sendChatMessage() {
         tempMessageElement.querySelector('.message-time').textContent = `${dateString}, ${timeString} (échec de l'envoi)`;
     });
 }
+
 // Initialiser les compteurs de messages non lus
 function initUnreadMessageCounters() {
     // Pour chaque carte de commande, ajouter un compteur de messages non lus
@@ -1166,7 +1194,33 @@ function checkForNewMessages() {
     document.querySelectorAll('.order-card').forEach(card => {
         const orderId = getChatOrderIdFromCard(card);
         if (orderId) {
-            fetchUnreadCount(orderId, card);
+            // Utiliser la nouvelle route pour récupérer le nombre de messages non lus
+            fetch(`/api/orders/${orderId}/unread-messages`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.unreadCount > 0) {
+                        // Ajouter un badge de notification sur le bouton de chat
+                        const chatButton = card.querySelector('.chat-btn');
+                        if (chatButton) {
+                            // Vérifier si un badge existe déjà
+                            let badge = chatButton.querySelector('.unread-badge');
+                            
+                            if (!badge) {
+                                // Créer un nouveau badge
+                                badge = document.createElement('div');
+                                badge.className = 'unread-badge';
+                                chatButton.appendChild(badge);
+                            }
+                            
+                            // Mettre à jour le compteur
+                            badge.textContent = data.unreadCount;
+                            badge.setAttribute('data-count', data.unreadCount);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des messages non lus:', error);
+                });
         }
     });
     
