@@ -546,42 +546,61 @@ function loadChatMessages(deliveryId) {
         });
 }
 
-// Chargement des messages de chat (simulation)
+
 function loadChatMessages(deliveryId) {
-    // Simuler un délai de chargement
-    setTimeout(() => {
-        // Messages simulés
-        const simulatedMessages = [
-            {
-                sender: 'system',
-                content: 'Début de la conversation avec votre livreur.',
-                timestamp: new Date(Date.now() - 3600000) // 1 heure dans le passé
-            },
-            {
-                sender: 'livreur',
-                content: 'Bonjour ! Je suis votre livreur pour cette commande. Je vous contacterai dès que votre commande sera prête à être livrée.',
-                timestamp: new Date(Date.now() - 3500000) // 58 minutes dans le passé
-            },
-            {
-                sender: 'client',
-                content: 'D\'accord, merci. Est-ce que vous avez une estimation du temps de livraison ?',
-                timestamp: new Date(Date.now() - 3400000) // 56 minutes dans le passé
-            },
-            {
-                sender: 'livreur',
-                content: 'Pour le moment, votre commande est en préparation. Je pense pouvoir vous livrer dans environ 30 minutes.',
-                timestamp: new Date(Date.now() - 3300000) // 55 minutes dans le passé
+    // Afficher un indicateur de chargement
+    const loadingMessage = document.createElement('div');
+    loadingMessage.className = 'system-message';
+    loadingMessage.textContent = 'Chargement des messages...';
+    chatMessages.appendChild(loadingMessage);
+    
+    // Appel à l'API pour récupérer les messages de chat
+    fetch(`/api/orders/${deliveryId}/chat`)
+        .then(response => response.json())
+        .then(data => {
+            // Supprimer l'indicateur de chargement
+            loadingMessage.remove();
+            
+            if (!data.success) {
+                console.error('Erreur lors du chargement des messages:', data.message);
+                
+                // Afficher un message d'erreur
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'system-message';
+                errorMessage.textContent = 'Erreur lors du chargement des messages.';
+                chatMessages.appendChild(errorMessage);
+                return;
             }
-        ];
-        
-        // Ajouter les messages simulés au chat
-        simulatedMessages.forEach(msg => {
-            addChatMessage(msg.sender, msg.content, msg.timestamp);
+            
+            // Si aucun message n'est trouvé
+            if (data.messages.length === 0) {
+                const noMessagesNotice = document.createElement('div');
+                noMessagesNotice.className = 'system-message';
+                noMessagesNotice.textContent = 'Aucun message dans cette conversation.';
+                chatMessages.appendChild(noMessagesNotice);
+                return;
+            }
+            
+            // Ajouter les messages au chat
+            data.messages.forEach(msg => {
+                addChatMessage(msg.sender, msg.content, new Date(msg.timestamp));
+            });
+            
+            // Faire défiler vers le bas
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        })
+        .catch(error => {
+            console.error('Erreur lors du chargement des messages:', error);
+            
+            // Supprimer l'indicateur de chargement
+            loadingMessage.remove();
+            
+            // Afficher un message d'erreur
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'system-message';
+            errorMessage.textContent = 'Erreur lors du chargement des messages. Veuillez réessayer.';
+            chatMessages.appendChild(errorMessage);
         });
-        
-        // Faire défiler vers le bas
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }, 500);
 }
 
 // Envoi d'un message dans le chat
@@ -590,10 +609,10 @@ function sendChatMessage() {
     
     if (!messageText) return;
     
-    // Désactiver le bouton d'envoi pour éviter les doubles soumissions
+    // Désactiver le bouton d'envoi pendant la requête
     sendChatMessageBtn.disabled = true;
     
-    // Appel à l'API pour envoyer le message
+    // Envoyer le message à l'API
     fetch(`/api/orders/${currentDeliveryId}/chat`, {
         method: 'POST',
         headers: {
@@ -601,36 +620,52 @@ function sendChatMessage() {
         },
         body: JSON.stringify({ content: messageText })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Ajouter le message envoyé à l'interface
-            addChatMessage('livreur', messageText, new Date());
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Ajouter le message au chat
+                addChatMessage('livreur', messageText, new Date());
+                
+                // Vider le champ d'entrée
+                chatInputField.value = '';
+                
+                // Faire défiler vers le bas
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } else {
+                console.error('Erreur lors de l\'envoi du message:', data.message);
+                
+                // Afficher un message d'erreur sous forme de notification
+                const errorNotification = document.createElement('div');
+                errorNotification.className = 'notification error';
+                errorNotification.textContent = 'Erreur lors de l\'envoi du message';
+                document.body.appendChild(errorNotification);
+                
+                // Supprimer la notification après 3 secondes
+                setTimeout(() => {
+                    errorNotification.remove();
+                }, 3000);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de l\'envoi du message:', error);
             
-            // Vider le champ d'entrée
-            chatInputField.value = '';
+            // Afficher un message d'erreur sous forme de notification
+            const errorNotification = document.createElement('div');
+            errorNotification.className = 'notification error';
+            errorNotification.textContent = 'Erreur lors de l\'envoi du message';
+            document.body.appendChild(errorNotification);
             
-            // Faire défiler vers le bas
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            // Attendre un peu et recharger tous les messages pour s'assurer que tout est synchronisé
+            // Supprimer la notification après 3 secondes
             setTimeout(() => {
-                loadChatMessages(currentDeliveryId);
-            }, 1000);
-        } else {
-            console.error('Erreur lors de l\'envoi du message:', data.message);
-            alert('Erreur lors de l\'envoi du message: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Erreur lors de l\'envoi du message:', error);
-        alert('Erreur lors de l\'envoi du message. Veuillez réessayer.');
-    })
-    .finally(() => {
-        // Réactiver le bouton d'envoi
-        sendChatMessageBtn.disabled = false;
-    });
+                errorNotification.remove();
+            }, 3000);
+        })
+        .finally(() => {
+            // Réactiver le bouton d'envoi
+            sendChatMessageBtn.disabled = false;
+        });
 }
+
 
 // Ajout d'un message au chat
 function addChatMessage(sender, content, timestamp) {
