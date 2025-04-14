@@ -430,6 +430,22 @@ function initInlineQueueSection() {
 function updateAndShowInlineQueueSection(orderId) {
     console.log(`Mise à jour de la section file d'attente pour la commande: ${orderId}`);
     
+    // Essayer de trouver l'ID MongoDB associé à cet ID d'affichage
+    let mongoId = null;
+    
+    // Parcourir les cartes de commande pour trouver celle avec cet ID d'affichage
+    document.querySelectorAll('.order-card').forEach(card => {
+        const orderIdElement = card.querySelector('.order-id');
+        if (orderIdElement && orderIdElement.textContent.includes(orderId)) {
+            // Utiliser l'ID MongoDB stocké dans l'attribut data-order-id
+            mongoId = card.getAttribute('data-order-id');
+        }
+    });
+    
+    // Si on a trouvé un ID MongoDB, l'utiliser
+    const idToUse = mongoId || orderId;
+    console.log(`ID trouvé: ${idToUse}`);
+    
     // Vérifier si les éléments nécessaires existent
     const queueActiveOrderId = document.getElementById('queue-active-order-id');
     const noQueueMessage = document.getElementById('no-queue-message');
@@ -440,8 +456,10 @@ function updateAndShowInlineQueueSection(orderId) {
         return;
     }
     
-    // Mettre à jour l'ID de commande affiché
+    // Mettre à jour l'ID de commande affiché (utiliser l'ID d'affichage pour l'interface)
     queueActiveOrderId.textContent = orderId;
+    // Stocker l'ID MongoDB pour les appels API
+    queueActiveOrderId.dataset.mongoId = idToUse;
     
     // Masquer le message "aucune commande"
     noQueueMessage.style.display = 'none';
@@ -449,8 +467,8 @@ function updateAndShowInlineQueueSection(orderId) {
     // Afficher les détails de la file d'attente
     queueDetails.style.display = 'block';
     
-    // Charger les données réelles de la file d'attente
-    updateInlineQueueData(orderId);
+    // Charger les données réelles de la file d'attente (utiliser l'ID MongoDB)
+    updateInlineQueueData(idToUse);
 }
 
 // Afficher le message "aucune commande dans la file d'attente"
@@ -624,11 +642,13 @@ function initQueuePreview() {
         const match = orderIdText.match(/Commande #([A-Z0-9]+)/);
         if (!match) return;
         
-        const orderDisplayId = match[1];
-        const orderDataId = card.getAttribute('data-order-id');
+        // Toujours utiliser l'ID MongoDB si disponible
+        const orderId = card.getAttribute('data-order-id');
         
-        // Utiliser l'ID stocké dans data-order-id s'il existe, sinon utiliser l'ID affiché
-        const orderId = orderDataId || orderDisplayId;
+        if (!orderId) {
+            console.error("Impossible de trouver l'ID MongoDB pour la commande", match[1]);
+            return;
+        }
         
         // Afficher des valeurs de chargement pour l'indicateur de position
         let queueIndicator = card.querySelector('.queue-position-indicator');
@@ -660,6 +680,11 @@ function initQueuePreview() {
 
 // Récupérer les informations de file d'attente d'une commande
 function fetchQueueInfo(orderId, orderCard) {
+    // Si l'ID semble être un ID d'affichage (au format BDXXXXX), essayer d'utiliser l'ID MongoDB
+    if (orderId.startsWith('BD') && orderCard.getAttribute('data-order-id')) {
+        orderId = orderCard.getAttribute('data-order-id');
+    }
+    
     fetch(`/api/orders/${orderId}/queue`)
         .then(response => response.json())
         .then(data => {
