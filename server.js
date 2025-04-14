@@ -446,26 +446,41 @@ setInterval(updateDeliveryQueue, 5 * 60 * 1000);
 // Route pour obtenir les informations de file d'attente d'une commande spécifique
 app.get('/api/orders/:id/queue', isAuthenticated, async (req, res) => {
     try {
-        // Vérifier si l'ID est au format BD*, chercher la commande d'abord
+        // Récupérer l'ID de la commande depuis les paramètres
         let orderId = req.params.id;
         
         let order;
+        
+        // Vérifier le format de l'ID et adapter la requête en conséquence
         if (orderId.startsWith('BD')) {
-            // Trouver la commande par son numéro d'affichage
+            // Format BD* - Chercher par orderNumber
             order = await Order.findOne({
-                $or: [
-                    { orderNumber: orderId },
-                    // Chercher aussi dans le champ _id au cas où
-                    { _id: orderId }
-                ],
+                orderNumber: orderId,
                 user: req.session.user.id
             });
         } else {
-            // L'ID est peut-être déjà un ObjectId
-            order = await Order.findOne({
-                _id: orderId,
-                user: req.session.user.id
-            });
+            // Essayer avec ObjectId (si l'ID est un format MongoDB valide)
+            try {
+                // Vérifier si l'ID est un ObjectId valide
+                if (mongoose.Types.ObjectId.isValid(orderId)) {
+                    order = await Order.findOne({
+                        _id: orderId,
+                        user: req.session.user.id
+                    });
+                } else {
+                    // Tenter une recherche par orderNumber si ce n'est pas un ObjectId valide
+                    order = await Order.findOne({
+                        orderNumber: orderId,
+                        user: req.session.user.id
+                    });
+                }
+            } catch (err) {
+                console.error("Erreur lors de la validation de l'ObjectId:", err);
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'ID de commande invalide' 
+                });
+            }
         }
         
         if (!order) {
@@ -490,7 +505,7 @@ app.get('/api/orders/:id/queue', isAuthenticated, async (req, res) => {
             // déclencher une mise à jour de la file d'attente
             await updateDeliveryQueue();
             
-            // Récupérer la commande mise à jour
+            // Récupérer la commande mise à jour en utilisant son _id (pas orderId)
             const updatedOrder = await Order.findById(order._id);
             if (updatedOrder && updatedOrder.queueInfo) {
                 order.queueInfo = updatedOrder.queueInfo;
@@ -521,6 +536,7 @@ app.get('/api/orders/:id/queue', isAuthenticated, async (req, res) => {
         });
     }
 });
+
 // Route pour obtenir un résumé de la file d'attente (pour l'administrateur)
 app.get('/api/admin/delivery-queue', isAuthenticated, async (req, res) => {
     try {
@@ -1079,11 +1095,7 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         if (orderId.startsWith('BD')) {
             // Trouver la commande par son numéro d'affichage
             order = await Order.findOne({ 
-                $or: [
-                    { orderNumber: orderId },
-                    // Chercher aussi dans le champ _id au cas où
-                    { _id: orderId }
-                ]
+                orderNumber: orderId 
             });
             
             if (!order) {
@@ -1093,9 +1105,17 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
                 });
             }
             
-            orderId = order._id;
+            orderId = order._id; // Utiliser l'ObjectId pour la suite
         } else {
-            // L'ID est peut-être déjà un ObjectId, vérifier la commande
+            // Vérifier si l'ID est un ObjectId valide
+            if (!mongoose.Types.ObjectId.isValid(orderId)) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'ID de commande invalide' 
+                });
+            }
+            
+            // L'ID est un ObjectId, vérifier la commande
             const query = { _id: orderId };
             
             // Si l'utilisateur n'est pas admin, on ajoute une restriction
@@ -1122,11 +1142,11 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         }
         
         // Trouver ou créer la conversation
-        let conversation = await Conversation.findOne({ orderId: orderId });
+        let conversation = await Conversation.findOne({ orderId: order._id });
         
         if (!conversation) {
             conversation = new Conversation({
-                orderId: orderId,
+                orderId: order._id,
                 participants: {
                     user: order.user,
                     // deliveryPerson sera défini lorsqu'un livreur sera assigné
@@ -1143,7 +1163,7 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         // Créer le nouveau message
         const newMessage = new Message({
             conversationId: conversation._id,
-            orderId: orderId,
+            orderId: order._id,
             sender: sender,
             content: content.trim(),
             timestamp: new Date(),
@@ -1177,6 +1197,7 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         });
     }
 });
+
 // ===================== CHAT=====================
 // ===================== CHAT =====================
 // Route pour récupérer l'historique du chat d'une commande
@@ -1190,11 +1211,7 @@ app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         if (orderId.startsWith('BD')) {
             // Trouver la commande par son numéro d'affichage
             order = await Order.findOne({ 
-                $or: [
-                    { orderNumber: orderId },
-                    // Chercher aussi dans le champ _id au cas où
-                    { _id: orderId }
-                ]
+                orderNumber: orderId
             });
             
             if (!order) {
@@ -1204,9 +1221,17 @@ app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
                 });
             }
             
-            orderId = order._id;
+            orderId = order._id; // Utiliser l'ObjectId pour la suite
         } else {
-            // L'ID est peut-être déjà un ObjectId, vérifier la commande
+            // Vérifier si l'ID est un ObjectId valide
+            if (!mongoose.Types.ObjectId.isValid(orderId)) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'ID de commande invalide' 
+                });
+            }
+            
+            // L'ID est un ObjectId, vérifier la commande
             const query = { _id: orderId };
             
             // Si l'utilisateur n'est pas admin, on ajoute une restriction
@@ -1233,14 +1258,14 @@ app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         }
         
         // Trouver la conversation correspondant à cette commande
-        let conversation = await Conversation.findOne({ orderId: orderId });
+        let conversation = await Conversation.findOne({ orderId: order._id });
         
         // Si aucune conversation n'existe, la créer avec des messages d'accueil
         if (!conversation) {
-            await createInitialChat(orderId, req.session.user.id);
+            await createInitialChat(order._id, req.session.user.id);
             
             // Récupérer la conversation nouvellement créée
-            conversation = await Conversation.findOne({ orderId: orderId });
+            conversation = await Conversation.findOne({ orderId: order._id });
             
             if (!conversation) {
                 return res.status(500).json({
@@ -1297,17 +1322,19 @@ app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
     }
 });
 
+
+
 // Route pour récupérer le nombre de messages non lus pour une commande
 app.get('/api/orders/:id/unread-messages', isAuthenticated, async (req, res) => {
     try {
-        // Si l'ID est au format BD*, chercher la commande d'abord
+        // Vérifier si l'ID est au format BD*, chercher la commande d'abord
         let orderId = req.params.id;
         
         if (orderId.startsWith('BD')) {
             // Trouver la commande par son numéro d'affichage
             const order = await Order.findOne({ orderNumber: orderId });
             if (order) {
-                orderId = order._id;
+                orderId = order._id; // Utiliser l'ObjectId pour la suite
             } else {
                 // Si la commande n'est pas trouvée, renvoyer 0 messages non lus
                 return res.status(200).json({ 
@@ -1315,6 +1342,12 @@ app.get('/api/orders/:id/unread-messages', isAuthenticated, async (req, res) => 
                     unreadCount: 0
                 });
             }
+        } else if (!mongoose.Types.ObjectId.isValid(orderId)) {
+            // Si l'ID n'est pas un ObjectId valide et pas un format BD*
+            return res.status(200).json({ 
+                success: true, 
+                unreadCount: 0
+            });
         }
         
         // Trouver la conversation pour cette commande
@@ -1344,7 +1377,6 @@ app.get('/api/orders/:id/unread-messages', isAuthenticated, async (req, res) => 
         });
     }
 });
-
 // Route pour récupérer tous les chats non lus (pour l'admin/dashboard)
 app.get('/api/chats/unread', isAuthenticated, async (req, res) => {
     // Vérifier si l'utilisateur est admin
@@ -1550,6 +1582,12 @@ app.post('/api/orders/simple-delivery', isAuthenticated, async (req, res) => {
 // NOUVEAU: Fonction utilitaire pour créer la conversation initiale
 async function createInitialChat(orderId, userId) {
     try {
+        // Vérifier que l'orderId est bien un ObjectId
+        if (!mongoose.Types.ObjectId.isValid(orderId)) {
+            console.error('ID de commande invalide pour la création du chat:', orderId);
+            return;
+        }
+        
         // Récupérer les détails de la commande pour les messages personnalisés
         const order = await Order.findById(orderId).populate('user', 'username');
         
@@ -1614,7 +1652,6 @@ async function createInitialChat(orderId, userId) {
         console.error('Erreur lors de la création du chat initial:', error);
     }
 }
-
 // Route pour une commande avec un seul article (alternative simplifiée)
 app.post('/api/orders/simple-delivery', isAuthenticated, async (req, res) => {
     try {
