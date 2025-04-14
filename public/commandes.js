@@ -511,17 +511,7 @@ function updateInlineQueueData(orderId) {
     if (timeElement) timeElement.textContent = "Chargement...";
     if (statusElement) statusElement.textContent = "Chargement...";
     
-    // Rechercher d'abord la carte correspondant à cette commande pour obtenir sa position
-    let orderCard = null;
-    const orderCards = document.querySelectorAll('.order-card');
-    orderCards.forEach(card => {
-        const orderIdElement = card.querySelector('.order-id');
-        if (orderIdElement && orderIdElement.textContent.includes(orderId)) {
-            orderCard = card;
-        }
-    });
-    
-    // Utiliser l'approche du fetchQueueInfo mais sans recréer un appel API
+    // Récupérer les données depuis l'API
     fetch(`/api/orders/${orderId}/queue`)
         .then(response => response.json())
         .then(data => {
@@ -529,14 +519,16 @@ function updateInlineQueueData(orderId) {
                 // Mettre à jour la position avec la valeur réelle
                 if (positionElement) {
                     positionElement.textContent = data.queueInfo.position;
+                    console.log("Position mise à jour:", data.queueInfo.position); // Débogage
                 }
                 
                 // Mettre à jour le temps estimé en fonction de la position
                 if (timeElement) {
-                    // Calculer le temps en fonction de la position (environ 15 min par position)
+                    // Calculer le temps en fonction de la position
                     const minTime = data.queueInfo.position * 10;
                     const maxTime = data.queueInfo.position * 15;
                     timeElement.textContent = `${minTime}-${maxTime} min`;
+                    console.log("Temps mis à jour:", `${minTime}-${maxTime} min`); // Débogage
                 }
                 
                 if (statusElement) {
@@ -545,6 +537,7 @@ function updateInlineQueueData(orderId) {
                     // Mettre à jour la classe CSS du statut
                     statusElement.className = 'queue-status';
                     statusElement.classList.add(`status-${getStatusClass(data.status)}`);
+                    console.log("Statut mis à jour:", data.status); // Débogage
                 }
                 
                 // Mettre à jour les marqueurs et la progression
