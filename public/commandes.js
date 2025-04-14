@@ -180,6 +180,11 @@ function createOrderElement(order) {
             <div class="order-id">Commande #${displayOrderId}</div>
             <div class="order-date">${formattedDate}</div>
             <div class="order-status status-${getStatusClass(order.status)}">${order.status}</div>
+            <!-- MODIFICATION: Ajout de l'indicateur de position avec état initial de chargement -->
+            <div class="queue-position-indicator">
+                <span class="position-icon">🔄</span>
+                <span>Chargement...</span>
+            </div>
             <div class="expand-icon">▼</div>
         </div>
         <div class="order-body">
