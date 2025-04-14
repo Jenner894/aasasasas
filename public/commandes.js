@@ -416,17 +416,17 @@ function initInlineQueueSection() {
         findAndDisplayActiveOrder();
     }
     
-// Ajouter l'événement pour actualiser
-const refreshButton = document.getElementById('inline-refresh-queue');
-if (refreshButton) {
-    refreshButton.addEventListener('click', function() {
-        const queueActiveOrderId = document.getElementById('queue-active-order-id');
-        // Utiliser l'ID MongoDB stocké dans data-mongo-id si disponible
-        const orderId = queueActiveOrderId.dataset.mongoId || queueActiveOrderId.textContent;
-        updateInlineQueueData(orderId);
-    });
+    // Ajouter l'événement pour actualiser
+    const refreshButton = document.getElementById('inline-refresh-queue');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', function() {
+            const queueActiveOrderId = document.getElementById('queue-active-order-id');
+            // Utiliser l'ID MongoDB stocké dans data-mongo-id si disponible
+            const orderId = queueActiveOrderId.dataset.mongoId || queueActiveOrderId.textContent;
+            updateInlineQueueData(orderId);
+        });
+    }
 }
-
 
 function updateAndShowInlineQueueSection(orderId) {
     console.log(`Mise à jour de la section file d'attente pour la commande: ${orderId}`);
