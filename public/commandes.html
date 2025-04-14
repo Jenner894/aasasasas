@@ -1668,236 +1668,120 @@
                     <button class="filter-btn" data-filter="delivered">Livrées</button>
                 </div>
                 
-                <!-- Liste des commandes -->
+                <!-- Liste des commandes - Sera remplie par JavaScript -->
                 <div class="orders-list">
-                    <!-- Commande 1 -->
-                    <div class="order-card" data-status="processing">
-                        <div class="order-header">
-                            <div class="order-id">Commande #BD2305</div>
-                            <div class="order-date">18 Mars 2025</div>
-                            <div class="order-status status-processing">En préparation</div>
-                            <div class="queue-position-indicator">
-                                <span class="position-icon">🚶</span>
-                                <span>Position: 3</span>
-                            </div>
-                            <div class="expand-icon">▼</div>
-                        </div>
-                        <div class="order-body">
-                            <div class="order-products">
-                                <div class="product-item">
-                                    <div class="product-icon">🌿</div>
-                                    <div class="product-info">
-                                        <div class="product-name">Super Silver Haze</div>
-                                        <div class="product-details">
-                                            <div class="product-quantity">10g</div>
-                                            <div class="product-price">85,00€</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="product-item">
-                                    <div class="product-icon">🍫</div>
-                                    <div class="product-info">
-                                        <div class="product-name">Afghan Kush</div>
-                                        <div class="product-details">
-                                            <div class="product-quantity">5g</div>
-                                            <div class="product-price">45,00€</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="order-summary">
-                                <div class="summary-row">
-                                    <div>Sous-total</div>
-                                    <div>130,00€</div>
-                                </div>
-                                <div class="summary-row">
-                                    <div>Frais de livraison</div>
-                                    <div>5,00€</div>
-                                </div>
-                                <div class="summary-row">
-                                    <div>Total</div>
-                                    <div>135,00€</div>
-                                </div>
-                            </div>
-                            
-                            <!-- Tracking info -->
-                            <div class="tracking-info">
-                                <div class="tracking-title">
-                                    <span class="tracking-title-icon">🚚</span> Suivi de commande
-                                </div>
-                                <div class="tracking-steps">
-                                    <div class="tracking-line"></div>
-                                    
-                                    <div class="tracking-step">
-                                        <div class="step-marker completed"></div>
-                                        <div class="step-content">
-                                            <div class="step-title">Commande confirmée</div>
-                                            <div class="step-date">18 Mars 2025, 14:35</div>
-                                            <div class="step-description">Votre commande a été reçue et confirmée</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="tracking-step">
-                                        <div class="step-marker active"></div>
-                                        <div class="step-content">
-                                            <div class="step-title">En préparation</div>
-                                            <div class="step-date">18 Mars 2025, 16:20</div>
-                                            <div class="step-description">Votre commande est en cours de préparation</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="tracking-step">
-                                        <div class="step-marker"></div>
-                                        <div class="step-content">
-                                            <div class="step-title">Prête pour livraison</div>
-                                            <div class="step-date">-</div>
-                                            <div class="step-description">Votre commande sera bientôt prête à être récupérée</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="tracking-step">
-                                        <div class="step-marker"></div>
-                                        <div class="step-content">
-                                            <div class="step-title">Livraison en main propre</div>
-                                            <div class="step-date">-</div>
-                                            <div class="step-description">Paiement et remise en main propre</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="order-actions">
-<button class="action-btn queue-btn" data-order="BD2305">
-    <span class="queue-btn-icon">🔢</span> File d'attente
-</button>
-                                <button class="action-btn chat-btn" data-order="BD2305">
-                                    <span class="chat-btn-icon">💬</span> Chatter avec le livreur
-                                </button>
-                                <button class="action-btn secondary tracking-btn">
-                                    <span class="tracking-btn-icon">🔄</span> Actualiser le suivi
-                                </button>
+                    <div class="loading-indicator">Chargement des commandes...</div>
+                </div>
+            </div>
+            
+            <!-- Section de file d'attente en pied de page -->
+            <div class="order-section queue-section" id="queue-section">
+                <h2>Statut de livraison en cours</h2>
+                
+                <!-- Contenu dynamique de la file d'attente -->
+                <div id="queue-content">
+                    <!-- État par défaut: message "aucune commande" -->
+                    <div class="no-queue-message" id="no-queue-message">
+                        <div class="blur-overlay">
+                            <div class="no-queue-text">
+                                <div class="no-queue-icon">🕐</div>
+                                <p>Aucune commande active dans la file d'attente</p>
+                                <p class="no-queue-subtext">Sélectionnez une commande en cours pour voir son statut de livraison</p>
                             </div>
                         </div>
                     </div>
                     
-
-<!-- Section de file d'attente -->
-<div class="order-section queue-section" id="queue-section">
-    <h2>File d'attente en cours</h2>
-    
-    <!-- Contenu dynamique de la file d'attente -->
-    <div id="queue-content">
-        <!-- État par défaut: message "aucune commande" -->
-        <div class="no-queue-message" id="no-queue-message">
-            <div class="blur-overlay">
-                <div class="no-queue-text">
-                    <div class="no-queue-icon">🕐</div>
-                    <p>Aucune commande dans la file d'attente</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Contenu de la file d'attente (initialement caché) -->
-        <div class="queue-details" id="queue-details" style="display: none;">
-            <div class="active-order-info">
-                <h3>Commande #<span id="queue-active-order-id">BD2305</span></h3>
-            </div>
-            
-            <div class="queue-info">
-                <div class="queue-card">
-                    <div class="queue-header">
-                        <div class="queue-title">Votre position</div>
-                        <div class="queue-icon">🚶</div>
-                    </div>
-                    <div class="queue-body">
-                        <div class="queue-position" id="inline-queue-position">3</div>
-                        <div class="queue-label">dans la file d'attente</div>
-                    </div>
-                </div>
-                
-                <div class="queue-card">
-                    <div class="queue-header">
-                        <div class="queue-title">Temps estimé</div>
-                        <div class="queue-icon">⏱️</div>
-                    </div>
-                    <div class="queue-body">
-                        <div class="queue-time" id="inline-queue-time">45 min</div>
-                        <div class="queue-label">avant livraison</div>
-                    </div>
-                </div>
-                
-                <div class="queue-card">
-                    <div class="queue-header">
-                        <div class="queue-title">Statut actuel</div>
-                        <div class="queue-icon">📋</div>
-                    </div>
-                    <div class="queue-body">
-                        <div class="queue-status status-processing" id="inline-queue-status">En préparation</div>
-                        <div class="queue-label">de votre commande</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="queue-visualization">
-                <div class="queue-line">
-                    <div class="queue-progress" id="inline-queue-progress" style="width: 50%;"></div>
-                </div>
-                <div class="queue-markers">
-                    <div class="queue-marker active">
-                        <div class="marker-icon">📋</div>
-                        <div class="marker-label">Confirmation</div>
-                    </div>
-                    <div class="queue-marker active">
-                        <div class="marker-icon">👨‍🍳</div>
-                        <div class="marker-label">Préparation</div>
-                    </div>
-                    <div class="queue-marker">
-                        <div class="marker-icon">🚚</div>
-                        <div class="marker-label">En route</div>
-                    </div>
-                    <div class="queue-marker">
-                        <div class="marker-icon">🎁</div>
-                        <div class="marker-label">Livraison</div>
+                    <!-- Contenu de la file d'attente (initialement caché) -->
+                    <div class="queue-details" id="queue-details" style="display: none;">
+                        <div class="active-order-info">
+                            <h3>Commande #<span id="queue-active-order-id"></span></h3>
+                        </div>
+                        
+                        <div class="queue-info">
+                            <div class="queue-card">
+                                <div class="queue-header">
+                                    <div class="queue-title">Votre position</div>
+                                    <div class="queue-icon">🚶</div>
+                                </div>
+                                <div class="queue-body">
+                                    <div class="queue-position" id="inline-queue-position">...</div>
+                                    <div class="queue-label">dans la file d'attente</div>
+                                </div>
+                            </div>
+                            
+                            <div class="queue-card">
+                                <div class="queue-header">
+                                    <div class="queue-title">Temps estimé</div>
+                                    <div class="queue-icon">⏱️</div>
+                                </div>
+                                <div class="queue-body">
+                                    <div class="queue-time" id="inline-queue-time">Chargement...</div>
+                                    <div class="queue-label">avant livraison</div>
+                                </div>
+                            </div>
+                            
+                            <div class="queue-card">
+                                <div class="queue-header">
+                                    <div class="queue-title">Statut actuel</div>
+                                    <div class="queue-icon">📋</div>
+                                </div>
+                                <div class="queue-body">
+                                    <div class="queue-status" id="inline-queue-status">Chargement...</div>
+                                    <div class="queue-label">de votre commande</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="queue-visualization">
+                            <div class="queue-line">
+                                <div class="queue-progress" id="inline-queue-progress" style="width: 0%;"></div>
+                            </div>
+                            <div class="queue-markers">
+                                <div class="queue-marker">
+                                    <div class="marker-icon">📋</div>
+                                    <div class="marker-label">Confirmation</div>
+                                </div>
+                                <div class="queue-marker">
+                                    <div class="marker-icon">👨‍🍳</div>
+                                    <div class="marker-label">Préparation</div>
+                                </div>
+                                <div class="queue-marker">
+                                    <div class="marker-icon">🚚</div>
+                                    <div class="marker-label">En route</div>
+                                </div>
+                                <div class="queue-marker">
+                                    <div class="marker-icon">🎁</div>
+                                    <div class="marker-label">Livraison</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="queue-refresh">
+                            <!-- Bouton pour chatter avec le livreur -->
+                            <button id="inline-chat-btn" class="action-btn chat-btn" style="margin-bottom: 15px; width: 100%;">
+                                <span class="chat-btn-icon">💬</span> Chatter avec le livreur
+                            </button>
+                            
+                            <button id="inline-refresh-queue" class="action-btn secondary">
+                                <span class="refresh-icon">🔄</span> Actualiser le statut
+                            </button>
+                            <div class="last-updated" id="inline-last-updated">Dernière mise à jour: --:--</div>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="queue-refresh">
-                <button id="inline-refresh-queue" class="action-btn secondary">
-                    <span class="refresh-icon">🔄</span> Actualiser le statut
-                </button>
-                <div class="last-updated" id="inline-last-updated">Dernière mise à jour: 14:35</div>
-            </div>
-        </div>
-    </div>
-</div>
             
             <!-- Chat Modal -->
             <div class="modal" id="chat-modal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <div class="modal-title">Chat avec le livreur - Commande #<span id="chat-order-id">BD2305</span></div>
+                        <div class="modal-title">Chat avec le livreur - Commande #<span id="chat-order-id"></span></div>
                         <button class="modal-close" id="close-chat-modal">×</button>
                     </div>
                     <div class="modal-body">
                         <div class="chat-container">
                             <div class="chat-messages" id="chat-messages">
-                                <div class="system-message">Conversation initiée le 18 Mars 2025 à 16:45</div>
-                                <div class="message message-other">
-                                    <div class="message-sender">Livreur</div>
-                                    <div>Bonjour, votre commande est en préparation. Je suis votre livreur pour aujourd'hui.</div>
-                                    <div class="message-time">16:45</div>
-                                </div>
-                                <div class="message message-user">
-                                    <div>Bonjour, merci. À quelle heure pensez-vous pouvoir livrer ?</div>
-                                    <div class="message-time">16:47</div>
-                                </div>
-                                <div class="message message-other">
-                                    <div class="message-sender">Livreur</div>
-                                    <div>J'estime arriver dans environ 45 minutes, vers 17h30. Je vous contacterai à nouveau quand je serai en route.</div>
-                                    <div class="message-time">16:50</div>
-                                </div>
+                                <div class="loading-indicator">Chargement des messages...</div>
                             </div>
                             <div class="chat-input">
                                 <input type="text" placeholder="Tapez votre message..." id="chat-input-text">
@@ -1909,100 +1793,62 @@
             </div>
         </div>
     </div>
-            <!-- Section de file d'attente en pied de page -->
-<div class="order-section queue-section" id="queue-section">
-    <h2>Statut de livraison en cours</h2>
     
-    <!-- Contenu dynamique de la file d'attente -->
-    <div id="queue-content">
-        <!-- État par défaut: message "aucune commande" -->
-        <div class="no-queue-message" id="no-queue-message">
-            <div class="blur-overlay">
-                <div class="no-queue-text">
-                    <div class="no-queue-icon">🕐</div>
-                    <p>Aucune commande active dans la file d'attente</p>
-                    <p class="no-queue-subtext">Sélectionnez une commande en cours pour voir son statut de livraison</p>
+    <!-- Template pour une carte de commande (ne sera pas affiché directement) -->
+    <template id="order-card-template">
+        <div class="order-card" data-status="" data-order-id="">
+            <div class="order-header">
+                <div class="order-id">Commande #</div>
+                <div class="order-date"></div>
+                <div class="order-status"></div>
+                <div class="queue-position-indicator">
+                    <span class="position-icon">🔄</span>
+                    <span>Chargement...</span>
+                </div>
+                <div class="expand-icon">▼</div>
+            </div>
+            <div class="order-body">
+                <div class="order-products"></div>
+                
+                <div class="order-summary">
+                    <div class="summary-row">
+                        <div>Sous-total</div>
+                        <div></div>
+                    </div>
+                    <div class="summary-row">
+                        <div>Frais de livraison</div>
+                        <div>5,00€</div>
+                    </div>
+                    <div class="summary-row">
+                        <div>Total</div>
+                        <div></div>
+                    </div>
+                </div>
+                
+                <!-- Tracking info -->
+                <div class="tracking-info">
+                    <div class="tracking-title">
+                        <span class="tracking-title-icon">🚚</span> Suivi de commande
+                    </div>
+                    <div class="tracking-steps">
+                        <div class="tracking-line"></div>
+                        <!-- Étapes de tracking générées dynamiquement -->
+                    </div>
+                </div>
+                
+                <div class="order-actions">
+                    <button class="action-btn queue-btn">
+                        <span class="queue-btn-icon">🔢</span> File d'attente
+                    </button>
+                    <button class="action-btn chat-btn">
+                        <span class="chat-btn-icon">💬</span> Chatter avec le livreur
+                    </button>
+                    <button class="action-btn secondary tracking-btn">
+                        <span class="tracking-btn-icon">🔄</span> Actualiser le suivi
+                    </button>
                 </div>
             </div>
         </div>
-        
-<!-- Contenu de la file d'attente (initialement caché) -->
-<div class="queue-details" id="queue-details" style="display: none;">
-    <div class="active-order-info">
-        <h3>Commande #<span id="queue-active-order-id">BD2305</span></h3>
-    </div>
-    
-    <div class="queue-info">
-        <div class="queue-card">
-            <div class="queue-header">
-                <div class="queue-title">Votre position</div>
-                <div class="queue-icon">🚶</div>
-            </div>
-            <div class="queue-body">
-                <div class="queue-position" id="inline-queue-position">3</div>
-                <div class="queue-label">dans la file d'attente</div>
-            </div>
-        </div>
-        
-        <div class="queue-card">
-            <div class="queue-header">
-                <div class="queue-title">Temps estimé</div>
-                <div class="queue-icon">⏱️</div>
-            </div>
-            <div class="queue-body">
-                <div class="queue-time" id="inline-queue-time">45 min</div>
-                <div class="queue-label">avant livraison</div>
-            </div>
-        </div>
-        
-        <div class="queue-card">
-            <div class="queue-header">
-                <div class="queue-title">Statut actuel</div>
-                <div class="queue-icon">📋</div>
-            </div>
-            <div class="queue-body">
-                <div class="queue-status status-processing" id="inline-queue-status">En préparation</div>
-                <div class="queue-label">de votre commande</div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="queue-visualization">
-        <div class="queue-line">
-            <div class="queue-progress" id="inline-queue-progress" style="width: 50%;"></div>
-        </div>
-        <div class="queue-markers">
-            <div class="queue-marker active">
-                <div class="marker-icon">📋</div>
-                <div class="marker-label">Confirmation</div>
-            </div>
-            <div class="queue-marker active">
-                <div class="marker-icon">👨‍🍳</div>
-                <div class="marker-label">Préparation</div>
-            </div>
-            <div class="queue-marker">
-                <div class="marker-icon">🚚</div>
-                <div class="marker-label">En route</div>
-            </div>
-            <div class="queue-marker">
-                <div class="marker-icon">🎁</div>
-                <div class="marker-label">Livraison</div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="queue-refresh">
-        <!-- Nouveau bouton pour chatter avec le livreur -->
-        <button id="inline-chat-btn" class="action-btn chat-btn" style="margin-bottom: 15px; width: 100%;">
-            <span class="chat-btn-icon">💬</span> Chatter avec le livreur
-        </button>
-        
-        <button id="inline-refresh-queue" class="action-btn secondary">
-            <span class="refresh-icon">🔄</span> Actualiser le statut
-        </button>
-        <div class="last-updated" id="inline-last-updated">Dernière mise à jour: 14:35</div>
-    </div>
-</div>
       <script src="commandes.js"></script>
 </body>
 </html>
