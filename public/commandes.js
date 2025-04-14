@@ -992,12 +992,14 @@ function loadChatHistory(orderId) {
         })
         .then(data => {
             if (data.success) {
-                // Stocker l'ID de conversation si nécessaire
+                // Stocker l'ID de conversation si fourni
                 const chatOrderId = document.getElementById('chat-order-id');
                 if (chatOrderId && data.conversation) {
                     chatOrderId.dataset.conversationId = data.conversation.id;
                     // Stocker également l'ID MongoDB pour les futurs appels API
-                    chatOrderId.dataset.mongoId = data.orderId;
+                    if (data.orderId) {
+                        chatOrderId.dataset.mongoId = data.orderId;
+                    }
                 }
                 
                 // Afficher les messages
