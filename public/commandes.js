@@ -169,18 +169,44 @@ function createOrderElement(order) {
     const orderCard = document.createElement('div');
     orderCard.className = 'order-card';
     orderCard.setAttribute('data-status', order.status.toLowerCase().replace(' ', '-'));
-    orderCard.setAttribute('data-order-id', order._id);
+    orderCard.setAttribute('data-order-id', order._id); // Stocker l'ID MongoDB
     
-    // Générer un ID de commande plus lisible
-    const displayOrderId = order.orderNumber || `BD${orderDate.getFullYear().toString().slice(2)}${(orderDate.getMonth() + 1).toString().padStart(2, '0')}${Math.floor(Math.random() * 100).toString().padStart(2, '0')}`;
+    // Utiliser l'orderNumber existant ou générer un nouveau
+    const displayOrderId = order.orderNumber || 
+        `BD${orderDate.getFullYear().toString().slice(2)}${
+            (orderDate.getMonth() + 1).toString().padStart(2, '0')
+        }${
+            Math.floor(Math.random() * 100).toString().padStart(2, '0')
+        }`;
+    
+    // Si orderNumber n'est pas défini en base de données, le mettre à jour
+    if (!order.orderNumber) {
+        // Enregistrer cet orderNumber pour cette commande
+        fetch(`/api/orders/${order._id}/update-order-number`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ orderNumber: displayOrderId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log(`OrderNumber mis à jour pour la commande ${order._id}:`, displayOrderId);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la mise à jour de l\'orderNumber:', error);
+        });
+    }
     
     // Structure de la carte de commande
     orderCard.innerHTML = `
         <div class="order-header">
-            <div class="order-id">Commande #${displayOrderId}</div>
+            <div class="order-id" data-mongo-id="${order._id}">Commande #${displayOrderId}</div>
             <div class="order-date">${formattedDate}</div>
             <div class="order-status status-${getStatusClass(order.status)}">${order.status}</div>
-            <!-- MODIFICATION: Ajout de l'indicateur de position avec état initial de chargement -->
+            <!-- Indicateur de position avec état initial de chargement -->
             <div class="queue-position-indicator">
                 <span class="position-icon">🔄</span>
                 <span>Chargement...</span>
@@ -228,10 +254,10 @@ function createOrderElement(order) {
             </div>
             
             <div class="order-actions">
-<button class="action-btn queue-btn" data-order="${displayOrderId}" data-id="${order._id}">
-    <span class="queue-btn-icon">🔢</span> File d'attente
-</button>
-                <button class="action-btn chat-btn" data-order="${displayOrderId}">
+                <button class="action-btn queue-btn" data-order="${displayOrderId}" data-id="${order._id}">
+                    <span class="queue-btn-icon">🔢</span> File d'attente
+                </button>
+                <button class="action-btn chat-btn" data-order="${displayOrderId}" data-mongo-id="${order._id}">
                     <span class="chat-btn-icon">💬</span> Chatter avec le livreur
                 </button>
                 <button class="action-btn secondary tracking-btn">
