@@ -1074,7 +1074,6 @@ function displayChatMessages(messages) {
     // Faire défiler jusqu'au bas
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
 function sendChatMessage() {
     const inputField = document.getElementById('chat-input-text');
     if (!inputField) return;
@@ -1089,6 +1088,7 @@ function sendChatMessage() {
     // Utiliser l'ID MongoDB stocké dans data-mongo-id si disponible
     const visibleOrderId = orderIdElement.textContent;
     const mongoId = orderIdElement.dataset.mongoId;
+    const conversationId = orderIdElement.dataset.conversationId;
     
     // Si mongoId est manquant, essayer de le trouver dans les cartes de commande
     let idToUse = mongoId;
@@ -1133,8 +1133,8 @@ function sendChatMessage() {
     };
     
     // Si nous avons un ID de conversation, l'inclure dans les données
-    if (orderIdElement.dataset.conversationId) {
-        messageData.conversationId = orderIdElement.dataset.conversationId;
+    if (conversationId) {
+        messageData.conversationId = conversationId;
     }
     
     // Envoyer le message au serveur
@@ -1163,10 +1163,15 @@ function sendChatMessage() {
             if (!orderIdElement.dataset.mongoId && data.message && data.message.orderId) {
                 orderIdElement.dataset.mongoId = data.message.orderId;
             }
+            
+            // Stocker l'ID de conversation si renvoyé et pas déjà présent
+            if (!orderIdElement.dataset.conversationId && data.message && data.message.conversationId) {
+                orderIdElement.dataset.conversationId = data.message.conversationId;
+            }
         } else {
             // Marquer le message comme échoué
             tempMessageElement.classList.add('message-error');
-            tempMessageElement.querySelector('.message-time').textContent = `${dateString}, ${timeString} (échec de l'envoi)`;
+            tempMessageElement.querySelector('.message-time').textContent = `${dateString}, ${timeString} (échec de l'envoi: ${data.message || 'Erreur inconnue'})`;
         }
     })
     .catch(error => {
