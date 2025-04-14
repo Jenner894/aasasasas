@@ -1153,8 +1153,8 @@ function sendChatMessage() {
         messageData.conversationId = conversationId;
     }
     
-    // Envoyer le message au serveur
-    fetch(`/api/orders/${idToUse}/chat`, {
+    // MODIFICATION: Utiliser la route spécifique au client
+    fetch(`/api/orders/${idToUse}/chat/client`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
