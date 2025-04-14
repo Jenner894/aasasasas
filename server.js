@@ -71,13 +71,19 @@ const OrderSchema = new mongoose.Schema({
     productName: { type: String, required: true },
     quantity: { type: Number, required: true },
     totalPrice: { type: Number, required: true },
+    // Ajout du champ orderNumber pour stocker l'identifiant formaté BD*
+    orderNumber: { 
+        type: String, 
+        unique: true,
+        sparse: true // Permet d'avoir des documents sans orderNumber
+    },
     status: { 
         type: String, 
         enum: ['En attente', 'En préparation', 'Expédié', 'Livré', 'Annulé'],
         default: 'En attente'
     },
     createdAt: { type: Date, default: Date.now },
-    // Ajout des informations de livraison
+    // Informations de livraison
     delivery: {
         type: { 
             type: String, 
@@ -101,7 +107,7 @@ const OrderSchema = new mongoose.Schema({
             }
         }
     },
-    // Nouveau: informations de file d'attente
+    // Informations de file d'attente
     queueInfo: {
         position: { type: Number, default: null },
         estimatedTime: { type: Number, default: null }, // en minutes
@@ -109,7 +115,6 @@ const OrderSchema = new mongoose.Schema({
         lastUpdated: { type: Date, default: null }
     }
 });
-
 
 
 // Middleware pour mettre à jour la liste des commandes de l'utilisateur
@@ -1201,60 +1206,53 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
 // ===================== CHAT=====================
 // ===================== CHAT =====================
 // Route pour récupérer l'historique du chat d'une commande
-// Route pour récupérer l'historique du chat d'une commande
 app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
     try {
-        // Vérifier si l'ID est au format BD*, chercher la commande d'abord
+        // Récupérer l'ID de la commande depuis les paramètres
         let orderId = req.params.id;
         let order;
         
-        if (orderId.startsWith('BD')) {
-            // Trouver la commande par son numéro d'affichage
-            order = await Order.findOne({ 
+        console.log("Récupération des messages pour commande ID:", orderId);
+        
+        // Vérifier si l'ID est un ObjectId valide directement
+        if (mongoose.Types.ObjectId.isValid(orderId)) {
+            // Rechercher directement par ID MongoDB
+            order = await Order.findOne({
+                _id: orderId
+            });
+        } else if (orderId.startsWith('BD')) {
+            // Chercher par orderNumber si format BD*
+            order = await Order.findOne({
                 orderNumber: orderId
             });
-            
-            if (!order) {
-                return res.status(404).json({ 
-                    success: false, 
-                    message: 'Commande non trouvée ou accès non autorisé' 
-                });
-            }
-            
-            orderId = order._id; // Utiliser l'ObjectId pour la suite
         } else {
-            // Vérifier si l'ID est un ObjectId valide
-            if (!mongoose.Types.ObjectId.isValid(orderId)) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'ID de commande invalide' 
-                });
-            }
-            
-            // L'ID est un ObjectId, vérifier la commande
-            const query = { _id: orderId };
-            
-            // Si l'utilisateur n'est pas admin, on ajoute une restriction
-            if (req.session.user.role !== 'admin') {
-                query.user = req.session.user.id;
-            }
-            
-            order = await Order.findOne(query);
-            
-            if (!order) {
-                return res.status(404).json({ 
-                    success: false, 
-                    message: 'Commande non trouvée ou accès non autorisé' 
-                });
-            }
+            // Autre format - essayer de trouver par une recherche flexible
+            order = await Order.findOne({
+                $or: [
+                    { orderNumber: orderId },
+                    // Permettre la recherche par autres champs si nécessaire
+                ]
+            });
         }
         
-        // Vérifier si la commande appartient à l'utilisateur (sauf pour admin)
-        if (req.session.user.role !== 'admin' && order.user.toString() !== req.session.user.id) {
-            return res.status(403).json({ 
+        if (!order) {
+            console.error("Commande non trouvée:", orderId);
+            return res.status(404).json({ 
                 success: false, 
-                message: 'Vous n\'êtes pas autorisé à accéder à cette commande' 
+                message: 'Commande non trouvée ou accès non autorisé' 
             });
+        }
+        
+        console.log("Commande trouvée:", order._id);
+        
+        // Vérification d'authentification sauf pour admin
+        if (req.session.user.role !== 'admin') {
+            if (order.user.toString() !== req.session.user.id) {
+                return res.status(403).json({ 
+                    success: false, 
+                    message: 'Vous n\'êtes pas autorisé à accéder à cette commande' 
+                });
+            }
         }
         
         // Trouver la conversation correspondant à cette commande
@@ -1304,7 +1302,8 @@ app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         }
         
         res.status(200).json({ 
-            success: true, 
+            success: true,
+            orderId: order._id, // Renvoyer aussi l'ID MongoDB
             conversation: {
                 id: conversation._id,
                 createdAt: conversation.createdAt,
@@ -1321,7 +1320,6 @@ app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         });
     }
 });
-
 
 
 // Route pour récupérer le nombre de messages non lus pour une commande
