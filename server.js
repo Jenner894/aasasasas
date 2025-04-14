@@ -1082,7 +1082,108 @@ app.put('/api/orders/:id/cancel', isAuthenticated, async (req, res) => {
 
 
 // Route pour envoyer un message dans le chat d'une commande
-app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
+app.post('/api/orders/:id/chat/livreur', isAuthenticated, async (req, res) => {
+    try {
+        const { content } = req.body;
+        
+        // Vérifier si l'utilisateur est admin
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Seuls les administrateurs peuvent envoyer des messages en tant que livreur' 
+            });
+        }
+        
+        if (!content || content.trim() === '') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Le message ne peut pas être vide' 
+            });
+        }
+        
+        // Vérifier si l'ID est au format BD*, chercher la commande d'abord
+        let orderId = req.params.id;
+        let order;
+        
+        if (orderId.startsWith('BD')) {
+            // Trouver la commande par son numéro d'affichage
+            order = await Order.findOne({ 
+                orderNumber: orderId 
+            });
+        } else {
+            // Vérifier si l'ID est un ObjectId valide
+            if (!mongoose.Types.ObjectId.isValid(orderId)) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'ID de commande invalide' 
+                });
+            }
+            
+            // L'ID est un ObjectId, vérifier la commande
+            order = await Order.findById(orderId);
+        }
+        
+        if (!order) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Commande non trouvée' 
+            });
+        }
+        
+        // Trouver ou créer la conversation
+        let conversation = await Conversation.findOne({ orderId: order._id });
+        
+        if (!conversation) {
+            conversation = new Conversation({
+                orderId: order._id,
+                participants: {
+                    user: order.user,
+                    deliveryPerson: req.session.user.id, // Assigner l'admin comme livreur
+                },
+                lastMessageAt: new Date()
+            });
+            
+            await conversation.save();
+        } else if (!conversation.participants.deliveryPerson) {
+            // Si le livreur n'était pas encore assigné, l'assigner maintenant
+            conversation.participants.deliveryPerson = req.session.user.id;
+        }
+        
+        // Créer le nouveau message (toujours avec sender "livreur")
+        const newMessage = new Message({
+            conversationId: conversation._id,
+            orderId: order._id,
+            sender: 'livreur', // Explicitement défini comme "livreur"
+            content: content.trim(),
+            timestamp: new Date(),
+            userId: req.session.user.id,
+            deliveryPersonId: req.session.user.id,
+            isRead: false
+        });
+        
+        await newMessage.save();
+        
+        // Mettre à jour le compteur de messages non lus pour le client
+        conversation.unreadCount.user = (conversation.unreadCount.user || 0) + 1;
+        
+        // Mettre à jour l'horodatage du dernier message
+        conversation.lastMessageAt = newMessage.timestamp;
+        await conversation.save();
+        
+        // Retourner le message créé
+        res.status(201).json({ 
+            success: true, 
+            message: newMessage
+        });
+    } catch (error) {
+        console.error('Erreur lors de l\'envoi du message livreur:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de l\'envoi du message' 
+        });
+    }
+});
+app.post('/api/orders/:id/chat/client', isAuthenticated, async (req, res) => {
     try {
         const { content } = req.body;
         
@@ -1121,14 +1222,10 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
             }
             
             // L'ID est un ObjectId, vérifier la commande
-            const query = { _id: orderId };
-            
-            // Si l'utilisateur n'est pas admin, on ajoute une restriction
-            if (req.session.user.role !== 'admin') {
-                query.user = req.session.user.id;
-            }
-            
-            order = await Order.findOne(query);
+            order = await Order.findOne({
+                _id: orderId,
+                user: req.session.user.id // Vérifier que la commande appartient à l'utilisateur
+            });
             
             if (!order) {
                 return res.status(404).json({ 
@@ -1136,14 +1233,6 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
                     message: 'Commande non trouvée ou accès non autorisé' 
                 });
             }
-        }
-        
-        // Vérifier si la commande appartient à l'utilisateur (sauf pour admin)
-        if (req.session.user.role !== 'admin' && order.user.toString() !== req.session.user.id) {
-            return res.status(403).json({ 
-                success: false, 
-                message: 'Vous n\'êtes pas autorisé à accéder à cette commande' 
-            });
         }
         
         // Trouver ou créer la conversation
@@ -1162,14 +1251,11 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
             await conversation.save();
         }
         
-        // Déterminer le type d'expéditeur
-        const sender = req.session.user.role === 'admin' ? 'livreur' : 'client';
-        
-        // Créer le nouveau message
+        // Créer le nouveau message (toujours avec sender "client")
         const newMessage = new Message({
             conversationId: conversation._id,
             orderId: order._id,
-            sender: sender,
+            sender: 'client', // Explicitement défini comme "client"
             content: content.trim(),
             timestamp: new Date(),
             userId: req.session.user.id,
@@ -1178,12 +1264,8 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
         
         await newMessage.save();
         
-        // Mettre à jour le compteur de messages non lus dans la conversation
-        if (sender === 'client') {
-            conversation.unreadCount.deliveryPerson = (conversation.unreadCount.deliveryPerson || 0) + 1;
-        } else {
-            conversation.unreadCount.user = (conversation.unreadCount.user || 0) + 1;
-        }
+        // Mettre à jour le compteur de messages non lus pour le livreur
+        conversation.unreadCount.deliveryPerson = (conversation.unreadCount.deliveryPerson || 0) + 1;
         
         // Mettre à jour l'horodatage du dernier message
         conversation.lastMessageAt = newMessage.timestamp;
@@ -1195,7 +1277,7 @@ app.post('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
             message: newMessage
         });
     } catch (error) {
-        console.error('Erreur lors de l\'envoi du message:', error);
+        console.error('Erreur lors de l\'envoi du message client:', error);
         res.status(500).json({ 
             success: false, 
             message: 'Erreur lors de l\'envoi du message' 
