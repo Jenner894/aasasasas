@@ -864,7 +864,7 @@ function setupChatButtons() {
         }
     });
 }
-
+    
 // Configurer le bouton de chat dans la file d'attente
 function setupInlineChatButton() {
     const inlineChatBtn = document.getElementById('inline-chat-btn');
@@ -888,18 +888,29 @@ function setupInlineChatButton() {
 // Ouvrir le modal de chat et charger l'historique
 function openChatModal(orderId) {
     const chatModal = document.getElementById('chat-modal');
-    if (!chatModal) return;
+    if (!chatModal) {
+        // Si le modal n'existe pas, le créer
+        initChatModal();
+    }
+    
+    const modal = document.getElementById('chat-modal');
+    if (!modal) return;
     
     // Définir l'ID de commande dans le modal
-    document.getElementById('chat-order-id').textContent = orderId;
+    const orderIdSpan = document.getElementById('chat-order-id');
+    if (orderIdSpan) {
+        orderIdSpan.textContent = orderId;
+    }
     
     // Afficher le modal
-    chatModal.classList.add('active');
+    modal.classList.add('active');
     
     // Charger l'historique du chat
     loadChatHistory(orderId);
+    
+    // Réinitialiser le compteur de messages non lus pour cette commande
+    resetUnreadCounter(orderId);
 }
-
 // Charger l'historique du chat depuis l'API
 function loadChatHistory(orderId) {
     const chatMessages = document.getElementById('chat-messages');
@@ -910,12 +921,17 @@ function loadChatHistory(orderId) {
     
     // Appel à l'API pour récupérer l'historique
     fetch(`/api/orders/${orderId}/chat`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 displayChatMessages(data.messages);
             } else {
-                chatMessages.innerHTML = '<div class="error-message">Erreur lors du chargement des messages</div>';
+                chatMessages.innerHTML = `<div class="error-message">${data.message || 'Erreur lors du chargement des messages'}</div>`;
             }
         })
         .catch(error => {
@@ -923,7 +939,7 @@ function loadChatHistory(orderId) {
             chatMessages.innerHTML = '<div class="error-message">Erreur de connexion au serveur</div>';
         });
 }
-
+    
 // Afficher les messages du chat
 function displayChatMessages(messages) {
     const chatMessages = document.getElementById('chat-messages');
@@ -968,6 +984,7 @@ function displayChatMessages(messages) {
             
             // Ajouter le contenu du message
             const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
             contentDiv.textContent = message.content;
             messageElement.appendChild(contentDiv);
             
@@ -986,7 +1003,6 @@ function displayChatMessages(messages) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Envoyer un message
 function sendChatMessage() {
     const inputField = document.getElementById('chat-input-text');
     if (!inputField) return;
@@ -1012,7 +1028,7 @@ function sendChatMessage() {
     const tempMessageElement = document.createElement('div');
     tempMessageElement.className = 'message message-user message-pending';
     tempMessageElement.innerHTML = `
-        <div>${messageText}</div>
+        <div class="message-content">${messageText}</div>
         <div class="message-time">${dateString}, ${timeString} (envoi en cours...)</div>
     `;
     
@@ -1027,7 +1043,12 @@ function sendChatMessage() {
         },
         body: JSON.stringify({ content: messageText })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             // Supprimer le message temporaire
@@ -1049,7 +1070,6 @@ function sendChatMessage() {
         tempMessageElement.querySelector('.message-time').textContent = `${dateString}, ${timeString} (échec de l'envoi)`;
     });
 }
-
 // Initialiser les compteurs de messages non lus
 function initUnreadMessageCounters() {
     // Pour chaque carte de commande, ajouter un compteur de messages non lus
@@ -1507,6 +1527,7 @@ function initChatModal() {
     
     return chatModal;
 }
+
 
 // Fonction pour améliorer l'animation du modal
 function enhanceModalAnimations() {
