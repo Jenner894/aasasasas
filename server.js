@@ -1440,6 +1440,9 @@ app.post('/api/orders/delivery', isAuthenticated, async (req, res) => {
             
             await newOrder.save();
             createdOrders.push(newOrder);
+            
+            // NOUVEAU: Création automatique d'une conversation pour cette commande
+            await createInitialChat(newOrder._id, req.session.user.id);
         }
         
         // Mettre à jour la file d'attente immédiatement après création
@@ -1459,6 +1462,109 @@ app.post('/api/orders/delivery', isAuthenticated, async (req, res) => {
         });
     }
 });
+app.post('/api/orders/simple-delivery', isAuthenticated, async (req, res) => {
+    try {
+        const { 
+            productName,
+            quantity,
+            totalPrice, 
+            deliveryType,
+            deliveryAddress,
+            deliveryTimeSlot
+        } = req.body;
+        
+        // Validation des données basiques
+        if (!productName || !quantity || !totalPrice || !deliveryAddress) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Tous les champs sont requis' 
+            });
+        }
+        
+        // Vérification du créneau horaire pour livraison planifiée
+        if (deliveryType === 'scheduled' && !deliveryTimeSlot) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Créneau horaire requis pour livraison planifiée' 
+            });
+        }
+        
+        // Création de la commande
+        const newOrder = new Order({
+            user: req.session.user.id,
+            productName,
+            quantity,
+            totalPrice,
+            status: 'En attente',
+            delivery: {
+                type: deliveryType || 'instant',
+                address: deliveryAddress,
+                timeSlot: deliveryTimeSlot
+            }
+        });
+        
+        await newOrder.save();
+        
+        // NOUVEAU: Création automatique d'une conversation pour cette commande
+        await createInitialChat(newOrder._id, req.session.user.id);
+        
+        res.status(201).json({ 
+            success: true, 
+            message: 'Commande créée avec succès',
+            order: newOrder 
+        });
+    } catch (error) {
+        console.error('Erreur lors de la création de la commande simple:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la création de la commande' 
+        });
+    }
+});
+
+// NOUVEAU: Fonction utilitaire pour créer la conversation initiale
+async function createInitialChat(orderId, userId) {
+    try {
+        // Récupérer les détails de la commande pour les messages personnalisés
+        const order = await Order.findById(orderId).populate('user', 'username');
+        
+        if (!order) {
+            console.error('Commande non trouvée pour la création du chat:', orderId);
+            return;
+        }
+        
+        // Message de bienvenue du système
+        const welcomeMessage = new Message({
+            orderId: orderId,
+            sender: 'system',
+            content: 'Bienvenue dans votre conversation avec votre livreur.',
+            timestamp: new Date(),
+            isRead: true,
+            userId: userId
+        });
+        
+        // Message initial du livreur
+        const orderNumber = order.orderNumber || orderId.toString().substr(-6);
+        const deliveryMessage = new Message({
+            orderId: orderId,
+            sender: 'livreur',
+            content: `Bonjour ${order.user.username} ! Je suis votre livreur pour la commande #${orderNumber}. Je vous contacterai dès que votre commande sera prête à être livrée.`,
+            timestamp: new Date(Date.now() + 1000), // 1 seconde plus tard
+            isRead: false,
+            userId: userId
+        });
+        
+        // Enregistrer les messages
+        await welcomeMessage.save();
+        await deliveryMessage.save();
+        
+        console.log(`Chat initial créé pour la commande: ${orderId}`);
+        
+    } catch (error) {
+        console.error('Erreur lors de la création du chat initial:', error);
+    }
+}
+
 
 // Route pour une commande avec un seul article (alternative simplifiée)
 app.post('/api/orders/simple-delivery', isAuthenticated, async (req, res) => {
@@ -1752,45 +1858,98 @@ app.put('/api/orders/:id/status', isAuthenticated, async (req, res) => {
 // Route pour obtenir les messages de chat d'une commande (pour admin)
 app.get('/api/orders/:id/chat', isAuthenticated, async (req, res) => {
     try {
-        // Vérifier si l'utilisateur est admin
-        if (req.session.user.role !== 'admin') {
-            return res.status(403).json({ success: false, message: 'Accès non autorisé' });
-        }
+        // Vérifier si l'ID est au format BD* ou un ObjectId
+        let orderId = req.params.id;
+        let order;
         
-        // Vérifier si la commande existe
-        const order = await Order.findById(req.params.id);
-        if (!order) {
-            return res.status(404).json({ success: false, message: 'Commande non trouvée' });
-        }
-        
-        // Simuler des messages (normalement vous les récupéreriez d'une collection de messages)
-        const messages = [
-            {
-                sender: 'system',
-                content: 'Début de la conversation avec le client.',
-                timestamp: new Date(Date.now() - 3600000) // 1 heure dans le passé
-            },
-            {
-                sender: 'livreur',
-                content: 'Bonjour ! Je suis votre livreur pour cette commande. Je vous contacterai dès que votre commande sera prête à être livrée.',
-                timestamp: new Date(Date.now() - 3500000) // 58 minutes dans le passé
-            },
-            {
-                sender: 'client',
-                content: 'D\'accord, merci. Est-ce que vous avez une estimation du temps de livraison ?',
-                timestamp: new Date(Date.now() - 3400000) // 56 minutes dans le passé
-            },
-            {
-                sender: 'livreur',
-                content: 'Pour le moment, votre commande est en préparation. Je pense pouvoir vous livrer dans environ 30 minutes.',
-                timestamp: new Date(Date.now() - 3300000) // 55 minutes dans le passé
+        if (orderId.startsWith('BD')) {
+            // Trouver la commande par son numéro d'affichage
+            order = await Order.findOne({ 
+                $or: [
+                    { orderNumber: orderId },
+                    { _id: orderId }
+                ]
+            });
+            
+            if (!order) {
+                return res.status(404).json({ 
+                    success: false, 
+                    message: 'Commande non trouvée ou accès non autorisé' 
+                });
             }
-        ];
+            
+            orderId = order._id;
+        } else {
+            // L'ID est peut-être déjà un ObjectId, vérifier la commande
+            const query = { _id: orderId };
+            
+            // Si l'utilisateur n'est pas admin, on ajoute une restriction
+            if (req.session.user.role !== 'admin') {
+                query.user = req.session.user.id;
+            }
+            
+            order = await Order.findOne(query);
+            
+            if (!order) {
+                return res.status(404).json({ 
+                    success: false, 
+                    message: 'Commande non trouvée ou accès non autorisé' 
+                });
+            }
+        }
         
-        res.status(200).json({ success: true, messages });
+        // Vérifier si la commande appartient à l'utilisateur (sauf pour admin)
+        if (req.session.user.role !== 'admin' && order.user.toString() !== req.session.user.id) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Vous n\'êtes pas autorisé à accéder à cette commande' 
+            });
+        }
+        
+        // Récupérer tous les messages pour cette commande
+        const messages = await Message.find({ 
+            orderId: orderId 
+        }).sort({ timestamp: 1 });
+        
+        // Si aucun message n'existe encore, créer un message système d'accueil
+        if (messages.length === 0) {
+            // Création de la conversation si elle n'existe pas encore
+            await createInitialChat(orderId, req.session.user.id);
+            
+            // Récupérer les messages nouvellement créés
+            const initialMessages = await Message.find({ 
+                orderId: orderId 
+            }).sort({ timestamp: 1 });
+            
+            return res.status(200).json({ 
+                success: true, 
+                messages: initialMessages
+            });
+        }
+        
+        // Marquer les messages non lus comme lus (seulement ceux destinés à l'utilisateur courant)
+        if (req.session.user.role === 'client') {
+            await Message.updateMany(
+                { orderId: orderId, sender: 'livreur', isRead: false },
+                { $set: { isRead: true } }
+            );
+        } else if (req.session.user.role === 'admin') {
+            await Message.updateMany(
+                { orderId: orderId, sender: 'client', isRead: false },
+                { $set: { isRead: true } }
+            );
+        }
+        
+        res.status(200).json({ 
+            success: true, 
+            messages: messages
+        });
     } catch (error) {
         console.error('Erreur lors de la récupération des messages:', error);
-        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des messages' });
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erreur lors de la récupération des messages' 
+        });
     }
 });
 
