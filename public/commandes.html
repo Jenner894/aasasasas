@@ -1656,7 +1656,7 @@
         <!-- Main Content -->
         <div class="container">
             <!-- Commandes section -->
-    <div class="order-section">
+  <div class="order-section">
                 <h2>Mes Commandes</h2>
                 
                 <!-- Filtres des commandes -->
@@ -1668,7 +1668,7 @@
                     <button class="filter-btn" data-filter="delivered">Livrées</button>
                 </div>
                 
-                <!-- Liste des commandes - Sera remplie par JavaScript -->
+                <!-- Liste des commandes - initialement vide pour être remplie par JavaScript -->
                 <div class="orders-list">
                     <div class="loading-indicator">Chargement des commandes...</div>
                 </div>
@@ -1793,62 +1793,6 @@
             </div>
         </div>
     </div>
-    
-    <!-- Template pour une carte de commande (ne sera pas affiché directement) -->
-    <template id="order-card-template">
-        <div class="order-card" data-status="" data-order-id="">
-            <div class="order-header">
-                <div class="order-id">Commande #</div>
-                <div class="order-date"></div>
-                <div class="order-status"></div>
-                <div class="queue-position-indicator">
-                    <span class="position-icon">🔄</span>
-                    <span>Chargement...</span>
-                </div>
-                <div class="expand-icon">▼</div>
-            </div>
-            <div class="order-body">
-                <div class="order-products"></div>
-                
-                <div class="order-summary">
-                    <div class="summary-row">
-                        <div>Sous-total</div>
-                        <div></div>
-                    </div>
-                    <div class="summary-row">
-                        <div>Frais de livraison</div>
-                        <div>5,00€</div>
-                    </div>
-                    <div class="summary-row">
-                        <div>Total</div>
-                        <div></div>
-                    </div>
-                </div>
-                
-                <!-- Tracking info -->
-                <div class="tracking-info">
-                    <div class="tracking-title">
-                        <span class="tracking-title-icon">🚚</span> Suivi de commande
-                    </div>
-                    <div class="tracking-steps">
-                        <div class="tracking-line"></div>
-                        <!-- Étapes de tracking générées dynamiquement -->
-                    </div>
-                </div>
-                
-                <div class="order-actions">
-                    <button class="action-btn queue-btn">
-                        <span class="queue-btn-icon">🔢</span> File d'attente
-                    </button>
-                    <button class="action-btn chat-btn">
-                        <span class="chat-btn-icon">💬</span> Chatter avec le livreur
-                    </button>
-                    <button class="action-btn secondary tracking-btn">
-                        <span class="tracking-btn-icon">🔄</span> Actualiser le suivi
-                    </button>
-                </div>
-            </div>
-        </div>
       <script src="commandes.js"></script>
 </body>
 </html>
