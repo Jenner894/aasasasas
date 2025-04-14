@@ -964,6 +964,8 @@ function openChatModal(orderId, mongoId) {
 
 // Charger l'historique du chat depuis l'API
 function loadChatHistory(orderId) {
+    console.log("Chargement de l'historique de chat pour:", orderId);
+    
     const chatMessages = document.getElementById('chat-messages');
     if (!chatMessages) return;
     
@@ -975,43 +977,49 @@ function loadChatHistory(orderId) {
     document.querySelectorAll('.order-card').forEach(card => {
         const orderIdElement = card.querySelector('.order-id');
         if (orderIdElement && orderIdElement.textContent.includes(orderId)) {
-            mongoId = orderIdElement.getAttribute('data-mongo-id');
+            mongoId = card.getAttribute('data-order-id');
         }
     });
     
     // Utiliser l'ID MongoDB s'il est disponible
     const idToUse = mongoId || orderId;
+    console.log("ID utilisé pour charger l'historique:", idToUse);
     
     // Appel à l'API pour récupérer l'historique
-    fetch(`/api/orders/${idToUse}/chat`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                // Stocker l'ID de conversation si fourni
-                const chatOrderId = document.getElementById('chat-order-id');
-                if (chatOrderId && data.conversation) {
-                    chatOrderId.dataset.conversationId = data.conversation.id;
-                    // Stocker également l'ID MongoDB pour les futurs appels API
-                    if (data.orderId) {
-                        chatOrderId.dataset.mongoId = data.orderId;
-                    }
+    fetch(`/api/orders/${idToUse}/chat`, {
+        credentials: 'include' // Assurer que les cookies de session sont envoyés
+    })
+    .then(response => {
+        console.log("Réponse de l'API pour l'historique (statut):", response.status);
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("Données reçues de l'API pour l'historique:", data);
+        if (data.success) {
+            // Stocker l'ID de conversation si fourni
+            const chatOrderId = document.getElementById('chat-order-id');
+            if (chatOrderId && data.conversation) {
+                chatOrderId.dataset.conversationId = data.conversation.id;
+                // Stocker également l'ID MongoDB pour les futurs appels API
+                if (data.orderId) {
+                    chatOrderId.dataset.mongoId = data.orderId;
+                    console.log("ID MongoDB stocké:", data.orderId);
                 }
-                
-                // Afficher les messages
-                displayChatMessages(data.messages);
-            } else {
-                chatMessages.innerHTML = `<div class="error-message">${data.message || 'Erreur lors du chargement des messages'}</div>`;
             }
-        })
-        .catch(error => {
-            console.error('Erreur lors du chargement des messages:', error);
-            chatMessages.innerHTML = '<div class="error-message">Erreur de connexion au serveur</div>';
-        });
+            
+            // Afficher les messages
+            displayChatMessages(data.messages);
+        } else {
+            chatMessages.innerHTML = `<div class="error-message">${data.message || 'Erreur lors du chargement des messages'}</div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Erreur lors du chargement des messages:', error);
+        chatMessages.innerHTML = '<div class="error-message">Erreur de connexion au serveur</div>';
+    });
 }
     
 // Afficher les messages du chat
@@ -1076,6 +1084,8 @@ function displayChatMessages(messages) {
     // Faire défiler jusqu'au bas
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
+
 function sendChatMessage() {
     const inputField = document.getElementById('chat-input-text');
     if (!inputField) return;
@@ -1108,6 +1118,8 @@ function sendChatMessage() {
         idToUse = visibleOrderId;
     }
     
+    console.log("ID utilisé pour l'envoi du message:", idToUse);
+    
     // Effacer le champ de saisie immédiatement
     inputField.value = '';
     
@@ -1131,7 +1143,8 @@ function sendChatMessage() {
     
     // Préparer les données du message
     const messageData = {
-        content: messageText
+        content: messageText,
+        sender: 'client'
     };
     
     // Si nous avons un ID de conversation, l'inclure dans les données
@@ -1139,21 +1152,26 @@ function sendChatMessage() {
         messageData.conversationId = conversationId;
     }
     
+    console.log("Données du message à envoyer:", messageData);
+    
     // Envoyer le message au serveur
     fetch(`/api/orders/${idToUse}/chat`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(messageData)
+        body: JSON.stringify(messageData),
+        credentials: 'include' // Assurer que les cookies de session sont envoyés
     })
     .then(response => {
+        console.log("Réponse du serveur (statut):", response.status);
         if (!response.ok) {
             throw new Error(`Erreur HTTP: ${response.status}`);
         }
         return response.json();
     })
     .then(data => {
+        console.log("Réponse du serveur (données):", data);
         if (data.success) {
             // Supprimer le message temporaire
             tempMessageElement.remove();
