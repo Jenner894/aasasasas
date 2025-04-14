@@ -1151,6 +1151,128 @@ function displayChatMessages(messages) {
         sendChatMessageBtn.disabled = false;
     });
 }
+
+function sendChatMessage() {
+    const inputField = document.getElementById('chat-input-text');
+    if (!inputField) return;
+    
+    const messageText = inputField.value.trim();
+    if (!messageText) return;
+    
+    // Récupérer l'ID de la commande
+    const orderIdElement = document.getElementById('chat-order-id');
+    if (!orderIdElement) return;
+    
+    // Utiliser l'ID MongoDB stocké dans data-mongo-id si disponible
+    const visibleOrderId = orderIdElement.textContent;
+    const mongoId = orderIdElement.dataset.mongoId;
+    const conversationId = orderIdElement.dataset.conversationId;
+    
+    console.log("Envoi du message pour la commande:", visibleOrderId);
+    console.log("ID MongoDB:", mongoId);
+    console.log("ID de conversation:", conversationId);
+    
+    // Si mongoId est manquant, essayer de le trouver dans les cartes de commande
+    let idToUse = mongoId;
+    if (!idToUse) {
+        document.querySelectorAll('.order-card').forEach(card => {
+            const orderIdElement = card.querySelector('.order-id');
+            if (orderIdElement && orderIdElement.textContent.includes(visibleOrderId)) {
+                idToUse = card.getAttribute('data-order-id');
+            }
+        });
+    }
+    
+    // Si toujours pas trouvé, utiliser l'ID visible (BD*)
+    if (!idToUse) {
+        idToUse = visibleOrderId;
+    }
+    
+    console.log("ID utilisé pour l'envoi:", idToUse);
+    
+    // Effacer le champ de saisie immédiatement
+    inputField.value = '';
+    
+    // Afficher un message temporaire (optimistic UI)
+    const chatMessages = document.getElementById('chat-messages');
+    if (!chatMessages) return;
+    
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const dateString = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    
+    const tempMessageElement = document.createElement('div');
+    tempMessageElement.className = 'message message-user message-pending';
+    tempMessageElement.innerHTML = `
+        <div class="message-content">${messageText}</div>
+        <div class="message-time">${dateString}, ${timeString} (envoi en cours...)</div>
+    `;
+    
+    chatMessages.appendChild(tempMessageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Préparer les données du message
+    const messageData = {
+        content: messageText
+    };
+    
+    // Si nous avons un ID de conversation, l'inclure dans les données
+    if (conversationId) {
+        messageData.conversationId = conversationId;
+    }
+    
+    // Envoyer le message au serveur
+    fetch(`/api/orders/${idToUse}/chat`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messageData),
+        credentials: 'include' // Assurer que les cookies de session sont envoyés
+    })
+    .then(response => {
+        console.log("Réponse de l'API (statut):", response.status);
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("Réponse de l'API (données):", data);
+        
+        if (data.success) {
+            // Supprimer le message temporaire
+            tempMessageElement.remove();
+            
+            // Recharger tous les messages pour s'assurer qu'ils sont à jour
+            loadChatHistory(visibleOrderId);
+            
+            // Stocker l'ID MongoDB pour les futurs envois si ce n'était pas déjà fait
+            if (!orderIdElement.dataset.mongoId && data.message && data.message.orderId) {
+                orderIdElement.dataset.mongoId = data.message.orderId;
+            }
+            
+            // Stocker l'ID de conversation si renvoyé et pas déjà présent
+            if (!orderIdElement.dataset.conversationId && data.message && data.message.conversationId) {
+                orderIdElement.dataset.conversationId = data.message.conversationId;
+            }
+        } else {
+            // Marquer le message comme échoué
+            tempMessageElement.classList.add('message-error');
+            tempMessageElement.querySelector('.message-time').textContent = 
+                `${dateString}, ${timeString} (échec de l'envoi: ${data.message || 'Erreur inconnue'})`;
+            console.error("Erreur d'envoi:", data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur lors de l\'envoi du message:', error);
+        
+        // Marquer le message comme échoué
+        tempMessageElement.classList.add('message-error');
+        tempMessageElement.querySelector('.message-time').textContent = 
+            `${dateString}, ${timeString} (échec de l'envoi)`;
+    });
+}
 // Initialiser les compteurs de messages non lus
 function initUnreadMessageCounters() {
     // Pour chaque carte de commande, ajouter un compteur de messages non lus
