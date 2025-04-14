@@ -506,44 +506,61 @@ function updateInlineQueueData(orderId) {
     if (timeElement) timeElement.textContent = "Chargement...";
     if (statusElement) statusElement.textContent = "Chargement...";
     
-    // Simuler un appel API (comme le serveur n'est pas disponible)
-    setTimeout(() => {
-        // Simuler des données de file d'attente
-        const queueData = {
-            success: true,
-            inQueue: true,
-            queueInfo: {
-                position: 3,
-                estimatedTime: 30
-            },
-            status: 'En préparation'
-        };
-        
-        // Mettre à jour les informations de file d'attente
-        if (positionElement) positionElement.textContent = queueData.queueInfo.position;
-        
-        // Mettre à jour le temps estimé
-        if (timeElement) timeElement.textContent = '30-45 min';
-        
-        if (statusElement) {
-            statusElement.textContent = queueData.status;
-            
-            // Mettre à jour la classe CSS du statut
-            statusElement.className = 'queue-status';
-            statusElement.classList.add('status-processing');
+    // Rechercher d'abord la carte correspondant à cette commande pour obtenir sa position
+    let orderCard = null;
+    const orderCards = document.querySelectorAll('.order-card');
+    orderCards.forEach(card => {
+        const orderIdElement = card.querySelector('.order-id');
+        if (orderIdElement && orderIdElement.textContent.includes(orderId)) {
+            orderCard = card;
         }
-        
-        // Mettre à jour les marqueurs et la progression
-        updateInlineQueueStepMarkers(queueData.status);
-        
-        // Mettre à jour l'heure de la dernière mise à jour
-        const now = new Date();
-        const timeString = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
-        const lastUpdatedElement = document.getElementById('inline-last-updated');
-        if (lastUpdatedElement) {
-            lastUpdatedElement.textContent = 'Dernière mise à jour: ' + timeString;
-        }
-    }, 1000);
+    });
+    
+    // Utiliser l'approche du fetchQueueInfo mais sans recréer un appel API
+    fetch(`/api/orders/${orderId}/queue`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.inQueue) {
+                // Mettre à jour la position avec la valeur réelle
+                if (positionElement) {
+                    positionElement.textContent = data.queueInfo.position;
+                }
+                
+                // Mettre à jour le temps estimé en fonction de la position
+                if (timeElement) {
+                    // Calculer le temps en fonction de la position (environ 15 min par position)
+                    const minTime = data.queueInfo.position * 10;
+                    const maxTime = data.queueInfo.position * 15;
+                    timeElement.textContent = `${minTime}-${maxTime} min`;
+                }
+                
+                if (statusElement) {
+                    statusElement.textContent = data.status;
+                    
+                    // Mettre à jour la classe CSS du statut
+                    statusElement.className = 'queue-status';
+                    statusElement.classList.add(`status-${getStatusClass(data.status)}`);
+                }
+                
+                // Mettre à jour les marqueurs et la progression
+                updateInlineQueueStepMarkers(data.status);
+                
+                // Mettre à jour l'heure de la dernière mise à jour
+                const now = new Date();
+                const timeString = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
+                const lastUpdatedElement = document.getElementById('inline-last-updated');
+                if (lastUpdatedElement) {
+                    lastUpdatedElement.textContent = 'Dernière mise à jour: ' + timeString;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la récupération des informations de file d\'attente:', error);
+            // En cas d'erreur, utiliser des données par défaut
+            if (positionElement) positionElement.textContent = "?";
+            if (timeElement) timeElement.textContent = "Indisponible";
+            if (statusElement) statusElement.textContent = "Inconnu";
+        });
 }
 
 // Mettre à jour les marqueurs d'étape de la file d'attente
