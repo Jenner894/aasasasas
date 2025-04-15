@@ -1605,7 +1605,6 @@ function openChatModal(orderId, mongoId) {
     setTimeout(testConnection, 500);
 }
 // Charger l'historique du chat depuis l'API
-// Assurez-vous que cette partie de la fonction loadChatHistory est correcte
 function loadChatHistory(orderId) {
     console.log("Chargement de l'historique de chat pour:", orderId);
     
