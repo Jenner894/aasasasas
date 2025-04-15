@@ -1,14 +1,16 @@
 const express = require('express');
+const app = express();
 const path = require('path');
+const http = require('http');
 const axios = require('axios');
 const helmet = require('helmet');
 const cors = require('cors');
+const server = http.createServer(app);
 const socketIo = require('socket.io');
 const io = socketIo(server);
-const http = require('http');
 const session = require('express-session');
 const mongoose = require('mongoose');
-const app = express();
+
 require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 
@@ -2641,8 +2643,6 @@ app.get('/register', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
-// Création du serveur HTTP
-const server = require('http').createServer(app);
 
 // Démarrage du serveur
 server.listen(PORT, '0.0.0.0', () => {
