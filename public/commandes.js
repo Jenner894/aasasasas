@@ -1292,10 +1292,20 @@ function setupChatButtons() {
 
     
 // Configurer le bouton de chat dans la file d'attente
+// Configurer le bouton de chat dans la file d'attente
 function setupInlineChatButton() {
     const inlineChatBtn = document.getElementById('inline-chat-btn');
     
     if (inlineChatBtn) {
+        // S'assurer que le texte du bouton est correct
+        const btnText = inlineChatBtn.querySelector('.chat-btn-text');
+        if (btnText) {
+            btnText.textContent = 'Chatter avec le livreur';
+        } else {
+            // Si l'élément n'existe pas, créer la structure correcte
+            inlineChatBtn.innerHTML = '<span class="chat-btn-icon">💬</span> <span class="chat-btn-text">Chatter avec le livreur</span>';
+        }
+        
         inlineChatBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -1595,6 +1605,7 @@ function openChatModal(orderId, mongoId) {
     setTimeout(testConnection, 500);
 }
 // Charger l'historique du chat depuis l'API
+// Assurez-vous que cette partie de la fonction loadChatHistory est correcte
 function loadChatHistory(orderId) {
     console.log("Chargement de l'historique de chat pour:", orderId);
     
