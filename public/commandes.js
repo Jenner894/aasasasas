@@ -1292,30 +1292,36 @@ function setupChatButtons() {
 
     
 // Configurer le bouton de chat dans la file d'attente
-// Configurer le bouton de chat dans la file d'attente
 function setupInlineChatButton() {
     const inlineChatBtn = document.getElementById('inline-chat-btn');
     
     if (inlineChatBtn) {
-        // S'assurer que le texte du bouton est correct
-        inlineChatBtn.innerHTML = '<span class="chat-btn-icon">💬</span> <span class="chat-btn-text">Chatter avec le livreur</span>';
-        
-        inlineChatBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
+        // Vérifier si le bouton n'a pas déjà été configuré
+        if (!inlineChatBtn.hasAttribute('data-initialized')) {
+            // Définir le contenu HTML du bouton une seule fois
+            inlineChatBtn.innerHTML = '<span class="chat-btn-icon">💬</span> <span class="chat-btn-text">Chatter avec le livreur</span>';
             
-            const queueOrderIdElement = document.getElementById('queue-active-order-id');
-            if (queueOrderIdElement && queueOrderIdElement.textContent) {
-                const orderId = queueOrderIdElement.textContent;
-                const mongoId = queueOrderIdElement.dataset.mongoId;
+            // Marquer le bouton comme initialisé
+            inlineChatBtn.setAttribute('data-initialized', 'true');
+            
+            // Ajouter l'écouteur d'événement une seule fois
+            inlineChatBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 
-                // Utiliser à la fois l'orderId et le mongoId
-                openChatModal(orderId, mongoId);
-                
-                // Réinitialiser le compteur de messages non lus pour cette commande
-                resetUnreadCounter(orderId);
-            }
-        });
+                const queueOrderIdElement = document.getElementById('queue-active-order-id');
+                if (queueOrderIdElement && queueOrderIdElement.textContent) {
+                    const orderId = queueOrderIdElement.textContent;
+                    const mongoId = queueOrderIdElement.dataset.mongoId;
+                    
+                    // Utiliser à la fois l'orderId et le mongoId
+                    openChatModal(orderId, mongoId);
+                    
+                    // Réinitialiser le compteur de messages non lus pour cette commande
+                    resetUnreadCounter(orderId);
+                }
+            });
+        }
     }
 }
 
