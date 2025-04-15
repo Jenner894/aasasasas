@@ -176,6 +176,12 @@ let currentChatOrderId = null;
 
 // Fonction pour initialiser Socket.io
 function initSocketConnection() {
+    // Vérifier si Socket.io est chargé
+    if (typeof io === 'undefined') {
+        console.error('Socket.io n\'est pas chargé. Vérifiez votre inclusion de script.');
+        return;
+    }
+    
     // Connexion au serveur Socket.io
     socket = io();
     
