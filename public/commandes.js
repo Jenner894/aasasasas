@@ -1322,6 +1322,7 @@ function setupInlineChatButton() {
                 }
             });
         }
+        // Ne pas modifier le HTML si le bouton est déjà initialisé
     }
 }
 
