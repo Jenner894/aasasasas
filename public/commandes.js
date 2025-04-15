@@ -1,9 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
-        // Supprimer tout modal de chat existant pour éviter les doublons
+    // Supprimer tout modal de chat existant pour éviter les doublons
     const existingModal = document.getElementById('chat-modal');
     if (existingModal) {
         existingModal.remove();
     }
+    
+    // Créer le modal de chat immédiatement
+    initChatModal();
+    
     // Fonctionnalités principales
     checkAuthStatus();
     setupModals();
@@ -11,9 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupSearchOrder();
     initExpandButtons();
     
-    // Créer le modal de chat s'il n'existe pas
-    initChatModal();
-        // Configurer les boutons de chat dans les cartes de commande
+    // Configurer les boutons de chat dans les cartes de commande
     setupChatButtons();
     
     // Configurer le bouton de chat dans la section de file d'attente
@@ -22,14 +24,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Ajouter des compteurs de messages non lus
     initUnreadMessageCounters();
     
-    // Vérifier périodiquement les nouveaux messages (toutes les 30 secondes)
+    // Vérifier périodiquement les nouveaux messages
     setInterval(checkForNewMessages, 5000);
+    
     // Améliorer les animations des modaux
     enhanceModalAnimations();
-        attachChatSendEventHandlers();
     
     // Initialiser la section de file d'attente immédiatement sans délai
     initInlineQueueSection();
+    
+    // IMPORTANT: Attacher explicitement les gestionnaires d'événements d'envoi de message
+    attachChatSendEventHandlers();
 });
 
 // Vérifier le statut d'authentification de l'utilisateur
