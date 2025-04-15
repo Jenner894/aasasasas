@@ -445,6 +445,25 @@ function updateUnreadBadge(orderId) {
                     badge = document.createElement('div');
                     badge.className = 'unread-badge';
                     badge.textContent = '1';
+                    
+                    // S'assurer que le badge a un style qui le place en haut à droite du bouton
+                    badge.style.position = 'absolute';
+                    badge.style.top = '-8px';
+                    badge.style.right = '-8px';
+                    badge.style.backgroundColor = 'red';
+                    badge.style.color = 'white';
+                    badge.style.borderRadius = '50%';
+                    badge.style.width = '20px';
+                    badge.style.height = '20px';
+                    badge.style.display = 'flex';
+                    badge.style.alignItems = 'center';
+                    badge.style.justifyContent = 'center';
+                    badge.style.fontSize = '12px';
+                    badge.style.fontWeight = 'bold';
+                    
+                    // S'assurer que le bouton a une position relative pour que le badge soit positionné correctement
+                    chatButton.style.position = 'relative';
+                    
                     chatButton.appendChild(badge);
                 } else {
                     // Incrémenter le compteur existant
@@ -466,16 +485,60 @@ function updateUnreadBadge(orderId) {
     if (queueOrderId && (queueOrderId.textContent === orderId || queueOrderId.dataset.mongoId === orderId)) {
         const inlineChatBtn = document.getElementById('inline-chat-btn');
         if (inlineChatBtn) {
+            // Préserver le texte original du bouton
+            const buttonTextSpan = inlineChatBtn.querySelector('.chat-btn-text');
+            const originalText = buttonTextSpan ? buttonTextSpan.textContent : "Chatter avec le livreur";
+            
+            // Vérifier si un badge existe déjà
             let badge = inlineChatBtn.querySelector('.unread-badge');
             
             if (!badge) {
+                // Créer un nouveau badge
                 badge = document.createElement('div');
                 badge.className = 'unread-badge';
                 badge.textContent = '1';
+                
+                // Styliser le badge comme un cercle rouge
+                badge.style.position = 'absolute';
+                badge.style.top = '-8px';
+                badge.style.right = '-8px';
+                badge.style.backgroundColor = 'red';
+                badge.style.color = 'white';
+                badge.style.borderRadius = '50%';
+                badge.style.width = '20px';
+                badge.style.height = '20px';
+                badge.style.display = 'flex';
+                badge.style.alignItems = 'center';
+                badge.style.justifyContent = 'center';
+                badge.style.fontSize = '12px';
+                badge.style.fontWeight = 'bold';
+                badge.style.zIndex = '5';
+                
+                // S'assurer que le bouton a une position relative pour que le badge soit positionné correctement
+                inlineChatBtn.style.position = 'relative';
+                
                 inlineChatBtn.appendChild(badge);
             } else {
+                // Incrémenter le compteur existant
                 const count = parseInt(badge.textContent) || 0;
                 badge.textContent = count + 1;
+            }
+            
+            // S'assurer que le texte du bouton reste "Chatter avec le livreur"
+            if (buttonTextSpan) {
+                buttonTextSpan.textContent = originalText;
+            } else {
+                // S'il n'y a pas de span avec la classe chat-btn-text, restructurer le contenu du bouton
+                // Sauvegarder le badge
+                const badgeNode = inlineChatBtn.querySelector('.unread-badge');
+                
+                // Recréer le contenu du bouton
+                inlineChatBtn.innerHTML = `<span class="chat-btn-icon">💬</span> <span class="chat-btn-text">${originalText}</span>`;
+                
+                // Réajouter le badge s'il existe
+                if (badgeNode) {
+                    inlineChatBtn.appendChild(badgeNode);
+                }
             }
             
             // Animation
@@ -486,7 +549,6 @@ function updateUnreadBadge(orderId) {
         }
     }
 }
-
 
 // Fonction pour mettre à jour le statut d'une commande en temps réel
 function updateOrderStatus(orderId, newStatus) {
@@ -1300,12 +1362,29 @@ function setupInlineChatButton() {
         newButton.id = 'inline-chat-btn';
         newButton.className = inlineChatBtn.className;
         
-        // Définir le contenu HTML du bouton
+        // Définir le contenu HTML du bouton avec une position relative pour le badge
+        newButton.style.position = 'relative';
         newButton.innerHTML = '<span class="chat-btn-icon">💬</span> <span class="chat-btn-text">Chatter avec le livreur</span>';
         
         // Conserver les badges de notification s'ils existent
         const badge = inlineChatBtn.querySelector('.unread-badge');
         if (badge) {
+            // Assurer que le badge a le style correct
+            badge.style.position = 'absolute';
+            badge.style.top = '-8px';
+            badge.style.right = '-8px';
+            badge.style.backgroundColor = 'red';
+            badge.style.color = 'white';
+            badge.style.borderRadius = '50%';
+            badge.style.width = '20px';
+            badge.style.height = '20px';
+            badge.style.display = 'flex';
+            badge.style.alignItems = 'center';
+            badge.style.justifyContent = 'center';
+            badge.style.fontSize = '12px';
+            badge.style.fontWeight = 'bold';
+            badge.style.zIndex = '5';
+            
             newButton.appendChild(badge.cloneNode(true));
         }
         
@@ -1329,6 +1408,56 @@ function setupInlineChatButton() {
         
         // Remplacer le bouton original par le nouveau
         inlineChatBtn.parentNode.replaceChild(newButton, inlineChatBtn);
+    }
+}
+
+// Ajouter des styles CSS pour le badge de notification
+function addNotificationStyles() {
+    if (!document.getElementById('notification-animations')) {
+        const style = document.createElement('style');
+        style.id = 'notification-animations';
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.2); }
+                100% { transform: scale(1); }
+            }
+            
+            .unread-badge {
+                position: absolute;
+                top: -8px;
+                right: -8px;
+                background-color: red;
+                color: white;
+                border-radius: 50%;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                font-weight: bold;
+                z-index: 5;
+            }
+            
+            .unread-badge.pulse {
+                animation: pulse 0.5s ease-in-out;
+            }
+            
+            .chat-btn, #inline-chat-btn {
+                position: relative;
+            }
+            
+            .message.fade-in {
+                animation: fadeIn 0.3s ease-in-out;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
     }
 }
 
