@@ -1298,21 +1298,19 @@ function setupInlineChatButton() {
     
     if (inlineChatBtn) {
         // S'assurer que le texte du bouton est correct
-        const btnText = inlineChatBtn.querySelector('.chat-btn-text');
-        if (btnText) {
-            btnText.textContent = 'Chatter avec le livreur';
-        } else {
-            // Si l'élément n'existe pas, créer la structure correcte
-            inlineChatBtn.innerHTML = '<span class="chat-btn-icon">💬</span> <span class="chat-btn-text">Chatter avec le livreur</span>';
-        }
+        inlineChatBtn.innerHTML = '<span class="chat-btn-icon">💬</span> <span class="chat-btn-text">Chatter avec le livreur</span>';
         
         inlineChatBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             
-            const orderId = document.getElementById('queue-active-order-id').textContent;
-            if (orderId) {
-                openChatModal(orderId);
+            const queueOrderIdElement = document.getElementById('queue-active-order-id');
+            if (queueOrderIdElement && queueOrderIdElement.textContent) {
+                const orderId = queueOrderIdElement.textContent;
+                const mongoId = queueOrderIdElement.dataset.mongoId;
+                
+                // Utiliser à la fois l'orderId et le mongoId
+                openChatModal(orderId, mongoId);
                 
                 // Réinitialiser le compteur de messages non lus pour cette commande
                 resetUnreadCounter(orderId);
