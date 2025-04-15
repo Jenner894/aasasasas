@@ -182,7 +182,7 @@ function initSocketConnection() {
         
         // Afficher une alerte visible pour aider au débogage
         const errorDiv = document.createElement('div');
-        errorDiv.style.backgroundColor = 'red';
+        errorDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
         errorDiv.style.color = 'white';
         errorDiv.style.padding = '10px';
         errorDiv.style.position = 'fixed';
@@ -192,17 +192,42 @@ function initSocketConnection() {
         errorDiv.style.zIndex = '9999';
         errorDiv.textContent = 'ERREUR: Socket.io n\'est pas chargé correctement. Les messages en temps réel ne fonctionneront pas.';
         document.body.prepend(errorDiv);
+        
+        // Tenter de charger Socket.io dynamiquement
+        const script = document.createElement('script');
+        script.src = '/socket.io/socket.io.js';
+        script.onload = () => {
+            errorDiv.style.backgroundColor = 'rgba(0, 128, 0, 0.8)';
+            errorDiv.textContent = 'Socket.io chargé avec succès! Rafraîchissez la page.';
+            setTimeout(() => {
+                errorDiv.remove();
+                initSocketConnection(); // Réessayer l'initialisation
+            }, 2000);
+        };
+        script.onerror = () => {
+            errorDiv.textContent = 'Impossible de charger Socket.io dynamiquement. Vérifiez la configuration du serveur.';
+        };
+        document.head.appendChild(script);
         return;
     }
     
     try {
         console.log('Tentative de connexion Socket.io...');
         
+        // Déconnexion d'abord si un socket existe déjà
+        if (socket && socket.connected) {
+            console.log('Socket déjà connecté, déconnexion avant de reconnecter...');
+            socket.disconnect();
+        }
+        
         // Connexion au serveur Socket.io avec des options de débogage
         socket = io({
             reconnectionAttempts: 5,
             timeout: 10000,
-            debug: true
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            randomizationFactor: 0.5
         });
         
         // Événement de connexion réussie
@@ -211,7 +236,7 @@ function initSocketConnection() {
             
             // Notifier l'utilisateur de la connexion réussie
             const notifDiv = document.createElement('div');
-            notifDiv.style.backgroundColor = '#4CAF50';
+            notifDiv.style.backgroundColor = 'rgba(76, 175, 80, 0.9)';
             notifDiv.style.color = 'white';
             notifDiv.style.padding = '10px';
             notifDiv.style.position = 'fixed';
@@ -219,12 +244,25 @@ function initSocketConnection() {
             notifDiv.style.right = '20px';
             notifDiv.style.borderRadius = '5px';
             notifDiv.style.zIndex = '9999';
+            notifDiv.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
             notifDiv.textContent = '✓ Connexion en temps réel établie';
             document.body.appendChild(notifDiv);
             
             setTimeout(() => {
-                notifDiv.remove();
+                notifDiv.style.opacity = '0';
+                notifDiv.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => {
+                    notifDiv.remove();
+                }, 500);
             }, 3000);
+            
+            // Configurer les événements après connexion réussie
+            setupSocketEvents();
+            
+            // Rejoindre à nouveau la salle si une commande est active
+            if (currentChatOrderId) {
+                joinChatRoom(currentChatOrderId);
+            }
         });
         
         // Événement de reconnexion
@@ -237,26 +275,6 @@ function initSocketConnection() {
             console.error('⚠️ Erreur de connexion Socket.io:', error);
         });
         
-        // Écouter les nouveaux messages avec plus de logs
-        socket.on('new_message', (data) => {
-        console.log('📩 Nouveau message reçu via Socket.io:', data);
-        
-        // Vérifier si le message concerne la commande actuellement affichée
-        if (data.orderId === currentChatOrderId) {
-            console.log('📨 Message pour la conversation active, ajout au chat');
-            addMessageToChat(data);
-        } else {
-            console.log('📮 Message pour une autre conversation, mise à jour du badge');
-            updateUnreadBadge(data.orderId);
-        }
-    });
-        
-        // Écouter les mises à jour de statut
-        socket.on('order_status_updated', (data) => {
-            console.log('🔄 Mise à jour de statut reçue:', data);
-            updateOrderStatus(data.orderId, data.newStatus);
-        });
-        
         // Événement de déconnexion
         socket.on('disconnect', (reason) => {
             console.log('❌ Déconnecté du serveur Socket.io, raison:', reason);
@@ -265,12 +283,37 @@ function initSocketConnection() {
                 // La déconnexion est intentionnelle côté serveur, tentative de reconnexion
                 socket.connect();
             }
+            
+            // Afficher une notification de déconnexion
+            const disconnectNotif = document.createElement('div');
+            disconnectNotif.style.backgroundColor = 'rgba(255, 71, 87, 0.9)';
+            disconnectNotif.style.color = 'white';
+            disconnectNotif.style.padding = '10px';
+            disconnectNotif.style.position = 'fixed';
+            disconnectNotif.style.bottom = '20px';
+            disconnectNotif.style.right = '20px';
+            disconnectNotif.style.borderRadius = '5px';
+            disconnectNotif.style.zIndex = '9999';
+            disconnectNotif.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+            disconnectNotif.textContent = '⚠️ Connexion au chat perdue, tentative de reconnexion...';
+            document.body.appendChild(disconnectNotif);
+            
+            setTimeout(() => {
+                disconnectNotif.style.opacity = '0';
+                disconnectNotif.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => {
+                    disconnectNotif.remove();
+                }, 500);
+            }, 5000);
         });
+        
+        // Indiquer que les événements ont été configurés
+        socket.isConfigured = true;
+        
     } catch (error) {
         console.error('❌ Erreur lors de l\'initialisation de Socket.io:', error);
     }
 }
-
 // Fonction pour rejoindre un canal de chat spécifique à une commande
 // Fonction améliorée pour rejoindre un canal de chat
 function joinChatRoom(orderId) {
@@ -365,9 +408,12 @@ function updateBadgeForButton(button, count) {
     let badge = button.querySelector('.unread-badge');
     
     if (count <= 0) {
-        // Si le compteur est 0 ou négatif, on supprime le badge s'il existe
+        // Si le compteur est 0 ou négatif, masquer le badge s'il existe
         if (badge) {
-            badge.remove();
+            badge.classList.remove('visible');
+            setTimeout(() => {
+                badge.remove();
+            }, 300); // Attendre la fin de la transition avant de supprimer
         }
         return;
     }
@@ -377,11 +423,19 @@ function updateBadgeForButton(button, count) {
         badge = document.createElement('div');
         badge.className = 'unread-badge';
         button.appendChild(badge);
+        
+        // Forcer un reflow pour que l'animation fonctionne
+        badge.offsetHeight;
     }
     
     // Mettre à jour le compteur
     badge.textContent = count > 99 ? '99+' : count;
     badge.setAttribute('data-count', count);
+    
+    // Rendre le badge visible avec transition
+    setTimeout(() => {
+        badge.classList.add('visible');
+    }, 10);
     
     // Ajouter une animation de pulsation
     badge.classList.add('pulse');
@@ -399,7 +453,7 @@ function addMessageToChat(messageData) {
     const existingMessages = chatMessages.querySelectorAll('.message-content');
     for (const msg of existingMessages) {
         if (msg.textContent === messageData.content) {
-            // Si un message avec le même contenu et est récent (moins de 2 secondes),
+            // Si un message avec le même contenu existe et est récent (moins de 2 secondes),
             // il est probablement un doublon
             const messageTime = msg.closest('.message')?.querySelector('.message-time')?.textContent;
             if (messageTime && new Date() - new Date(messageData.timestamp) < 2000) {
@@ -448,16 +502,33 @@ function addMessageToChat(messageData) {
         messageElement.appendChild(timeDiv);
     }
     
-    // Ajouter le message au conteneur
+    // Ajouter le message au conteneur avec animation
     chatMessages.appendChild(messageElement);
     
     // Faire défiler jusqu'au bas
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
-    // Jouer un son de notification (si le message n'est pas du client)
-    if (messageData.sender !== 'client') {
-        playNotificationSound();
+    // Marquer le message comme lu via l'API si c'est un message du livreur
+    if (messageData.sender === 'livreur' && messageData.orderId) {
+        fetch(`/api/orders/${messageData.orderId}/messages/mark-read`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ messageId: messageData.id })
+        }).catch(error => {
+            console.error('Erreur lors du marquage du message comme lu:', error);
+        });
     }
+    
+    
+    // Ajouter un effet de highlight temporaire pour le nouveau message
+    setTimeout(() => {
+        messageElement.classList.add('highlight');
+        setTimeout(() => {
+            messageElement.classList.remove('highlight');
+        }, 1000);
+    }, 100);
 }
 // Fonction pour mettre à jour le badge de messages non lus
 function updateUnreadBadge(orderId) {
@@ -1985,16 +2056,25 @@ function fetchUnreadCount(orderId, card) {
 function resetUnreadCounter(orderId) {
     console.log(`Réinitialisation du compteur pour la commande: ${orderId}`);
     
+    // Appel API pour marquer tous les messages comme lus
+    fetch(`/api/orders/${orderId}/messages/mark-all-read`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).catch(error => {
+        console.error('Erreur lors du marquage des messages comme lus:', error);
+    });
+    
     // 1. Trouver et effacer les badges des cartes de commande
     document.querySelectorAll('.order-card').forEach(card => {
-        const cardOrderId = getChatOrderIdFromCard(card);
-        if (cardOrderId === orderId) {
+        const cardOrderId = card.getAttribute('data-order-id');
+        const displayOrderId = card.querySelector('.order-id')?.textContent.match(/Commande #([A-Z0-9]+)/)?.at(1);
+        
+        if (cardOrderId === orderId || displayOrderId === orderId) {
             const chatButton = card.querySelector('.chat-btn');
             if (chatButton) {
-                const badge = chatButton.querySelector('.unread-badge');
-                if (badge) {
-                    badge.remove();
-                }
+                updateBadgeForButton(chatButton, 0);
             }
         }
     });
@@ -2004,14 +2084,10 @@ function resetUnreadCounter(orderId) {
     if (queueOrderId && (queueOrderId.textContent === orderId || queueOrderId.dataset.mongoId === orderId)) {
         const inlineChatBtn = document.getElementById('inline-chat-btn');
         if (inlineChatBtn) {
-            const badge = inlineChatBtn.querySelector('.unread-badge');
-            if (badge) {
-                badge.remove();
-            }
+            updateBadgeForButton(inlineChatBtn, 0);
         }
     }
 }
-
 // Vérifier s'il y a de nouveaux messages pour toutes les commandes visibles
 function checkForNewMessages() {
     console.log('Vérification des nouveaux messages');
