@@ -357,6 +357,38 @@ function joinChatRoom(orderId) {
         }
     }
 }
+function updateBadgeForButton(button, count) {
+    // S'assurer que le bouton a une position relative pour le positionnement absolu du badge
+    button.style.position = 'relative';
+    
+    // Rechercher un badge existant
+    let badge = button.querySelector('.unread-badge');
+    
+    if (count <= 0) {
+        // Si le compteur est 0 ou négatif, on supprime le badge s'il existe
+        if (badge) {
+            badge.remove();
+        }
+        return;
+    }
+    
+    // Si le badge n'existe pas, le créer
+    if (!badge) {
+        badge = document.createElement('div');
+        badge.className = 'unread-badge';
+        button.appendChild(badge);
+    }
+    
+    // Mettre à jour le compteur
+    badge.textContent = count > 99 ? '99+' : count;
+    badge.setAttribute('data-count', count);
+    
+    // Ajouter une animation de pulsation
+    badge.classList.add('pulse');
+    setTimeout(() => {
+        badge.classList.remove('pulse');
+    }, 1000);
+}
 
 // Fonction pour ajouter un message au chat
 function addMessageToChat(messageData) {
@@ -429,127 +461,52 @@ function addMessageToChat(messageData) {
 }
 // Fonction pour mettre à jour le badge de messages non lus
 function updateUnreadBadge(orderId) {
-    // Trouver le bouton de chat correspondant à cette commande
-    document.querySelectorAll('.order-card').forEach(card => {
-        const cardOrderId = card.getAttribute('data-order-id');
-        const displayOrderId = card.querySelector('.order-id')?.textContent.match(/Commande #([A-Z0-9]+)/)?.at(1);
-        
-        if (cardOrderId === orderId || displayOrderId === orderId) {
-            const chatButton = card.querySelector('.chat-btn');
-            if (chatButton) {
-                // Vérifier si un badge existe déjà
-                let badge = chatButton.querySelector('.unread-badge');
-                
-                if (!badge) {
-                    // Créer un nouveau badge
-                    badge = document.createElement('div');
-                    badge.className = 'unread-badge';
-                    badge.textContent = '1';
-                    
-                    // S'assurer que le badge a un style qui le place en haut à droite du bouton
-                    badge.style.position = 'absolute';
-                    badge.style.top = '-8px';
-                    badge.style.right = '-8px';
-                    badge.style.backgroundColor = 'red';
-                    badge.style.color = 'white';
-                    badge.style.borderRadius = '50%';
-                    badge.style.width = '20px';
-                    badge.style.height = '20px';
-                    badge.style.display = 'flex';
-                    badge.style.alignItems = 'center';
-                    badge.style.justifyContent = 'center';
-                    badge.style.fontSize = '12px';
-                    badge.style.fontWeight = 'bold';
-                    
-                    // S'assurer que le bouton a une position relative pour que le badge soit positionné correctement
-                    chatButton.style.position = 'relative';
-                    
-                    chatButton.appendChild(badge);
-                } else {
-                    // Incrémenter le compteur existant
-                    const count = parseInt(badge.textContent) || 0;
-                    badge.textContent = count + 1;
-                }
-                
-                // Ajouter une animation pour attirer l'attention
-                badge.classList.add('pulse');
-                setTimeout(() => {
-                    badge.classList.remove('pulse');
-                }, 1000);
-            }
-        }
-    });
+    console.log(`Mise à jour des badges pour la commande: ${orderId}`);
     
-    // Vérifier également le bouton de chat dans la file d'attente
-    const queueOrderId = document.getElementById('queue-active-order-id');
-    if (queueOrderId && (queueOrderId.textContent === orderId || queueOrderId.dataset.mongoId === orderId)) {
-        const inlineChatBtn = document.getElementById('inline-chat-btn');
-        if (inlineChatBtn) {
-            // Préserver le texte original du bouton
-            const buttonTextSpan = inlineChatBtn.querySelector('.chat-btn-text');
-            const originalText = buttonTextSpan ? buttonTextSpan.textContent : "Chatter avec le livreur";
-            
-            // Vérifier si un badge existe déjà
-            let badge = inlineChatBtn.querySelector('.unread-badge');
-            
-            if (!badge) {
-                // Créer un nouveau badge
-                badge = document.createElement('div');
-                badge.className = 'unread-badge';
-                badge.textContent = '1';
-                
-                // Styliser le badge comme un cercle rouge
-                badge.style.position = 'absolute';
-                badge.style.top = '-8px';
-                badge.style.right = '-8px';
-                badge.style.backgroundColor = 'red';
-                badge.style.color = 'white';
-                badge.style.borderRadius = '50%';
-                badge.style.width = '20px';
-                badge.style.height = '20px';
-                badge.style.display = 'flex';
-                badge.style.alignItems = 'center';
-                badge.style.justifyContent = 'center';
-                badge.style.fontSize = '12px';
-                badge.style.fontWeight = 'bold';
-                badge.style.zIndex = '5';
-                
-                // S'assurer que le bouton a une position relative pour que le badge soit positionné correctement
-                inlineChatBtn.style.position = 'relative';
-                
-                inlineChatBtn.appendChild(badge);
-            } else {
-                // Incrémenter le compteur existant
-                const count = parseInt(badge.textContent) || 0;
-                badge.textContent = count + 1;
+    // Récupérer le nombre de messages non lus pour cette commande
+    fetch(`/api/orders/${orderId}/unread-messages`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                console.error('Erreur lors de la récupération du nombre de messages non lus:', data.message);
+                return;
             }
             
-            // S'assurer que le texte du bouton reste "Chatter avec le livreur"
-            if (buttonTextSpan) {
-                buttonTextSpan.textContent = originalText;
-            } else {
-                // S'il n'y a pas de span avec la classe chat-btn-text, restructurer le contenu du bouton
-                // Sauvegarder le badge
-                const badgeNode = inlineChatBtn.querySelector('.unread-badge');
+            const unreadCount = data.unreadCount || 0;
+            console.log(`Nombre de messages non lus: ${unreadCount}`);
+            
+            // 1. Mettre à jour les badges dans les cartes de commande
+            document.querySelectorAll('.order-card').forEach(card => {
+                const cardOrderId = card.getAttribute('data-order-id');
+                const displayOrderId = card.querySelector('.order-id')?.textContent.match(/Commande #([A-Z0-9]+)/)?.at(1);
                 
-                // Recréer le contenu du bouton
-                inlineChatBtn.innerHTML = `<span class="chat-btn-icon">💬</span> <span class="chat-btn-text">${originalText}</span>`;
-                
-                // Réajouter le badge s'il existe
-                if (badgeNode) {
-                    inlineChatBtn.appendChild(badgeNode);
+                if (cardOrderId === orderId || displayOrderId === orderId) {
+                    const chatButton = card.querySelector('.chat-btn');
+                    if (chatButton) {
+                        updateBadgeForButton(chatButton, unreadCount);
+                    }
+                }
+            });
+            
+            // 2. Mettre à jour le badge dans la file d'attente 
+            const queueOrderId = document.getElementById('queue-active-order-id');
+            if (queueOrderId && (queueOrderId.textContent === orderId || queueOrderId.dataset.mongoId === orderId)) {
+                const inlineChatBtn = document.getElementById('inline-chat-btn');
+                if (inlineChatBtn) {
+                    updateBadgeForButton(inlineChatBtn, unreadCount);
+                    
+                    // S'assurer que le texte du bouton reste "Chatter avec le livreur"
+                    const buttonText = inlineChatBtn.querySelector('.chat-btn-text');
+                    if (buttonText) {
+                        buttonText.textContent = "Chatter avec le livreur";
+                    }
                 }
             }
-            
-            // Animation
-            badge.classList.add('pulse');
-            setTimeout(() => {
-                badge.classList.remove('pulse');
-            }, 1000);
-        }
-    }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la récupération des messages non lus:', error);
+        });
 }
-
 // Fonction pour mettre à jour le statut d'une commande en temps réel
 function updateOrderStatus(orderId, newStatus) {
     document.querySelectorAll('.order-card').forEach(card => {
@@ -1332,25 +1289,26 @@ function setupSearchOrder() {
 // Configurer les boutons de chat
 function setupChatButtons() {
     // Utiliser une délégation d'événements pour gérer tous les boutons de chat
-    document.addEventListener('click', function(e) {
-        const chatButton = e.target.closest('.chat-btn');
-        if (chatButton) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const orderId = chatButton.getAttribute('data-order');
-            const mongoId = chatButton.getAttribute('data-mongo-id');
-            
-            if (orderId) {
-                openChatModal(orderId, mongoId);
-                
-                // Réinitialiser le compteur de messages non lus pour cette commande
-                resetUnreadCounter(orderId);
-            }
-        }
-    });
+    document.removeEventListener('click', handleChatButtonClick);
+    document.addEventListener('click', handleChatButtonClick);
 }
-
+function handleChatButtonClick(e) {
+    const chatButton = e.target.closest('.chat-btn');
+    if (chatButton) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const orderId = chatButton.getAttribute('data-order');
+        const mongoId = chatButton.getAttribute('data-mongo-id');
+        
+        if (orderId) {
+            openChatModal(orderId, mongoId);
+            
+            // Réinitialiser le compteur de messages non lus pour cette commande
+            resetUnreadCounter(mongoId || orderId);
+        }
+    }
+}
     
 // Configurer le bouton de chat dans la file d'attente
 function setupInlineChatButton() {
@@ -1369,23 +1327,8 @@ function setupInlineChatButton() {
         // Conserver les badges de notification s'ils existent
         const badge = inlineChatBtn.querySelector('.unread-badge');
         if (badge) {
-            // Assurer que le badge a le style correct
-            badge.style.position = 'absolute';
-            badge.style.top = '-8px';
-            badge.style.right = '-8px';
-            badge.style.backgroundColor = 'red';
-            badge.style.color = 'white';
-            badge.style.borderRadius = '50%';
-            badge.style.width = '20px';
-            badge.style.height = '20px';
-            badge.style.display = 'flex';
-            badge.style.alignItems = 'center';
-            badge.style.justifyContent = 'center';
-            badge.style.fontSize = '12px';
-            badge.style.fontWeight = 'bold';
-            badge.style.zIndex = '5';
-            
-            newButton.appendChild(badge.cloneNode(true));
+            const newBadge = badge.cloneNode(true);
+            newButton.appendChild(newBadge);
         }
         
         // Ajouter l'écouteur d'événement
@@ -1402,7 +1345,7 @@ function setupInlineChatButton() {
                 openChatModal(orderId, mongoId);
                 
                 // Réinitialiser le compteur de messages non lus pour cette commande
-                resetUnreadCounter(orderId);
+                resetUnreadCounter(mongoId || orderId);
             }
         });
         
@@ -1413,41 +1356,47 @@ function setupInlineChatButton() {
 
 // Ajouter des styles CSS pour le badge de notification
 function addNotificationStyles() {
-    if (!document.getElementById('notification-animations')) {
+    // Vérifier si les styles existent déjà
+    if (!document.getElementById('notification-styles')) {
         const style = document.createElement('style');
-        style.id = 'notification-animations';
+        style.id = 'notification-styles';
         style.textContent = `
+            /* Badge de notification */
+            .unread-badge {
+                position: absolute;
+                top: -8px;
+                right: -8px;
+                background-color: #ff4757;
+                color: white;
+                border-radius: 50%;
+                width: 18px;
+                height: 18px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                font-weight: bold;
+                z-index: 10;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+            
+            /* Animation de pulsation pour le badge */
             @keyframes pulse {
                 0% { transform: scale(1); }
                 50% { transform: scale(1.2); }
                 100% { transform: scale(1); }
             }
             
-            .unread-badge {
-                position: absolute;
-                top: -8px;
-                right: -8px;
-                background-color: red;
-                color: white;
-                border-radius: 50%;
-                width: 20px;
-                height: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 12px;
-                font-weight: bold;
-                z-index: 5;
-            }
-            
             .unread-badge.pulse {
                 animation: pulse 0.5s ease-in-out;
             }
             
+            /* S'assurer que tous les boutons chat ont une position relative */
             .chat-btn, #inline-chat-btn {
                 position: relative;
             }
             
+            /* Styles pour les messages */
             .message.fade-in {
                 animation: fadeIn 0.3s ease-in-out;
             }
@@ -1966,18 +1915,26 @@ function sendChatMessage() {
 
 // Initialiser les compteurs de messages non lus
 function initUnreadMessageCounters() {
+    console.log('Initialisation des compteurs de messages non lus');
+    
     // Pour chaque carte de commande, ajouter un compteur de messages non lus
     document.querySelectorAll('.order-card').forEach(card => {
         const orderId = getChatOrderIdFromCard(card);
         if (orderId) {
-            fetchUnreadCount(orderId, card);
+            updateUnreadBadge(orderId);
         }
     });
+    
+    // Vérifier aussi la commande active dans la file d'attente
+    const queueOrderId = document.getElementById('queue-active-order-id');
+    if (queueOrderId && queueOrderId.textContent) {
+        updateUnreadBadge(queueOrderId.textContent || queueOrderId.dataset.mongoId);
+    }
 }
 
 // Obtenir l'ID de commande à partir d'une carte
 function getChatOrderIdFromCard(card) {
-    // Essayer d'abord data-order-id
+    // Essayer d'abord data-order-id (ID MongoDB)
     let orderId = card.getAttribute('data-order-id');
     
     // Si non trouvé, essayer d'extraire de l'en-tête
@@ -2026,6 +1983,9 @@ function fetchUnreadCount(orderId, card) {
 
 // Réinitialiser le compteur de messages non lus pour une commande
 function resetUnreadCounter(orderId) {
+    console.log(`Réinitialisation du compteur pour la commande: ${orderId}`);
+    
+    // 1. Trouver et effacer les badges des cartes de commande
     document.querySelectorAll('.order-card').forEach(card => {
         const cardOrderId = getChatOrderIdFromCard(card);
         if (cardOrderId === orderId) {
@@ -2038,71 +1998,36 @@ function resetUnreadCounter(orderId) {
             }
         }
     });
+    
+    // 2. Effacer le badge de la file d'attente
+    const queueOrderId = document.getElementById('queue-active-order-id');
+    if (queueOrderId && (queueOrderId.textContent === orderId || queueOrderId.dataset.mongoId === orderId)) {
+        const inlineChatBtn = document.getElementById('inline-chat-btn');
+        if (inlineChatBtn) {
+            const badge = inlineChatBtn.querySelector('.unread-badge');
+            if (badge) {
+                badge.remove();
+            }
+        }
+    }
 }
 
 // Vérifier s'il y a de nouveaux messages pour toutes les commandes visibles
 function checkForNewMessages() {
+    console.log('Vérification des nouveaux messages');
+    
+    // 1. Vérifier pour les cartes de commande
     document.querySelectorAll('.order-card').forEach(card => {
         const orderId = getChatOrderIdFromCard(card);
         if (orderId) {
-            // Utiliser la nouvelle route pour récupérer le nombre de messages non lus
-            fetch(`/api/orders/${orderId}/unread-messages`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.unreadCount > 0) {
-                        // Ajouter un badge de notification sur le bouton de chat
-                        const chatButton = card.querySelector('.chat-btn');
-                        if (chatButton) {
-                            // Vérifier si un badge existe déjà
-                            let badge = chatButton.querySelector('.unread-badge');
-                            
-                            if (!badge) {
-                                // Créer un nouveau badge
-                                badge = document.createElement('div');
-                                badge.className = 'unread-badge';
-                                chatButton.appendChild(badge);
-                            }
-                            
-                            // Mettre à jour le compteur
-                            badge.textContent = data.unreadCount;
-                            badge.setAttribute('data-count', data.unreadCount);
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur lors de la récupération des messages non lus:', error);
-                });
+            updateUnreadBadge(orderId);
         }
     });
     
-    // Vérifier également pour la commande active dans la file d'attente
+    // 2. Vérifier pour la commande active dans la file d'attente
     const queueOrderId = document.getElementById('queue-active-order-id');
     if (queueOrderId && queueOrderId.textContent) {
-        const inlineChatBtn = document.getElementById('inline-chat-btn');
-        if (inlineChatBtn) {
-            fetch(`/api/orders/${queueOrderId.textContent}/unread-messages`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.unreadCount > 0) {
-                        // Ajouter un badge de notification sur le bouton de chat
-                        let badge = inlineChatBtn.querySelector('.unread-badge');
-                        
-                        if (!badge) {
-                            // Créer un nouveau badge
-                            badge = document.createElement('div');
-                            badge.className = 'unread-badge';
-                            inlineChatBtn.appendChild(badge);
-                        }
-                        
-                        // Mettre à jour le compteur
-                        badge.textContent = data.unreadCount;
-                        badge.setAttribute('data-count', data.unreadCount);
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur lors de la récupération des messages non lus:', error);
-                });
-        }
+        updateUnreadBadge(queueOrderId.textContent || queueOrderId.dataset.mongoId);
     }
 }
 
