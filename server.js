@@ -4,7 +4,6 @@ const axios = require('axios');
 const helmet = require('helmet');
 const cors = require('cors');
 const socketIo = require('socket.io');
-const server = http.createServer(app);
 const io = socketIo(server);
 const http = require('http');
 const session = require('express-session');
