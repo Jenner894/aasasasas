@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
+        // Supprimer tout modal de chat existant pour éviter les doublons
+    const existingModal = document.getElementById('chat-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
     // Fonctionnalités principales
     checkAuthStatus();
     setupModals();
@@ -21,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(checkForNewMessages, 5000);
     // Améliorer les animations des modaux
     enhanceModalAnimations();
+        attachChatSendEventHandlers();
     
     // Initialiser la section de file d'attente immédiatement sans délai
     initInlineQueueSection();
@@ -931,16 +937,172 @@ function setupInlineChatButton() {
     }
 }
 
+// IMPORTANT: Nouvelle fonction pour attacher les gestionnaires d'événements d'envoi de message
+function attachChatSendEventHandlers() {
+    console.log("Attachement des gestionnaires d'événements d'envoi de message");
+    
+    // Pour le bouton d'envoi
+    const sendButton = document.getElementById('send-message');
+    if (sendButton) {
+        console.log("Bouton d'envoi trouvé, attachement du gestionnaire");
+        // Supprimer tous les écouteurs d'événements existants
+        const newButton = sendButton.cloneNode(true);
+        sendButton.parentNode.replaceChild(newButton, sendButton);
+        
+        // Attacher le nouveau gestionnaire d'événement
+        newButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log("Bouton d'envoi cliqué");
+            handleSendMessage();
+        });
+    } else {
+        console.error("Bouton d'envoi introuvable");
+    }
+    
+    // Pour le champ de texte (touche Entrée)
+    const inputField = document.getElementById('chat-input-text');
+    if (inputField) {
+        console.log("Champ de saisie trouvé, attachement du gestionnaire");
+        // Supprimer tous les écouteurs d'événements existants
+        const newInputField = inputField.cloneNode(true);
+        inputField.parentNode.replaceChild(newInputField, inputField);
+        
+        // Attacher le nouveau gestionnaire d'événement
+        newInputField.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                console.log("Touche Entrée pressée dans le champ de saisie");
+                handleSendMessage();
+            }
+        });
+    } else {
+        console.error("Champ de saisie introuvable");
+    }
+}
+
+// IMPORTANT: Nouvelle fonction pour gérer l'envoi de message
+function handleSendMessage() {
+    const inputField = document.getElementById('chat-input-text');
+    if (!inputField) {
+        console.error("Champ de saisie introuvable lors de l'envoi");
+        return;
+    }
+    
+    const messageText = inputField.value.trim();
+    if (!messageText) {
+        console.log("Message vide, aucun envoi");
+        return;
+    }
+    
+    // Récupérer l'ID de la commande
+    const orderIdElement = document.getElementById('chat-order-id');
+    if (!orderIdElement) {
+        console.error("Élément chat-order-id introuvable");
+        return;
+    }
+    
+    // Récupérer l'ID visible (BD*) et l'ID MongoDB
+    const visibleOrderId = orderIdElement.textContent;
+    const mongoId = orderIdElement.dataset.mongoId;
+    
+    console.log("Envoi du message pour la commande:", visibleOrderId);
+    console.log("ID MongoDB:", mongoId);
+    
+    // Utiliser l'ID MongoDB s'il existe, sinon utiliser l'ID visible
+    let idToUse = mongoId || visibleOrderId;
+    
+    console.log("ID utilisé pour l'envoi:", idToUse);
+    
+    // Effacer le champ de saisie immédiatement
+    inputField.value = '';
+    
+    // Afficher un message temporaire (optimistic UI)
+    const chatMessages = document.getElementById('chat-messages');
+    if (!chatMessages) {
+        console.error("Conteneur de messages introuvable");
+        return;
+    }
+    
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const dateString = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    
+    const tempMessageElement = document.createElement('div');
+    tempMessageElement.className = 'message message-user message-pending';
+    tempMessageElement.innerHTML = `
+        <div class="message-content">${messageText}</div>
+        <div class="message-time">${dateString}, ${timeString} (envoi en cours...)</div>
+    `;
+    
+    chatMessages.appendChild(tempMessageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Préparer les données du message
+    const messageData = {
+        content: messageText
+    };
+    
+    // Envoyer le message
+    fetch(`/api/orders/${idToUse}/chat/client`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messageData),
+        credentials: 'include'
+    })
+    .then(response => {
+        console.log("Réponse reçue:", response.status);
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("Réponse de l'API après envoi:", data);
+        
+        if (data.success) {
+            // Supprimer le message temporaire
+            tempMessageElement.remove();
+            
+            // Recharger tous les messages pour s'assurer qu'ils sont à jour
+            loadChatHistory(visibleOrderId);
+            
+            // Stocker l'ID MongoDB si disponible
+            if (data.message && data.message.orderId && !orderIdElement.dataset.mongoId) {
+                orderIdElement.dataset.mongoId = data.message.orderId;
+            }
+        } else {
+            // Marquer le message comme échoué
+            tempMessageElement.classList.add('message-error');
+            tempMessageElement.querySelector('.message-time').textContent = 
+                `${dateString}, ${timeString} (échec de l'envoi: ${data.message || 'Erreur inconnue'})`;
+        }
+    })
+    .catch(error => {
+        console.error('Erreur lors de l\'envoi du message:', error);
+        
+        // Marquer le message comme échoué
+        tempMessageElement.classList.add('message-error');
+        tempMessageElement.querySelector('.message-time').textContent = 
+            `${dateString}, ${timeString} (échec de l'envoi)`;
+    });
+}
+
 // Ouvrir le modal de chat et charger l'historique
 function openChatModal(orderId, mongoId) {
     console.log("Ouverture du modal de chat pour la commande:", orderId);
     console.log("ID MongoDB fourni:", mongoId);
     
-    // Initialiser le modal si nécessaire
-    initChatModal();
+    // S'assurer que le modal existe
+    let modal = document.getElementById('chat-modal');
+    if (!modal) {
+        console.log("Modal de chat non trouvé, création en cours");
+        modal = initChatModal();
+    }
     
-    const modal = document.getElementById('chat-modal');
-    if (!modal) return;
+    // S'assurer que les gestionnaires d'événements sont attachés
+    attachChatSendEventHandlers();
     
     // Définir l'ID de commande dans le modal
     const orderIdSpan = document.getElementById('chat-order-id');
@@ -1603,68 +1765,63 @@ function showStatusChangeNotification(orderId, oldStatus, newStatus) {
 
 // Initialisation du modal de chat si nécessaire
 function initChatModal() {
-    // Vérifier si le modal de chat existe déjà
-    let chatModal = document.getElementById('chat-modal');
+    console.log("Initialisation du modal de chat");
     
-    // Créer le modal s'il n'existe pas
-    if (!chatModal) {
-        chatModal = document.createElement('div');
-        chatModal.id = 'chat-modal';
-        chatModal.className = 'modal';
-        
-        chatModal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">Chat avec le livreur - Commande #<span id="chat-order-id"></span></div>
-                    <button class="modal-close" id="close-chat-modal">×</button>
-                </div>
-                <div class="modal-body">
-                    <div class="chat-container">
-                        <div class="chat-messages" id="chat-messages">
-                            <div class="loading-indicator">Chargement des messages...</div>
-                        </div>
-                        <div class="chat-input">
-                            <input type="text" placeholder="Tapez votre message..." id="chat-input-text">
-                            <button id="send-message">➤</button>
-                        </div>
+    // Supprimer tout modal existant pour éviter les doublons
+    const existingModal = document.getElementById('chat-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Créer le nouveau modal
+    const chatModal = document.createElement('div');
+    chatModal.id = 'chat-modal';
+    chatModal.className = 'modal';
+    
+    chatModal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Chat avec le livreur - Commande #<span id="chat-order-id"></span></div>
+                <button class="modal-close" id="close-chat-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="loading-indicator">Chargement des messages...</div>
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" placeholder="Tapez votre message..." id="chat-input-text">
+                        <button id="send-message">➤</button>
                     </div>
                 </div>
             </div>
-        `;
-        
-        document.body.appendChild(chatModal);
-        
-        // Ajouter les événements pour le modal
-        document.getElementById('close-chat-modal').addEventListener('click', function() {
+        </div>
+    `;
+    
+    document.body.appendChild(chatModal);
+    
+    // Ajouter les événements pour le modal
+    const closeButton = document.getElementById('close-chat-modal');
+    if (closeButton) {
+        closeButton.addEventListener('click', function() {
             chatModal.classList.remove('active');
-        });
-        
-        // IMPORTANT: Correction de l'événement d'envoi de message
-        const sendButton = document.getElementById('send-message');
-        if (sendButton) {
-            sendButton.addEventListener('click', sendChatMessage);
-        }
-        
-        const chatInput = document.getElementById('chat-input-text');
-        if (chatInput) {
-            chatInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    sendChatMessage();
-                }
-            });
-        }
-        
-        // Fermer le modal en cliquant en dehors
-        window.addEventListener('click', function(e) {
-            if (e.target === chatModal) {
-                chatModal.classList.remove('active');
-            }
         });
     }
     
+    // Fermer le modal en cliquant en dehors
+    window.addEventListener('click', function(e) {
+        if (e.target === chatModal) {
+            chatModal.classList.remove('active');
+        }
+    });
+    
+    // Attacher immédiatement les gestionnaires d'événements pour l'envoi
+    attachChatSendEventHandlers();
+    
+    console.log("Modal de chat initialisé");
     return chatModal;
 }
+
 
 // Fonction pour améliorer l'animation du modal
 function enhanceModalAnimations() {
