@@ -3,12 +3,38 @@ const path = require('path');
 const axios = require('axios');
 const helmet = require('helmet');
 const cors = require('cors');
+const socketIo = require('socket.io');
+const server = http.createServer(app);
+const io = socketIo(server);
+const http = require('http');
 const session = require('express-session');
 const mongoose = require('mongoose');
 const app = express();
 require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 
+
+// Configuration de Socket.io
+io.on('connection', (socket) => {
+    console.log('Nouveau client connecté:', socket.id);
+    
+    // Gestion de la déconnexion
+    socket.on('disconnect', () => {
+        console.log('Client déconnecté:', socket.id);
+    });
+    
+    // Rejoindre une salle de chat
+    socket.on('join_room', (data) => {
+        console.log(`Client ${socket.id} rejoint la salle ${data.room}`);
+        socket.join(data.room);
+    });
+    
+    // Quitter une salle de chat
+    socket.on('leave_room', (data) => {
+        console.log(`Client ${socket.id} quitte la salle ${data.room}`);
+        socket.leave(data.room);
+    });
+});
 
 const ProductSchema = new mongoose.Schema({
     name: { 
@@ -1149,7 +1175,7 @@ app.post('/api/orders/:id/chat/livreur', isAuthenticated, async (req, res) => {
             conversation.participants.deliveryPerson = req.session.user.id;
         }
         
-        // Créer le nouveau message (toujours avec sender "livreur")
+        // Créer le nouveau message
         const newMessage = new Message({
             conversationId: conversation._id,
             orderId: order._id,
@@ -1169,6 +1195,18 @@ app.post('/api/orders/:id/chat/livreur', isAuthenticated, async (req, res) => {
         // Mettre à jour l'horodatage du dernier message
         conversation.lastMessageAt = newMessage.timestamp;
         await conversation.save();
+        
+        // Notifier via Socket.io si implémenté
+        if (io) {
+            io.to(`order_${order._id}`).emit('new_message', {
+                orderId: order._id.toString(),
+                displayId: order.orderNumber || order._id.toString(),
+                sender: 'livreur',
+                content: content.trim(),
+                timestamp: newMessage.timestamp,
+                isRead: false
+            });
+        }
         
         // Retourner le message créé
         res.status(201).json({ 
@@ -1194,10 +1232,11 @@ app.post('/api/orders/:id/chat/client', isAuthenticated, async (req, res) => {
             });
         }
         
-        // Vérifier si l'ID est au format BD*, chercher la commande d'abord
+        // Récupération de l'ID de commande
         let orderId = req.params.id;
         let order;
         
+        // Déterminer si l'ID est au format BD* ou un ObjectId MongoDB
         if (orderId.startsWith('BD')) {
             // Trouver la commande par son numéro d'affichage
             order = await Order.findOne({ 
@@ -1251,7 +1290,7 @@ app.post('/api/orders/:id/chat/client', isAuthenticated, async (req, res) => {
             await conversation.save();
         }
         
-        // Créer le nouveau message (toujours avec sender "client")
+        // Créer le nouveau message
         const newMessage = new Message({
             conversationId: conversation._id,
             orderId: order._id,
@@ -1270,6 +1309,18 @@ app.post('/api/orders/:id/chat/client', isAuthenticated, async (req, res) => {
         // Mettre à jour l'horodatage du dernier message
         conversation.lastMessageAt = newMessage.timestamp;
         await conversation.save();
+        
+        // Notifier via Socket.io si implémenté
+        if (io) {
+            io.to(`order_${order._id}`).emit('new_message', {
+                orderId: order._id.toString(),
+                displayId: order.orderNumber || order._id.toString(),
+                sender: 'client',
+                content: content.trim(),
+                timestamp: newMessage.timestamp,
+                isRead: false
+            });
+        }
         
         // Retourner le message créé
         res.status(201).json({ 
