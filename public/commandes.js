@@ -8,7 +8,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Créer le modal de chat immédiatement
     initChatModal();
     
-    // Fonctionnalités principales
+    // Initialiser la connexion Socket.io
+    initSocketConnection();
+    
+    // Fonctionnalités principales (inchangées)
     checkAuthStatus();
     setupModals();
     initFilterButtons();
@@ -35,6 +38,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // IMPORTANT: Attacher explicitement les gestionnaires d'événements d'envoi de message
     attachChatSendEventHandlers();
+    
+    // Ajouter une animation pour les badges de notification
+    addNotificationStyles();
 });
 
 // Vérifier le statut d'authentification de l'utilisateur
@@ -165,7 +171,217 @@ function displayOrders(orders) {
     // Initialiser les aperçus de file d'attente
     initQueuePreview();
 }
+let socket;
+let currentChatOrderId = null;
 
+// Fonction pour initialiser Socket.io
+function initSocketConnection() {
+    // Connexion au serveur Socket.io
+    socket = io();
+    
+    // Événement de connexion réussie
+    socket.on('connect', () => {
+        console.log('Connecté au serveur Socket.io');
+    });
+    
+    // Gestion des erreurs de connexion
+    socket.on('connect_error', (error) => {
+        console.error('Erreur de connexion Socket.io:', error);
+    });
+    
+    // Écouter les nouveaux messages
+    socket.on('new_message', (data) => {
+        console.log('Nouveau message reçu:', data);
+        
+        // Vérifier si le message concerne la commande actuellement affichée
+        if (data.orderId === currentChatOrderId) {
+            // Ajouter le message à la conversation
+            addMessageToChat(data);
+        } else {
+            // Si ce n'est pas la conversation active, incrémenter le compteur de messages non lus
+            updateUnreadBadge(data.orderId);
+        }
+    });
+    
+    // Écouter les mises à jour de statut
+    socket.on('order_status_updated', (data) => {
+        console.log('Mise à jour de statut reçue:', data);
+        updateOrderStatus(data.orderId, data.newStatus);
+    });
+}
+
+// Fonction pour rejoindre un canal de chat spécifique à une commande
+function joinChatRoom(orderId) {
+    if (socket && socket.connected) {
+        // Quitter la salle précédente si nécessaire
+        if (currentChatOrderId) {
+            socket.emit('leave_room', { room: `order_${currentChatOrderId}` });
+        }
+        
+        // Rejoindre la nouvelle salle
+        socket.emit('join_room', { room: `order_${orderId}` });
+        currentChatOrderId = orderId;
+        console.log(`Rejoint la salle de chat pour la commande ${orderId}`);
+    }
+}
+
+// Fonction pour ajouter un message au chat
+function addMessageToChat(messageData) {
+    const chatMessages = document.getElementById('chat-messages');
+    if (!chatMessages) return;
+    
+    // Formater la date
+    const messageDate = new Date(messageData.timestamp);
+    const timeString = messageDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const dateString = messageDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    
+    // Créer l'élément HTML pour le message
+    let messageElement;
+    
+    if (messageData.sender === 'system') {
+        // Message système
+        messageElement = document.createElement('div');
+        messageElement.className = 'system-message fade-in';
+        messageElement.textContent = messageData.content;
+    } else {
+        // Message utilisateur ou livreur
+        messageElement = document.createElement('div');
+        messageElement.className = `message message-${messageData.sender === 'client' ? 'user' : 'other'} fade-in`;
+        
+        // Ajouter l'expéditeur pour les messages du livreur
+        if (messageData.sender === 'livreur') {
+            const senderDiv = document.createElement('div');
+            senderDiv.className = 'message-sender';
+            senderDiv.textContent = 'Livreur';
+            messageElement.appendChild(senderDiv);
+        }
+        
+        // Ajouter le contenu du message
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.textContent = messageData.content;
+        messageElement.appendChild(contentDiv);
+        
+        // Ajouter l'horodatage
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'message-time';
+        timeDiv.textContent = `${dateString}, ${timeString}`;
+        messageElement.appendChild(timeDiv);
+    }
+    
+    // Ajouter le message au conteneur
+    chatMessages.appendChild(messageElement);
+    
+    // Faire défiler jusqu'au bas
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Fonction pour mettre à jour le badge de messages non lus
+function updateUnreadBadge(orderId) {
+    // Trouver le bouton de chat correspondant à cette commande
+    document.querySelectorAll('.order-card').forEach(card => {
+        const cardOrderId = card.getAttribute('data-order-id');
+        const displayOrderId = card.querySelector('.order-id')?.textContent.match(/Commande #([A-Z0-9]+)/)?.at(1);
+        
+        if (cardOrderId === orderId || displayOrderId === orderId) {
+            const chatButton = card.querySelector('.chat-btn');
+            if (chatButton) {
+                // Vérifier si un badge existe déjà
+                let badge = chatButton.querySelector('.unread-badge');
+                
+                if (!badge) {
+                    // Créer un nouveau badge
+                    badge = document.createElement('div');
+                    badge.className = 'unread-badge';
+                    badge.textContent = '1';
+                    chatButton.appendChild(badge);
+                } else {
+                    // Incrémenter le compteur existant
+                    const count = parseInt(badge.textContent) || 0;
+                    badge.textContent = count + 1;
+                }
+                
+                // Ajouter une animation pour attirer l'attention
+                badge.classList.add('pulse');
+                setTimeout(() => {
+                    badge.classList.remove('pulse');
+                }, 1000);
+            }
+        }
+    });
+    
+    // Vérifier également le bouton de chat dans la file d'attente
+    const queueOrderId = document.getElementById('queue-active-order-id');
+    if (queueOrderId && (queueOrderId.textContent === orderId || queueOrderId.dataset.mongoId === orderId)) {
+        const inlineChatBtn = document.getElementById('inline-chat-btn');
+        if (inlineChatBtn) {
+            let badge = inlineChatBtn.querySelector('.unread-badge');
+            
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.className = 'unread-badge';
+                badge.textContent = '1';
+                inlineChatBtn.appendChild(badge);
+            } else {
+                const count = parseInt(badge.textContent) || 0;
+                badge.textContent = count + 1;
+            }
+            
+            // Animation
+            badge.classList.add('pulse');
+            setTimeout(() => {
+                badge.classList.remove('pulse');
+            }, 1000);
+        }
+    }
+}
+
+// Fonction pour mettre à jour le statut d'une commande en temps réel
+function updateOrderStatus(orderId, newStatus) {
+    document.querySelectorAll('.order-card').forEach(card => {
+        const cardOrderId = card.getAttribute('data-order-id');
+        const displayOrderId = card.querySelector('.order-id')?.textContent.match(/Commande #([A-Z0-9]+)/)?.at(1);
+        
+        if (cardOrderId === orderId || displayOrderId === orderId) {
+            // Stocker l'ancien statut pour la notification
+            const statusElement = card.querySelector('.order-status');
+            const oldStatus = statusElement ? statusElement.textContent : '';
+            
+            // Mettre à jour l'élément de statut
+            if (statusElement) {
+                statusElement.textContent = newStatus;
+                statusElement.className = 'order-status';
+                statusElement.classList.add(`status-${getStatusClass(newStatus)}`);
+            }
+            
+            // Mettre à jour l'attribut data-status de la carte
+            card.setAttribute('data-status', getStatusClass(newStatus));
+            
+            // Afficher une notification de changement de statut
+            showStatusChangeNotification(displayOrderId || orderId, oldStatus, newStatus);
+            
+            // Mettre à jour la section tracking si elle est visible
+            const trackingSteps = card.querySelector('.tracking-steps');
+            if (trackingSteps) {
+                trackingSteps.innerHTML = `<div class="tracking-line"></div>${generateTrackingSteps(newStatus)}`;
+            }
+        }
+    });
+    
+    // Mettre à jour également la section de file d'attente si active
+    const queueStatusElement = document.getElementById('inline-queue-status');
+    if (queueStatusElement) {
+        const queueOrderId = document.getElementById('queue-active-order-id');
+        if (queueOrderId && (queueOrderId.textContent === orderId || queueOrderId.dataset.mongoId === orderId)) {
+            queueStatusElement.textContent = newStatus;
+            queueStatusElement.className = 'queue-status';
+            queueStatusElement.classList.add(`status-${getStatusClass(newStatus)}`);
+            
+            // Mettre à jour les marqueurs et la barre de progression
+            updateInlineQueueStepMarkers(newStatus);
+        }
+    }
+}
 // Créer un élément HTML pour une commande
 function createOrderElement(order) {
     // Formater la date
@@ -1047,7 +1263,7 @@ function handleSendMessage() {
         content: messageText
     };
     
-    // Envoyer le message
+    // Envoyer le message via l'API
     fetch(`/api/orders/${idToUse}/chat/client`, {
         method: 'POST',
         headers: {
@@ -1070,8 +1286,8 @@ function handleSendMessage() {
             // Supprimer le message temporaire
             tempMessageElement.remove();
             
-            // Recharger tous les messages pour s'assurer qu'ils sont à jour
-            loadChatHistory(visibleOrderId);
+            // Le message sera affiché via l'événement Socket.io
+            // Pas besoin de recharger tout l'historique
             
             // Stocker l'ID MongoDB si disponible
             if (data.message && data.message.orderId && !orderIdElement.dataset.mongoId) {
@@ -1092,6 +1308,35 @@ function handleSendMessage() {
         tempMessageElement.querySelector('.message-time').textContent = 
             `${dateString}, ${timeString} (échec de l'envoi)`;
     });
+}
+// Ajouter des styles pour les animations des notifications
+function addNotificationStyles() {
+    if (!document.getElementById('notification-animations')) {
+        const style = document.createElement('style');
+        style.id = 'notification-animations';
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.2); }
+                100% { transform: scale(1); }
+            }
+            
+            .unread-badge.pulse {
+                animation: pulse 0.5s ease-in-out;
+                background-color: #ff4757;
+            }
+            
+            .message.fade-in {
+                animation: fadeIn 0.3s ease-in-out;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
 }
 
 // Ouvrir le modal de chat et charger l'historique
@@ -1129,6 +1374,9 @@ function openChatModal(orderId, mongoId) {
     
     // Réinitialiser le compteur de messages non lus
     resetUnreadCounter(orderId);
+    
+    // NOUVEAU: Rejoindre la salle de chat pour cette commande
+    joinChatRoom(mongoId || orderId);
 }
 
 // Charger l'historique du chat depuis l'API
@@ -1158,6 +1406,9 @@ function loadChatHistory(orderId) {
     // Utiliser l'ID MongoDB s'il est disponible
     const idToUse = mongoId || orderId;
     console.log("ID utilisé pour charger l'historique:", idToUse);
+    
+    // Rejoindre la salle Socket.io pour cette commande
+    joinChatRoom(idToUse);
     
     // Appel à l'API pour récupérer l'historique
     fetch(`/api/orders/${idToUse}/chat`, {
