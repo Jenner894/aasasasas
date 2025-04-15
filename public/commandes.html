@@ -1550,6 +1550,69 @@
     font-weight: bold;
     margin: 0;
 }
+/* Animations pour les notifications */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.message-notification {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.message-notification:hover {
+    transform: scale(1.02);
+}
+
+/* Styles pour le badge de messages non lus */
+.chat-btn .unread-badge, 
+#inline-chat-btn .unread-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #ff4757;
+    color: white;
+    border-radius: 50%;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Animation pour le badge */
+@keyframes badgePulse {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.unread-badge.new {
+    animation: badgePulse 0.3s forwards;
+}
     </style>
 </head>
 <body>
