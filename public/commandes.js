@@ -239,19 +239,17 @@ function initSocketConnection() {
         
         // Écouter les nouveaux messages avec plus de logs
         socket.on('new_message', (data) => {
-            console.log('📩 Nouveau message reçu via Socket.io:', data);
-            
-            // Vérifier si le message concerne la commande actuellement affichée
-            if (data.orderId === currentChatOrderId) {
-                console.log('📨 Message pour la conversation active, ajout au chat');
-                addMessageToChat(data);
-                
-              
-            } else {
-                console.log('📮 Message pour une autre conversation, mise à jour du badge');
-                updateUnreadBadge(data.orderId);
-            }
-        });
+        console.log('📩 Nouveau message reçu via Socket.io:', data);
+        
+        // Vérifier si le message concerne la commande actuellement affichée
+        if (data.orderId === currentChatOrderId) {
+            console.log('📨 Message pour la conversation active, ajout au chat');
+            addMessageToChat(data);
+        } else {
+            console.log('📮 Message pour une autre conversation, mise à jour du badge');
+            updateUnreadBadge(data.orderId);
+        }
+    });
         
         // Écouter les mises à jour de statut
         socket.on('order_status_updated', (data) => {
@@ -488,6 +486,7 @@ function updateUnreadBadge(orderId) {
         }
     }
 }
+
 
 // Fonction pour mettre à jour le statut d'une commande en temps réel
 function updateOrderStatus(orderId, newStatus) {
@@ -1296,33 +1295,40 @@ function setupInlineChatButton() {
     const inlineChatBtn = document.getElementById('inline-chat-btn');
     
     if (inlineChatBtn) {
-        // Vérifier si le bouton n'a pas déjà été configuré
-        if (!inlineChatBtn.hasAttribute('data-initialized')) {
-            // Définir le contenu HTML du bouton une seule fois
-            inlineChatBtn.innerHTML = '<span class="chat-btn-icon">💬</span> <span class="chat-btn-text">Chatter avec le livreur</span>';
-            
-            // Marquer le bouton comme initialisé
-            inlineChatBtn.setAttribute('data-initialized', 'true');
-            
-            // Ajouter l'écouteur d'événement une seule fois
-            inlineChatBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const queueOrderIdElement = document.getElementById('queue-active-order-id');
-                if (queueOrderIdElement && queueOrderIdElement.textContent) {
-                    const orderId = queueOrderIdElement.textContent;
-                    const mongoId = queueOrderIdElement.dataset.mongoId;
-                    
-                    // Utiliser à la fois l'orderId et le mongoId
-                    openChatModal(orderId, mongoId);
-                    
-                    // Réinitialiser le compteur de messages non lus pour cette commande
-                    resetUnreadCounter(orderId);
-                }
-            });
+        // Réinitialiser complètement le contenu et les écouteurs d'événements
+        const newButton = inlineChatBtn.cloneNode(false);
+        newButton.id = 'inline-chat-btn';
+        newButton.className = inlineChatBtn.className;
+        
+        // Définir le contenu HTML du bouton
+        newButton.innerHTML = '<span class="chat-btn-icon">💬</span> <span class="chat-btn-text">Chatter avec le livreur</span>';
+        
+        // Conserver les badges de notification s'ils existent
+        const badge = inlineChatBtn.querySelector('.unread-badge');
+        if (badge) {
+            newButton.appendChild(badge.cloneNode(true));
         }
-        // Ne pas modifier le HTML si le bouton est déjà initialisé
+        
+        // Ajouter l'écouteur d'événement
+        newButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const queueOrderIdElement = document.getElementById('queue-active-order-id');
+            if (queueOrderIdElement && queueOrderIdElement.textContent) {
+                const orderId = queueOrderIdElement.textContent;
+                const mongoId = queueOrderIdElement.dataset.mongoId;
+                
+                // Utiliser à la fois l'orderId et le mongoId
+                openChatModal(orderId, mongoId);
+                
+                // Réinitialiser le compteur de messages non lus pour cette commande
+                resetUnreadCounter(orderId);
+            }
+        });
+        
+        // Remplacer le bouton original par le nouveau
+        inlineChatBtn.parentNode.replaceChild(newButton, inlineChatBtn);
     }
 }
 
