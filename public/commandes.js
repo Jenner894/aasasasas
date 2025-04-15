@@ -180,104 +180,183 @@ function initSocketConnection() {
     if (typeof io === 'undefined') {
         console.error('Socket.io n\'est pas chargé. Vérifiez votre inclusion de script.');
         
-        // Ajouter un indicateur visible à l'utilisateur
-        const socketErrorBar = document.createElement('div');
-        socketErrorBar.style.backgroundColor = '#f44336';
-        socketErrorBar.style.color = 'white';
-        socketErrorBar.style.padding = '10px';
-        socketErrorBar.style.textAlign = 'center';
-        socketErrorBar.style.position = 'fixed';
-        socketErrorBar.style.top = '0';
-        socketErrorBar.style.left = '0';
-        socketErrorBar.style.right = '0';
-        socketErrorBar.style.zIndex = '9999';
-        socketErrorBar.textContent = 'Certaines fonctionnalités en temps réel ne sont pas disponibles. Rechargez la page.';
-        
-        document.body.prepend(socketErrorBar);
+        // Afficher une alerte visible pour aider au débogage
+        const errorDiv = document.createElement('div');
+        errorDiv.style.backgroundColor = 'red';
+        errorDiv.style.color = 'white';
+        errorDiv.style.padding = '10px';
+        errorDiv.style.position = 'fixed';
+        errorDiv.style.top = '0';
+        errorDiv.style.left = '0';
+        errorDiv.style.right = '0';
+        errorDiv.style.zIndex = '9999';
+        errorDiv.textContent = 'ERREUR: Socket.io n\'est pas chargé correctement. Les messages en temps réel ne fonctionneront pas.';
+        document.body.prepend(errorDiv);
         return;
     }
     
     try {
-        // Connexion au serveur Socket.io
-        socket = io();
+        console.log('Tentative de connexion Socket.io...');
+        
+        // Connexion au serveur Socket.io avec des options de débogage
+        socket = io({
+            reconnectionAttempts: 5,
+            timeout: 10000,
+            debug: true
+        });
         
         // Événement de connexion réussie
         socket.on('connect', () => {
-            console.log('Connecté au serveur Socket.io');
+            console.log('✅ Connecté au serveur Socket.io avec succès! ID:', socket.id);
             
-            // Notifier l'utilisateur que la connexion temps réel est établie
-            const socketStatusBar = document.createElement('div');
-            socketStatusBar.id = 'socket-status';
-            socketStatusBar.style.backgroundColor = '#4CAF50';
-            socketStatusBar.style.color = 'white';
-            socketStatusBar.style.padding = '5px';
-            socketStatusBar.style.textAlign = 'center';
-            socketStatusBar.style.position = 'fixed';
-            socketStatusBar.style.bottom = '0';
-            socketStatusBar.style.left = '0';
-            socketStatusBar.style.right = '0';
-            socketStatusBar.style.zIndex = '9999';
-            socketStatusBar.style.fontSize = '12px';
-            socketStatusBar.style.opacity = '0.9';
-            socketStatusBar.textContent = 'Connexion temps réel établie ✓';
+            // Notifier l'utilisateur de la connexion réussie
+            const notifDiv = document.createElement('div');
+            notifDiv.style.backgroundColor = '#4CAF50';
+            notifDiv.style.color = 'white';
+            notifDiv.style.padding = '10px';
+            notifDiv.style.position = 'fixed';
+            notifDiv.style.bottom = '20px';
+            notifDiv.style.right = '20px';
+            notifDiv.style.borderRadius = '5px';
+            notifDiv.style.zIndex = '9999';
+            notifDiv.textContent = '✓ Connexion en temps réel établie';
+            document.body.appendChild(notifDiv);
             
-            document.body.appendChild(socketStatusBar);
-            
-            // Masquer après 3 secondes
             setTimeout(() => {
-                socketStatusBar.style.opacity = '0';
-                socketStatusBar.style.transition = 'opacity 0.5s';
-                
-                // Supprimer après la transition
-                setTimeout(() => {
-                    if (socketStatusBar.parentNode) {
-                        socketStatusBar.parentNode.removeChild(socketStatusBar);
-                    }
-                }, 500);
+                notifDiv.remove();
             }, 3000);
+        });
+        
+        // Événement de reconnexion
+        socket.on('reconnect_attempt', (attemptNumber) => {
+            console.log(`Tentative de reconnexion #${attemptNumber}...`);
         });
         
         // Gestion des erreurs de connexion
         socket.on('connect_error', (error) => {
-            console.error('Erreur de connexion Socket.io:', error);
+            console.error('⚠️ Erreur de connexion Socket.io:', error);
         });
         
-        // Écouter les nouveaux messages
+        // Écouter les nouveaux messages avec plus de logs
         socket.on('new_message', (data) => {
-            console.log('Nouveau message reçu:', data);
+            console.log('📩 Nouveau message reçu via Socket.io:', data);
             
             // Vérifier si le message concerne la commande actuellement affichée
             if (data.orderId === currentChatOrderId) {
-                // Ajouter le message à la conversation
+                console.log('📨 Message pour la conversation active, ajout au chat');
                 addMessageToChat(data);
+                
+              
             } else {
-                // Si ce n'est pas la conversation active, incrémenter le compteur de messages non lus
+                console.log('📮 Message pour une autre conversation, mise à jour du badge');
                 updateUnreadBadge(data.orderId);
             }
         });
         
         // Écouter les mises à jour de statut
         socket.on('order_status_updated', (data) => {
-            console.log('Mise à jour de statut reçue:', data);
+            console.log('🔄 Mise à jour de statut reçue:', data);
             updateOrderStatus(data.orderId, data.newStatus);
         });
+        
+        // Événement de déconnexion
+        socket.on('disconnect', (reason) => {
+            console.log('❌ Déconnecté du serveur Socket.io, raison:', reason);
+            
+            if (reason === 'io server disconnect') {
+                // La déconnexion est intentionnelle côté serveur, tentative de reconnexion
+                socket.connect();
+            }
+        });
     } catch (error) {
-        console.error('Erreur lors de l\'initialisation de Socket.io:', error);
+        console.error('❌ Erreur lors de l\'initialisation de Socket.io:', error);
     }
 }
 
 // Fonction pour rejoindre un canal de chat spécifique à une commande
+// Fonction améliorée pour rejoindre un canal de chat
 function joinChatRoom(orderId) {
-    if (socket && socket.connected) {
+    if (!orderId) {
+        console.error('❌ Impossible de rejoindre la salle: ID de commande manquant');
+        return;
+    }
+    
+    if (!socket) {
+        console.error('❌ Socket non initialisé, impossible de rejoindre la salle');
+        return;
+    }
+    
+    if (!socket.connected) {
+        console.warn('⚠️ Socket.io non connecté, tentative de reconnexion...');
+        socket.connect();
+        
+        // Attendre la reconnexion avant de rejoindre la salle
+        socket.once('connect', () => {
+            _joinRoom(orderId);
+        });
+    } else {
+        _joinRoom(orderId);
+    }
+    
+    function _joinRoom(id) {
         // Quitter la salle précédente si nécessaire
         if (currentChatOrderId) {
+            console.log(`Quitter la salle: order_${currentChatOrderId}`);
             socket.emit('leave_room', { room: `order_${currentChatOrderId}` });
         }
         
         // Rejoindre la nouvelle salle
-        socket.emit('join_room', { room: `order_${orderId}` });
-        currentChatOrderId = orderId;
-        console.log(`Rejoint la salle de chat pour la commande ${orderId}`);
+        const roomName = `order_${id}`;
+        console.log(`✅ Rejoindre la salle de chat: ${roomName}`);
+        socket.emit('join_room', { room: roomName });
+        currentChatOrderId = id;
+        
+        // Ajouter un indicateur visuel
+        const chatContainer = document.querySelector('.chat-container');
+        if (chatContainer) {
+            // Supprimer tout indicateur existant
+            const existingIndicator = document.querySelector('.socket-status-indicator');
+            if (existingIndicator) existingIndicator.remove();
+            
+            // Créer un nouvel indicateur
+            const indicator = document.createElement('div');
+            indicator.className = 'socket-status-indicator';
+            indicator.innerHTML = '<span class="status-dot"></span> Connecté au chat en direct';
+            
+            // Styles pour l'indicateur
+            indicator.style.fontSize = '12px';
+            indicator.style.color = '#4CAF50';
+            indicator.style.display = 'flex';
+            indicator.style.alignItems = 'center';
+            indicator.style.position = 'absolute';
+            indicator.style.top = '10px';
+            indicator.style.right = '40px';
+            
+            const dot = indicator.querySelector('.status-dot');
+            dot.style.width = '8px';
+            dot.style.height = '8px';
+            dot.style.backgroundColor = '#4CAF50';
+            dot.style.borderRadius = '50%';
+            dot.style.marginRight = '5px';
+            dot.style.animation = 'pulse 2s infinite';
+            
+            // Ajouter une règle CSS pour l'animation
+            if (!document.getElementById('socket-indicator-style')) {
+                const style = document.createElement('style');
+                style.id = 'socket-indicator-style';
+                style.textContent = `
+                    @keyframes pulse {
+                        0% { opacity: 0.6; }
+                        50% { opacity: 1; }
+                        100% { opacity: 0.6; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // Ajouter l'indicateur au conteneur de chat
+            chatContainer.appendChild(indicator);
+        }
     }
 }
 
@@ -1454,8 +1533,7 @@ function addNotificationStyles() {
 
 // Ouvrir le modal de chat et charger l'historique
 function openChatModal(orderId, mongoId) {
-    console.log("Ouverture du modal de chat pour la commande:", orderId);
-    console.log("ID MongoDB fourni:", mongoId);
+    console.log("Ouverture du modal de chat pour la commande:", orderId, "MongoDB ID:", mongoId);
     
     // S'assurer que le modal existe
     let modal = document.getElementById('chat-modal');
@@ -1482,61 +1560,39 @@ function openChatModal(orderId, mongoId) {
     // Afficher le modal
     modal.classList.add('active');
     
+    // Appliquer une transition fluide
+    setTimeout(() => {
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) modalContent.style.transform = 'translateY(0)';
+    }, 10);
+    
     // Charger l'historique du chat
     loadChatHistory(orderId);
     
     // Réinitialiser le compteur de messages non lus
     resetUnreadCounter(orderId);
     
-    // IMPORTANT: Rejoint la salle de chat pour cette commande
-    // Utiliser l'ID MongoDB comme identifiant de salle s'il est disponible
+    // TRÈS IMPORTANT: Rejoindre la salle de chat pour cette commande
+    // Utiliser l'ID MongoDB comme identifiant de salle car c'est l'ID utilisé par le serveur
     joinChatRoom(mongoId || orderId);
     
-    // Ajouter une indication visuelle que la connexion Socket.io est active
-    const chatContainer = document.querySelector('.chat-container');
-    if (chatContainer) {
-        // Supprimer l'indicateur existant s'il y en a un
-        const existingIndicator = document.querySelector('.socket-indicator');
-        if (existingIndicator) {
-            existingIndicator.remove();
+    // Tester la connexion Socket.io
+    const testConnection = () => {
+        if (!socket || !socket.connected) {
+            console.warn('Socket.io non connecté, tentative de reconnexion...');
+            // Tenter de réinitialiser la connexion
+            initSocketConnection();
+            setTimeout(() => {
+                if (socket && socket.connected) {
+                    console.log('Socket reconnecté, rejoindre la salle de chat');
+                    joinChatRoom(mongoId || orderId);
+                }
+            }, 1000);
         }
-        
-        // Ajouter un nouvel indicateur
-        const indicator = document.createElement('div');
-        indicator.className = 'socket-indicator';
-        indicator.innerHTML = '<span class="dot"></span> Connecté en temps réel';
-        
-        // Ajouter les styles pour l'indicateur
-        const style = document.createElement('style');
-        style.textContent = `
-            .socket-indicator {
-                position: absolute;
-                top: 10px;
-                right: 50px;
-                font-size: 12px;
-                color: #4CAF50;
-                display: flex;
-                align-items: center;
-            }
-            .socket-indicator .dot {
-                width: 8px;
-                height: 8px;
-                background-color: #4CAF50;
-                border-radius: 50%;
-                margin-right: 5px;
-                animation: pulse 2s infinite;
-            }
-            @keyframes pulse {
-                0% { opacity: 0.5; }
-                50% { opacity: 1; }
-                100% { opacity: 0.5; }
-            }
-        `;
-        document.head.appendChild(style);
-        
-        // Ajouter l'indicateur à la barre de titre du modal
-        document.querySelector('.modal-header').appendChild(indicator);
-    }
+    };
+    
+    // Tester la connexion après un court délai
+    setTimeout(testConnection, 500);
 }
 // Charger l'historique du chat depuis l'API
 function loadChatHistory(orderId) {
