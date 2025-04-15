@@ -1613,6 +1613,57 @@
 .unread-badge.new {
     animation: badgePulse 0.3s forwards;
 }
+        /* Badge de notification */
+.unread-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #ff4757;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: scale(0);
+    transition: transform 0.3s ease;
+}
+
+.unread-badge.visible {
+    transform: scale(1);
+}
+
+/* Animation de pulsation pour le badge */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.unread-badge.pulse {
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* S'assurer que tous les boutons chat ont une position relative */
+.chat-btn, #inline-chat-btn {
+    position: relative;
+    overflow: visible !important;
+}
+
+/* Styles pour les messages */
+.message.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
     </style>
 </head>
 <body>
