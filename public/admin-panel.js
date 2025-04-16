@@ -141,7 +141,7 @@ function setupSocketListeners() {
             }
         } else {
             // Mettre à jour les badges de notification si besoin
-            // (Vous pourriez implémenter cela plus tard)
+            loadDeliveries(); // Rafraîchir les livraisons pour voir les nouvelles notifications
         }
     });
     
@@ -294,9 +294,9 @@ closeChatModalBtn.addEventListener('click', () => {
     // Quitter la salle de chat via Socket.io
     if (socket && socket.connected && currentDeliveryId) {
         socket.emit('leave_order_chat', { orderId: currentDeliveryId });
+        console.log('Quitter la salle:', currentDeliveryId);
     }
 });
-    
     // Mise à jour du statut
     updateStatusBtn.addEventListener('click', updateDeliveryStatus);
     
@@ -669,7 +669,11 @@ function openChat(deliveryId, username) {
     
     // Si socket.io est connecté, rejoindre la salle de chat
     if (socket && socket.connected) {
+        // Quitter toutes les salles précédentes d'abord
+        socket.emit('leave_all_rooms');
+        // Puis rejoindre la nouvelle salle
         socket.emit('join_order_chat', { orderId: deliveryId });
+        console.log('Rejoindre la salle:', deliveryId);
     }
     
     // Charger les messages réels du chat
@@ -685,7 +689,6 @@ function openChat(deliveryId, username) {
         chatInputField.focus();
     }, 300);
 }
-
 // Chargement des messages de chat (version réelle)
 function loadChatMessages(deliveryId) {
     // Vider les messages précédents
