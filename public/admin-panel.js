@@ -62,6 +62,21 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Ajouter les écouteurs d'événements
     setupEventListeners();
+    createTypingIndicator();
+
+// Initialiser Socket.io
+initializeSocketIO();
+    
+    function initializeSocketIO() {
+    // Connexion au serveur Socket.io
+    socket = io({
+        withCredentials: true
+    });
+    
+    // Configuration des écouteurs d'événements Socket.io
+    setupSocketListeners();
+}
+
 });
 
 // Vérification de l'authentification
@@ -88,9 +103,157 @@ function checkAuthentication() {
             window.location.href = '/login.html';
         });
 }
+// Fonction pour configurer les écouteurs d'événements Socket.io
+function setupSocketListeners() {
+    // Connexion établie
+    socket.on('connect', () => {
+        console.log('Connecté au serveur de chat');
+        
+        // Si un chat est ouvert, rejoindre la salle
+        if (currentDeliveryId) {
+            socket.emit('join_order_chat', { orderId: currentDeliveryId });
+        }
+    });
+    
+    // Déconnexion
+    socket.on('disconnect', () => {
+        console.log('Déconnecté du serveur de chat');
+    });
+    
+    // Réception d'un nouveau message
+    socket.on('new_message', (message) => {
+        console.log('Nouveau message reçu:', message);
+        
+        // Si le message est pour la commande actuellement ouverte
+        if (currentDeliveryId === message.orderId) {
+            // Ajouter le message au chat
+            addChatMessage(message.sender, message.content, new Date(message.timestamp));
+            
+            // Faire défiler vers le bas
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Marquer le message comme lu
+            if (message.sender === 'client') {
+                socket.emit('mark_read', { orderId: currentDeliveryId });
+            }
+        } else {
+            // Mettre à jour les badges de notification si besoin
+            // (Vous pourriez implémenter cela plus tard)
+        }
+    });
+    
+    // Notification d'utilisateur en train d'écrire
+    socket.on('user_typing', (data) => {
+        if (data.role === 'client' && currentDeliveryId === data.orderId) {
+            if (data.typing) {
+                showTypingIndicator();
+            } else {
+                hideTypingIndicator();
+            }
+        }
+    });
+    
+    // Notification de messages lus
+    socket.on('messages_read', (data) => {
+        if (data.role === 'client') {
+            // Le client a lu les messages
+            console.log('Le client a lu les messages');
+            // On pourrait ajouter un indicateur visuel ici
+        }
+    });
+    
+    // Erreur
+    socket.on('error', (error) => {
+        console.error('Erreur Socket.io:', error);
+        
+        // Afficher un message d'erreur
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'system-message';
+        errorMessage.textContent = `Erreur: ${error.message || 'Une erreur est survenue'}`;
+        
+        if (chatMessages) {
+            chatMessages.appendChild(errorMessage);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    });
+}
+
+// Créer un indicateur de frappe (ajouter cette fonction)
+function createTypingIndicator() {
+    const typingIndicator = document.createElement('div');
+    typingIndicator.className = 'typing-indicator fade-in';
+    typingIndicator.innerHTML = '<span></span><span></span><span></span>';
+    typingIndicator.id = 'typing-indicator';
+    typingIndicator.style.display = 'none';
+    
+    if (chatMessages) {
+        chatMessages.appendChild(typingIndicator);
+    }
+}
+
+// Montrer l'indicateur de frappe (ajouter cette fonction)
+function showTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.style.display = 'block';
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    } else {
+        createTypingIndicator();
+        showTypingIndicator();
+    }
+}
+
+// Cacher l'indicateur de frappe (ajouter cette fonction)
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.style.display = 'none';
+    }
+}
+
+// Gérer l'événement de frappe (ajouter cette fonction)
+function handleTyping(isTyping) {
+    if (!socket || !currentDeliveryId) return;
+    
+    // Effacer le timeout précédent
+    if (typingTimeout) {
+        clearTimeout(typingTimeout);
+    }
+    
+    // Envoyer l'état de frappe
+    socket.emit('typing', {
+        orderId: currentDeliveryId,
+        typing: isTyping
+    });
+    
+    // Si l'utilisateur est en train de taper, définir un timeout pour réinitialiser
+    if (isTyping) {
+        typingTimeout = setTimeout(() => {
+            socket.emit('typing', {
+                orderId: currentDeliveryId,
+                typing: false
+            });
+        }, 3000); // Réinitialiser après 3 secondes d'inactivité
+    }
+}
+
+// Marquer les messages comme lus (ajouter cette fonction)
+function markMessagesAsRead() {
+    if (!socket || !currentDeliveryId) return;
+    
+    socket.emit('mark_read', { orderId: currentDeliveryId });
+}
 
 // Configuration des écouteurs d'événements
 function setupEventListeners() {
+    // Gestion de la frappe pour l'indicateur "en train d'écrire"
+chatInputField.addEventListener('input', () => {
+    handleTyping(true);
+});
+
+chatInputField.addEventListener('blur', () => {
+    handleTyping(false);
+});
     // Sidebar toggle
     sidebarToggle.addEventListener('click', () => {
         sidebar.classList.add('open');
@@ -120,10 +283,16 @@ function setupEventListeners() {
         overlay.classList.remove('active');
     });
     
-    closeChatModalBtn.addEventListener('click', () => {
-        chatModal.classList.remove('active');
-        overlay.classList.remove('active');
-    });
+// Dans setupEventListeners()
+closeChatModalBtn.addEventListener('click', () => {
+    chatModal.classList.remove('active');
+    overlay.classList.remove('active');
+    
+    // Quitter la salle de chat via Socket.io
+    if (socket && socket.connected && currentDeliveryId) {
+        socket.emit('leave_order_chat', { orderId: currentDeliveryId });
+    }
+});
     
     // Mise à jour du statut
     updateStatusBtn.addEventListener('click', updateDeliveryStatus);
@@ -482,6 +651,9 @@ function openChat(deliveryId, username) {
     // Vider les messages précédents
     chatMessages.innerHTML = '';
     
+    // Créer l'indicateur de frappe au cas où
+    createTypingIndicator();
+    
     // Afficher un indicateur de chargement
     const loadingMessage = document.createElement('div');
     loadingMessage.className = 'system-message';
@@ -492,8 +664,18 @@ function openChat(deliveryId, username) {
     overlay.classList.add('active');
     chatModal.classList.add('active');
     
+    // Si socket.io est connecté, rejoindre la salle de chat
+    if (socket && socket.connected) {
+        socket.emit('join_order_chat', { orderId: deliveryId });
+    }
+    
     // Charger les messages réels du chat
     loadChatMessages(deliveryId);
+    
+    // Marquer les messages comme lus
+    if (socket && socket.connected) {
+        markMessagesAsRead();
+    }
     
     // Focus sur le champ d'entrée
     setTimeout(() => {
@@ -622,6 +804,7 @@ function loadChatMessages(deliveryId) {
 }
 
 // Envoi d'un message dans le chat
+// Envoi d'un message dans le chat
 function sendChatMessage() {
     const messageText = chatInputField.value.trim();
     
@@ -630,60 +813,71 @@ function sendChatMessage() {
     // Désactiver le bouton d'envoi pendant la requête
     sendChatMessageBtn.disabled = true;
     
-    // CORRECTION: Utiliser la route spécifique pour le livreur
-    fetch(`/api/orders/${currentDeliveryId}/chat/livreur`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ content: messageText })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Vider le champ d'entrée
-            chatInputField.value = '';
-            
-            // Ajouter le message à l'interface
-            addChatMessage('livreur', messageText, new Date());
-            
-            // Faire défiler vers le bas
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        } else {
-            console.error('Erreur lors de l\'envoi du message:', data.message);
+    // Vider le champ d'entrée
+    chatInputField.value = '';
+    
+    // Ajouter le message à l'interface immédiatement pour une UX réactive
+    addChatMessage('livreur', messageText, new Date());
+    
+    // Faire défiler vers le bas
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Arrêter l'indicateur de frappe
+    handleTyping(false);
+    
+    // Si connecté via Socket.io, envoyer le message par ce canal
+    if (socket && socket.connected) {
+        socket.emit('send_message', {
+            orderId: currentDeliveryId,
+            content: messageText
+        });
+        sendChatMessageBtn.disabled = false;
+    } else {
+        // Sinon, utiliser l'API HTTP comme fallback
+        fetch(`/api/orders/${currentDeliveryId}/chat/livreur`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ content: messageText })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                console.error('Erreur lors de l\'envoi du message:', data.message);
+                
+                // Afficher un message d'erreur
+                const errorNotification = document.createElement('div');
+                errorNotification.className = 'notification error';
+                errorNotification.textContent = `Erreur: ${data.message || 'Impossible d\'envoyer le message'}`;
+                document.body.appendChild(errorNotification);
+                
+                // Supprimer la notification après 3 secondes
+                setTimeout(() => {
+                    errorNotification.remove();
+                }, 3000);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de l\'envoi du message:', error);
             
             // Afficher un message d'erreur
             const errorNotification = document.createElement('div');
             errorNotification.className = 'notification error';
-            errorNotification.textContent = `Erreur: ${data.message || 'Impossible d\'envoyer le message'}`;
+            errorNotification.textContent = 'Erreur de connexion. Veuillez réessayer.';
             document.body.appendChild(errorNotification);
             
             // Supprimer la notification après 3 secondes
             setTimeout(() => {
                 errorNotification.remove();
             }, 3000);
-        }
-    })
-    .catch(error => {
-        console.error('Erreur lors de l\'envoi du message:', error);
-        
-        // Afficher un message d'erreur
-        const errorNotification = document.createElement('div');
-        errorNotification.className = 'notification error';
-        errorNotification.textContent = 'Erreur de connexion. Veuillez réessayer.';
-        document.body.appendChild(errorNotification);
-        
-        // Supprimer la notification après 3 secondes
-        setTimeout(() => {
-            errorNotification.remove();
-        }, 3000);
-    })
-    .finally(() => {
-        // Réactiver le bouton d'envoi
-        sendChatMessageBtn.disabled = false;
-    });
+        })
+        .finally(() => {
+            // Réactiver le bouton d'envoi
+            sendChatMessageBtn.disabled = false;
+        });
+    }
 }
-
 
 // Ajout d'un message au chat
 function addChatMessage(sender, content, timestamp) {
