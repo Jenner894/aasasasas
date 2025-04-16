@@ -3,6 +3,9 @@ let deliveries = [];
 let currentDeliveryId = null;
 let currentPage = 1;
 const itemsPerPage = 10;
+let socket = null; // Instance Socket.io
+let typingTimeout = null; // Timeout pour l'indicateur de frappe
+
 
 // Éléments DOM
 const sidebar = document.getElementById('sidebar');
