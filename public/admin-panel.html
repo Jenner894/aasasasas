@@ -1087,6 +1087,52 @@ header {
         text-align: center;
     }
 }
+    /* Indicateur de frappe */
+.typing-indicator {
+    display: flex;
+    padding: 8px 12px;
+    background-color: #f0f0f0;
+    border-radius: 16px;
+    width: fit-content;
+    margin: 8px 0;
+    animation: fadeIn 0.3s;
+}
+
+.typing-indicator span {
+    height: 8px;
+    width: 8px;
+    margin: 0 1px;
+    background-color: #aaa;
+    border-radius: 50%;
+    display: inline-block;
+    animation: bounce 1.3s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+@keyframes bounce {
+    0%, 60%, 100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-4px);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
 </style>
 </head>
 <body>
@@ -1347,7 +1393,7 @@ header {
     
     <!-- Overlay -->
     <div class="overlay" id="overlay"></div>
-    
+    <script src="/socket.io/socket.io.js"></script>
     <script src="admin-panel.js"></script>
 </body>
 </html>
