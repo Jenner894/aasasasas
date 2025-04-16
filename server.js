@@ -30,6 +30,13 @@ io.use((socket, next) => {
         socket.userId = session.user.id;
         socket.userRole = session.user.role;
         socket.username = session.user.username;
+        
+        // Si c'est un admin, le faire rejoindre automatiquement une salle "admin"
+        if (socket.userRole === 'admin') {
+            socket.join('admin_room');
+            console.log(`Admin ${socket.username} a rejoint la salle admin_room`);
+        }
+        
         next();
     } else {
         next(new Error('Authentification requise'));
@@ -1500,8 +1507,9 @@ app.post('/api/orders/:id/chat/client', isAuthenticated, async (req, res) => {
         conversation.lastMessageAt = newMessage.timestamp;
         await conversation.save();
         
-        // Notifier via Socket.io si implémenté
+        // Notifier via Socket.io - IMPORTANT : modification ici
         if (io) {
+            // Émettre à tous les clients dans la salle de cette commande
             io.to(`order_${order._id}`).emit('new_message', {
                 orderId: order._id.toString(),
                 displayId: order.orderNumber || order._id.toString(),
@@ -1509,6 +1517,13 @@ app.post('/api/orders/:id/chat/client', isAuthenticated, async (req, res) => {
                 content: content.trim(),
                 timestamp: newMessage.timestamp,
                 isRead: false
+            });
+            
+            // Notifier également tous les administrateurs qu'il y a un nouveau message
+            io.to('admin_room').emit('notification', {
+                type: 'new_message',
+                orderId: order._id.toString(),
+                sender: 'client'
             });
         }
         
