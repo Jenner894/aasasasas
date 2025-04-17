@@ -35,13 +35,12 @@ io.use(wrap(session({
 
 // Initialisation de l'authentification pour Socket.io
 io.use((socket, next) => {
-    const session = socket.request.session;
-    
-    if (session && session.user) {
-        // Stockage des infos utilisateur dans l'objet socket
-        socket.userId = session.user.id;
-        socket.userRole = session.user.role;
-        socket.username = session.user.username;
+    // Accéder à la session depuis socket.request
+    if (socket.request.session && socket.request.session.user) {
+        // Stocker les infos utilisateur dans l'objet socket
+        socket.userId = socket.request.session.user.id;
+        socket.userRole = socket.request.session.user.role;
+        socket.username = socket.request.session.user.username;
         
         console.log(`Socket.io: Utilisateur authentifié - ${socket.username} (${socket.userRole})`);
         
@@ -53,13 +52,11 @@ io.use((socket, next) => {
         
         next();
     } else {
-        // IMPORTANT : Ne pas interrompre la connexion, mais permettre de se connecter
-        // en tant qu'invité avec des privilèges limités
+        // Permettre la connexion en tant qu'invité avec privilèges limités
         console.log('Connexion Socket.io sans session authentifiée - accordé comme invité');
         socket.userId = null;
         socket.userRole = 'guest';
         socket.username = 'Invité';
-        // Ne pas définir isAuthenticated = false car c'est ce qui cause l'erreur
         next();
     }
 });
@@ -182,18 +179,16 @@ socket.on('send_message', async (data) => {
             return;
         }
         
-        // CORRECTION IMPORTANTE : Détermination explicite du type d'expéditeur
+        // Détermination explicite du type d'expéditeur basée sur le rôle stocké dans l'objet socket
+        // et non sur la session (qui n'est pas accessible ici de la même manière)
         let senderType;
         
-        // Admin/livreur: on force le type à "livreur" pour l'admin
         if (socket.userRole === 'admin') {
             senderType = 'livreur';
-            console.log('Expéditeur défini explicitement comme "livreur" car l\'utilisateur est un admin');
-        }
-        // Client: on force le type à "client" pour les non-admin
-        else {
+            console.log('Expéditeur défini comme "livreur" car l\'utilisateur est un admin');
+        } else {
             senderType = 'client';
-            console.log('Expéditeur défini explicitement comme "client" car l\'utilisateur n\'est pas un admin');
+            console.log('Expéditeur défini comme "client" car l\'utilisateur n\'est pas un admin');
         }
         
         // Trouver ou créer la conversation
@@ -691,18 +686,27 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 // Configuration des sessions
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'mySecret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    // Force 'secure: false' pour tester, même en production
-    secure: false, 
-    httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 24 heures
-  }
-}));
+const sessionMiddleware = session({
+    secret: process.env.SESSION_SECRET || 'mySecret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false, 
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000 // 24 heures
+    }
+});
+
+// Utilisez ce middleware dans Express
+app.use(sessionMiddleware);
+
+// Configuration de Socket.io avec le partage de session
+const wrap = middleware => (socket, next) => middleware(socket.request, socket.request.res, next);
+
+// Ajoutez ce middleware à Socket.io
+io.use(wrap(sessionMiddleware));
+
 
 async function updateDeliveryQueue() {
     try {
