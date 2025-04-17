@@ -7,9 +7,19 @@ const helmet = require('helmet');
 const cors = require('cors');
 const server = http.createServer(app);
 const socketIo = require('socket.io');
-const io = socketIo(server);
 const session = require('express-session');
 const mongoose = require('mongoose');
+
+// Remplacez l'initialisation de Socket.io par ce code
+const io = socketIo(server, {
+    cors: {
+        origin: '*', // Autorise les connexions de n'importe quelle origine
+        methods: ["GET", "POST"],
+        credentials: true
+    },
+    allowEIO3: true, // Pour assurer la compatibilité
+    pingTimeout: 60000 // Augmenter le timeout pour les connexions lentes
+});
 
 require('dotenv').config();
 const PORT = process.env.PORT || 3000;
@@ -26,33 +36,46 @@ io.use(wrap(session({
 // Initialisation de l'authentification pour Socket.io
 io.use((socket, next) => {
     const session = socket.request.session;
+    
     if (session && session.user) {
+        // Stockage des infos utilisateur dans l'objet socket
         socket.userId = session.user.id;
         socket.userRole = session.user.role;
         socket.username = session.user.username;
         
-        // Si c'est un admin, le faire rejoindre automatiquement une salle "admin"
+        console.log(`Socket.io: Utilisateur authentifié - ${socket.username} (${socket.userRole})`);
+        
+        // Si c'est un admin, le faire rejoindre la salle admin
         if (socket.userRole === 'admin') {
             socket.join('admin_room');
             console.log(`Admin ${socket.username} a rejoint la salle admin_room`);
         }
         
-        next();
+        return next();
     } else {
-        next(new Error('Authentification requise'));
+        console.log('Tentative de connexion Socket.io sans session authentifiée');
+        // Au lieu d'envoyer une erreur, permettre la connexion mais marquer comme non authentifié
+        socket.isAuthenticated = false;
+        socket.userId = null;
+        socket.userRole = 'guest';
+        socket.username = 'Invité';
+        return next();
     }
 });
 
 // Configuration des événements Socket.io
+// Remplacez la section de gestion des événements Socket.io par ce code
 io.on('connection', (socket) => {
-    console.log('Nouveau client connecté:', socket.id, 'Utilisateur:', socket.username, 'Rôle:', socket.userRole);
+    console.log('Client connecté:', socket.id, 
+                'Authentifié:', socket.isAuthenticated !== false, 
+                'Rôle:', socket.userRole || 'non défini');
     
     // Stocker les salles rejointes par cet utilisateur
-    socket.rooms = new Set();
+    socket.userRooms = new Set();
     
     // Rejoindre une salle de chat pour une commande spécifique
     socket.on('join_order_chat', (data) => {
-        if (!data.orderId) {
+        if (!data || !data.orderId) {
             socket.emit('error', { message: 'ID de commande requis' });
             return;
         }
@@ -60,19 +83,18 @@ io.on('connection', (socket) => {
         // Format de la salle pour Socket.io
         const roomName = `order_${data.orderId}`;
         
-        console.log(`Client ${socket.id} (${socket.username}) rejoint la salle ${roomName}`);
+        console.log(`Client ${socket.id} (${socket.username || 'Anonyme'}) rejoint la salle ${roomName}`);
         
-        // Quitter toutes les salles précédentes
-        socket.rooms.forEach(room => {
-            if (room !== socket.id) { // Ne pas quitter la salle par défaut
-                socket.leave(room);
-                console.log(`Client ${socket.id} quitte la salle ${room}`);
-            }
+        // Quitter toutes les salles précédentes liées aux commandes
+        socket.userRooms.forEach(room => {
+            socket.leave(room);
+            console.log(`Client ${socket.id} quitte la salle ${room}`);
         });
+        socket.userRooms.clear();
         
         // Rejoindre la nouvelle salle
         socket.join(roomName);
-        socket.rooms.add(roomName);
+        socket.userRooms.add(roomName);
         
         socket.emit('system_message', { 
             message: `Vous avez rejoint la conversation pour la commande ${data.orderId}` 
@@ -81,24 +103,58 @@ io.on('connection', (socket) => {
     
     // Quitter une salle de chat spécifique
     socket.on('leave_order_chat', (data) => {
-        if (!data.orderId) return;
+        if (!data || !data.orderId) return;
         
         const roomName = `order_${data.orderId}`;
         console.log(`Client ${socket.id} quitte la salle ${roomName}`);
         
         socket.leave(roomName);
-        socket.rooms.delete(roomName);
+        socket.userRooms.delete(roomName);
     });
     
     // Quitter toutes les salles (sauf la salle par défaut)
     socket.on('leave_all_rooms', () => {
-        socket.rooms.forEach(room => {
-            if (room !== socket.id) {
-                socket.leave(room);
-                console.log(`Client ${socket.id} quitte la salle ${room}`);
-            }
+        socket.userRooms.forEach(room => {
+            socket.leave(room);
+            console.log(`Client ${socket.id} quitte la salle ${room}`);
         });
-        socket.rooms.clear();
+        socket.userRooms.clear();
+    });
+    
+    // Support pour la version simplifiée (join_room au lieu de join_order_chat)
+    socket.on('join_room', (data) => {
+        if (!data || !data.room) {
+            socket.emit('error', { message: 'Nom de salle requis' });
+            return;
+        }
+        
+        console.log(`Client ${socket.id} (${socket.username || 'Anonyme'}) rejoint la salle ${data.room}`);
+        
+        // Quitter les salles précédentes si spécifié
+        if (data.leaveOthers) {
+            socket.userRooms.forEach(oldRoom => {
+                socket.leave(oldRoom);
+                console.log(`Client ${socket.id} quitte la salle ${oldRoom}`);
+            });
+            socket.userRooms.clear();
+        }
+        
+        // Rejoindre la nouvelle salle
+        socket.join(data.room);
+        socket.userRooms.add(data.room);
+        
+        socket.emit('system_message', {
+            message: `Vous avez rejoint la salle ${data.room}`
+        });
+    });
+    
+    // Support pour la version simplifiée (leave_room)
+    socket.on('leave_room', (data) => {
+        if (!data || !data.room) return;
+        
+        console.log(`Client ${socket.id} quitte la salle ${data.room}`);
+        socket.leave(data.room);
+        socket.userRooms.delete(data.room);
     });
     
     // Traiter un nouveau message
@@ -109,6 +165,12 @@ io.on('connection', (socket) => {
         }
         
         try {
+            // Vérifier si l'utilisateur est authentifié
+            if (socket.isAuthenticated === false) {
+                socket.emit('error', { message: 'Authentification requise pour envoyer des messages' });
+                return;
+            }
+            
             // Vérifier l'existence de la commande
             let order = await Order.findById(data.orderId);
             if (!order) {
@@ -159,16 +221,38 @@ io.on('connection', (socket) => {
             await conversation.save();
             
             // Émettre l'événement à tous les clients dans la salle
-            io.to(`order_${order._id}`).emit('new_message', {
+            const messageData = {
+                id: newMessage._id.toString(),
                 orderId: order._id.toString(),
                 displayId: order.orderNumber || order._id.toString(),
                 sender: senderType,
                 content: data.content.trim(),
                 timestamp: newMessage.timestamp,
                 isRead: false
-            });
+            };
+            
+            // Émettre le message à tous les clients dans la salle de commande
+            io.to(`order_${order._id}`).emit('new_message', messageData);
+            
+            // Si le message est du client, notifier aussi tous les admins
+            if (senderType === 'client') {
+                io.to('admin_room').emit('notification', {
+                    type: 'new_message',
+                    orderId: order._id.toString(),
+                    displayId: order.orderNumber || order._id.toString(),
+                    sender: 'client',
+                    content: data.content.trim(),
+                    timestamp: newMessage.timestamp
+                });
+            }
             
             console.log(`Message envoyé dans la salle order_${order._id} par ${senderType}`);
+            
+            // Confirmer la réception du message
+            socket.emit('message_sent', {
+                success: true,
+                messageId: newMessage._id.toString()
+            });
             
         } catch (error) {
             console.error('Erreur lors de l\'envoi du message via Socket.io:', error);
@@ -193,6 +277,11 @@ io.on('connection', (socket) => {
         if (!data.orderId) return;
         
         try {
+            // Vérifier si l'utilisateur est authentifié
+            if (socket.isAuthenticated === false) {
+                return; // Ignorer silencieusement
+            }
+            
             const role = socket.userRole === 'admin' ? 'livreur' : 'client';
             const conversation = await Conversation.findOne({ orderId: data.orderId });
             
@@ -221,6 +310,8 @@ io.on('connection', (socket) => {
                     orderId: data.orderId,
                     role
                 });
+                
+                console.log(`Messages marqués comme lus pour la commande ${data.orderId} par ${role}`);
             }
         } catch (error) {
             console.error('Erreur lors du marquage des messages comme lus:', error);
