@@ -25,14 +25,6 @@ require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 
 
-// Configuration de Socket.io avec gestion des sessions
-const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
-io.use(wrap(session({
-    secret: process.env.SESSION_SECRET || 'mySecret',
-    resave: false,
-    saveUninitialized: false
-})));
-
 // Initialisation de l'authentification pour Socket.io
 io.use((socket, next) => {
     // Accéder à la session depuis socket.request
