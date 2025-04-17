@@ -165,100 +165,96 @@ io.on('connection', (socket) => {
         }
         
         try {
-            // Vérifier si l'utilisateur est authentifié
-            if (socket.isAuthenticated === false) {
-                socket.emit('error', { message: 'Authentification requise pour envoyer des messages' });
-                return;
-            }
+
             
-            // Vérifier l'existence de la commande
-            let order = await Order.findById(data.orderId);
-            if (!order) {
-                socket.emit('error', { message: 'Commande non trouvée' });
-                return;
-            }
-            
-            // Déterminer le type d'expéditeur en fonction du rôle
-            const senderType = socket.userRole === 'admin' ? 'livreur' : 'client';
-            
-            // Trouver ou créer la conversation
-            let conversation = await Conversation.findOne({ orderId: order._id });
-            if (!conversation) {
-                conversation = new Conversation({
-                    orderId: order._id,
-                    participants: {
-                        user: senderType === 'client' ? socket.userId : order.user,
-                        deliveryPerson: senderType === 'livreur' ? socket.userId : null
-                    },
-                    lastMessageAt: new Date()
-                });
-                await conversation.save();
-            }
-            
-            // Créer le message
-            const newMessage = new Message({
-                conversationId: conversation._id,
+// Vérifier l'existence de la commande
+        let order = await Order.findById(data.orderId);
+        if (!order) {
+            socket.emit('error', { message: 'Commande non trouvée' });
+            return;
+        }
+        
+        // Déterminer le type d'expéditeur en fonction du rôle
+        const senderType = socket.userRole === 'admin' ? 'livreur' : 'client';
+        
+        // Trouver ou créer la conversation
+        let conversation = await Conversation.findOne({ orderId: order._id });
+        if (!conversation) {
+            conversation = new Conversation({
                 orderId: order._id,
-                sender: senderType,
-                content: data.content.trim(),
-                timestamp: new Date(),
-                userId: socket.userId,
-                deliveryPersonId: senderType === 'livreur' ? socket.userId : null,
-                isRead: false
+                participants: {
+                    user: senderType === 'client' ? socket.userId : order.user,
+                    deliveryPerson: senderType === 'livreur' ? socket.userId : null
+                },
+                lastMessageAt: new Date()
             });
-            
-            await newMessage.save();
-            
-            // Mettre à jour les compteurs de messages non lus
-            if (senderType === 'livreur') {
-                conversation.unreadCount.user = (conversation.unreadCount.user || 0) + 1;
-            } else {
-                conversation.unreadCount.deliveryPerson = (conversation.unreadCount.deliveryPerson || 0) + 1;
-            }
-            
-            // Mettre à jour l'horodatage du dernier message
-            conversation.lastMessageAt = newMessage.timestamp;
             await conversation.save();
-            
-            // Émettre l'événement à tous les clients dans la salle
-            const messageData = {
-                id: newMessage._id.toString(),
+        }
+        
+        // Créer le message
+        const newMessage = new Message({
+            conversationId: conversation._id,
+            orderId: order._id,
+            sender: senderType,
+            content: data.content.trim(),
+            timestamp: new Date(),
+            userId: socket.userId,
+            deliveryPersonId: senderType === 'livreur' ? socket.userId : null,
+            isRead: false
+        });
+        
+        await newMessage.save();
+        
+        // Mettre à jour les compteurs de messages non lus
+        if (senderType === 'livreur') {
+            conversation.unreadCount.user = (conversation.unreadCount.user || 0) + 1;
+        } else {
+            conversation.unreadCount.deliveryPerson = (conversation.unreadCount.deliveryPerson || 0) + 1;
+        }
+        
+        // Mettre à jour l'horodatage du dernier message
+        conversation.lastMessageAt = newMessage.timestamp;
+        await conversation.save();
+        
+        // Émettre l'événement à tous les clients dans la salle
+        const messageData = {
+            id: newMessage._id.toString(),
+            orderId: order._id.toString(),
+            displayId: order.orderNumber || order._id.toString(),
+            sender: senderType,
+            content: data.content.trim(),
+            timestamp: newMessage.timestamp,
+            isRead: false
+        };
+        
+        // Émettre le message à tous les clients dans la salle de commande
+        io.to(`order_${order._id}`).emit('new_message', messageData);
+        
+        // Si le message est du client, notifier aussi tous les admins
+        if (senderType === 'client') {
+            io.to('admin_room').emit('notification', {
+                type: 'new_message',
                 orderId: order._id.toString(),
                 displayId: order.orderNumber || order._id.toString(),
-                sender: senderType,
+                sender: 'client',
                 content: data.content.trim(),
-                timestamp: newMessage.timestamp,
-                isRead: false
-            };
-            
-            // Émettre le message à tous les clients dans la salle de commande
-            io.to(`order_${order._id}`).emit('new_message', messageData);
-            
-            // Si le message est du client, notifier aussi tous les admins
-            if (senderType === 'client') {
-                io.to('admin_room').emit('notification', {
-                    type: 'new_message',
-                    orderId: order._id.toString(),
-                    displayId: order.orderNumber || order._id.toString(),
-                    sender: 'client',
-                    content: data.content.trim(),
-                    timestamp: newMessage.timestamp
-                });
-            }
-            
-            console.log(`Message envoyé dans la salle order_${order._id} par ${senderType}`);
-            
-            // Confirmer la réception du message
-            socket.emit('message_sent', {
-                success: true,
-                messageId: newMessage._id.toString()
+                timestamp: newMessage.timestamp
             });
-            
-        } catch (error) {
-            console.error('Erreur lors de l\'envoi du message via Socket.io:', error);
-            socket.emit('error', { message: 'Erreur lors de l\'envoi du message' });
         }
-    });
+        
+        console.log(`Message envoyé dans la salle order_${order._id} par ${senderType}`);
+        
+        // Confirmer la réception du message
+        socket.emit('message_sent', {
+            success: true,
+            messageId: newMessage._id.toString()
+        });
+        
+    } catch (error) {
+        console.error('Erreur lors de l\'envoi du message via Socket.io:', error);
+        socket.emit('error', { message: 'Erreur lors de l\'envoi du message' });
+    }
+});
     
     // Notification de frappe
     socket.on('typing', (data) => {
