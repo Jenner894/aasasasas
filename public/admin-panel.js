@@ -70,15 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // Initialiser Socket.io
 initializeSocketIO();
     
-    function initializeSocketIO() {
-    // Connexion au serveur Socket.io
-    socket = io({
-        withCredentials: true
-    });
-    
-    // Configuration des écouteurs d'événements Socket.io
-    setupSocketListeners();
-}
 
 });
 
@@ -105,6 +96,225 @@ function checkAuthentication() {
             console.error('Erreur lors de la vérification de l\'authentification:', error);
             window.location.href = '/login.html';
         });
+}
+// Remplacez la fonction joinChatRoom() dans paste.txt (admin-panel.js)
+function joinChatRoom(deliveryId) {
+    if (!deliveryId) {
+        console.error('ID de livraison non spécifié');
+        return;
+    }
+    
+    if (!socket) {
+        console.warn('Socket.io non initialisé, initialisation...');
+        initializeSocketIO();
+        
+        // Attendre que la connexion soit établie
+        setTimeout(() => {
+            if (socket && socket.connected) {
+                joinChatRoom(deliveryId);
+            } else {
+                console.error('Impossible de rejoindre la salle: Socket.io non connecté');
+            }
+        }, 1000);
+        return;
+    }
+    
+    if (!socket.connected) {
+        console.warn('Socket.io déconnecté, tentative de reconnexion...');
+        socket.connect();
+        
+        // Attendre que la connexion soit établie
+        setTimeout(() => {
+            if (socket.connected) {
+                joinChatRoom(deliveryId);
+            } else {
+                console.error('Impossible de rejoindre la salle: Socket.io non connecté');
+            }
+        }, 1000);
+        return;
+    }
+    
+    // Si on est déjà dans cette salle, ne rien faire
+    if (currentDeliveryId === deliveryId) {
+        console.log(`Déjà dans la salle de chat pour la commande ${deliveryId}`);
+        return;
+    }
+    
+    console.log(`Rejoindre la salle de chat pour la commande: ${deliveryId}`);
+    
+    // Si un ancien ID existe, quitter d'abord cette salle
+    if (currentDeliveryId) {
+        socket.emit('leave_order_chat', { orderId: currentDeliveryId });
+    }
+    
+    // Mettre à jour l'ID courant
+    currentDeliveryId = deliveryId;
+    
+    // Rejoindre la nouvelle salle
+    socket.emit('join_order_chat', { orderId: deliveryId });
+    
+    // Marquer les messages existants comme lus
+    socket.emit('mark_read', { orderId: deliveryId });
+    
+    // Afficher un indicateur visuel de connexion
+    if (chatMessages) {
+        const connectionMessage = document.createElement('div');
+        connectionMessage.className = 'system-message';
+        connectionMessage.textContent = 'Connecté à la conversation en temps réel';
+        chatMessages.appendChild(connectionMessage);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+}
+function initializeSocketIO() {
+    // Vérification si Socket.io est déjà initialisé
+    if (socket && socket.connected) {
+        console.log('Socket.io déjà connecté, réutilisation de la connexion existante');
+        return;
+    }
+    
+    try {
+        console.log('Initialisation de Socket.io...');
+        
+        // Création d'une nouvelle connexion Socket.io avec options de reconnexion
+        socket = io({
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 20000,
+            withCredentials: true // Important pour transmettre les cookies de session
+        });
+        
+        // Connexion établie
+        socket.on('connect', () => {
+            console.log('Connecté au serveur de chat! ID:', socket.id);
+            
+            // Si un chat est ouvert, rejoindre la salle
+            if (currentDeliveryId) {
+                joinChatRoom(currentDeliveryId);
+            }
+        });
+        
+        // Déconnexion
+        socket.on('disconnect', (reason) => {
+            console.log('Déconnecté du serveur de chat, raison:', reason);
+            
+            // Tentative de reconnexion si la déconnexion est involontaire
+            if (reason === 'io server disconnect' || reason === 'transport close') {
+                // La déconnexion est due au serveur, tenter de se reconnecter
+                setTimeout(() => {
+                    console.log('Tentative de reconnexion...');
+                    socket.connect();
+                }, 1000);
+            }
+        });
+        
+        // Erreur de connexion
+        socket.on('connect_error', (error) => {
+            console.error('Erreur de connexion Socket.io:', error);
+        });
+        
+        // Réception d'un nouveau message
+        socket.on('new_message', (message) => {
+            console.log('Nouveau message reçu:', message);
+            
+            // Si le message est pour la commande actuellement ouverte
+            if (currentDeliveryId === message.orderId) {
+                // Ajouter le message au chat
+                addChatMessage(message.sender, message.content, new Date(message.timestamp));
+                
+                // Faire défiler vers le bas
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Marquer le message comme lu si nécessaire
+                if (message.sender === 'client') {
+                    socket.emit('mark_read', { orderId: currentDeliveryId });
+                }
+            } else {
+                // Ajouter une notification visuelle pour cette commande
+                const chatButton = document.querySelector(`.chat-button[data-id="${message.orderId}"]`);
+                if (chatButton) {
+                    chatButton.classList.add('new-message');
+                }
+            }
+        });
+        
+        // Notification d'utilisateur en train d'écrire
+        socket.on('user_typing', (data) => {
+            if (data.role === 'client' && currentDeliveryId === data.orderId) {
+                if (data.typing) {
+                    showTypingIndicator();
+                } else {
+                    hideTypingIndicator();
+                }
+            }
+        });
+        
+        // Notification de messages lus
+        socket.on('messages_read', (data) => {
+            if (data.role === 'client') {
+                // Le client a lu les messages
+                console.log('Le client a lu les messages');
+                // On pourrait ajouter un indicateur visuel ici
+            }
+        });
+        
+        // Réception d'une notification
+        socket.on('notification', (data) => {
+            console.log('Notification reçue:', data);
+            
+            // Si c'est une notification de nouveau message
+            if (data.type === 'new_message' && data.sender === 'client') {
+                // Trouver le bouton de chat pour cette commande
+                const chatButton = document.querySelector(`.chat-button[data-id="${data.orderId}"]`);
+                if (chatButton) {
+                    // Ajouter la classe pour indiquer un nouveau message
+                    chatButton.classList.add('new-message');
+                    
+                    // Ajouter une animation pour attirer l'attention
+                    chatButton.classList.add('pulse');
+                    setTimeout(() => {
+                        chatButton.classList.remove('pulse');
+                    }, 2000);
+                }
+            }
+        });
+        
+        // Message système (notification générale)
+        socket.on('system_message', (data) => {
+            console.log('Message système:', data.message);
+            
+            if (chatMessages && currentDeliveryId) {
+                const systemMessage = document.createElement('div');
+                systemMessage.className = 'system-message';
+                systemMessage.textContent = data.message;
+                chatMessages.appendChild(systemMessage);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        });
+        
+        // Confirmation d'envoi de message
+        socket.on('message_sent', (data) => {
+            console.log('Message envoyé avec succès:', data);
+        });
+        
+        // Erreur
+        socket.on('error', (error) => {
+            console.error('Erreur Socket.io:', error);
+            
+            // Afficher un message d'erreur
+            if (chatMessages) {
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'system-message error-message';
+                errorMessage.textContent = `Erreur: ${error.message || 'Une erreur est survenue'}`;
+                chatMessages.appendChild(errorMessage);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        });
+        
+    } catch (err) {
+        console.error('Erreur lors de l\'initialisation de Socket.io:', err);
+    }
 }
 // Fonction pour configurer les écouteurs d'événements Socket.io
 function setupSocketListeners() {
@@ -860,11 +1070,23 @@ function loadChatMessages(deliveryId) {
 }
 
 // Envoi d'un message dans le chat
-// Envoi d'un message dans le chat
 function sendChatMessage() {
     const messageText = chatInputField.value.trim();
     
     if (!messageText) return;
+    
+    // S'assurer qu'un ID de livraison est défini
+    if (!currentDeliveryId) {
+        console.error('Aucune livraison sélectionnée');
+        
+        // Afficher une erreur dans le chat
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'system-message error-message';
+        errorMessage.textContent = 'Erreur: Aucune conversation active';
+        chatMessages.appendChild(errorMessage);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return;
+    }
     
     // Désactiver le bouton d'envoi pendant la requête
     sendChatMessageBtn.disabled = true;
@@ -872,32 +1094,46 @@ function sendChatMessage() {
     // Vider le champ d'entrée
     chatInputField.value = '';
     
+    // Arrêter l'indicateur de frappe
+    handleTyping(false);
+    
     // Ajouter le message à l'interface immédiatement pour une UX réactive
     addChatMessage('livreur', messageText, new Date());
     
     // Faire défiler vers le bas
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
-    // Arrêter l'indicateur de frappe
-    handleTyping(false);
-    
     // Si connecté via Socket.io, envoyer le message par ce canal
     if (socket && socket.connected) {
+        console.log(`Envoi de message via Socket.io pour la commande ${currentDeliveryId}`);
+        
         socket.emit('send_message', {
             orderId: currentDeliveryId,
             content: messageText
         });
-        sendChatMessageBtn.disabled = false;
+        
+        // Réactiver le bouton après un court délai
+        setTimeout(() => {
+            sendChatMessageBtn.disabled = false;
+        }, 300);
     } else {
-        // Sinon, utiliser l'API HTTP comme fallback
+        console.warn('Socket.io non connecté, utilisation de l\'API REST');
+        
+        // Fallback: utiliser l'API HTTP classique
         fetch(`/api/orders/${currentDeliveryId}/chat/livreur`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ content: messageText })
+            body: JSON.stringify({ content: messageText }),
+            credentials: 'include' // Important pour inclure les cookies de session
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (!data.success) {
                 console.error('Erreur lors de l\'envoi du message:', data.message);
