@@ -1507,23 +1507,28 @@ app.post('/api/orders/:id/chat/client', isAuthenticated, async (req, res) => {
         conversation.lastMessageAt = newMessage.timestamp;
         await conversation.save();
         
-        // Notifier via Socket.io - IMPORTANT : modification ici
+        // Notifier via Socket.io - Partie modifiée ici
         if (io) {
-            // Émettre à tous les clients dans la salle de cette commande
-            io.to(`order_${order._id}`).emit('new_message', {
+            const messageData = {
                 orderId: order._id.toString(),
                 displayId: order.orderNumber || order._id.toString(),
                 sender: 'client',
                 content: content.trim(),
                 timestamp: newMessage.timestamp,
                 isRead: false
-            });
+            };
             
-            // Notifier également tous les administrateurs qu'il y a un nouveau message
+            // Émettre à tous les clients dans la salle de cette commande
+            io.to(`order_${order._id}`).emit('new_message', messageData);
+            
+            // Notifier tous les administrateurs qu'il y a un nouveau message
+            // Envoyer les mêmes données que 'new_message' mais avec un type différent
             io.to('admin_room').emit('notification', {
                 type: 'new_message',
                 orderId: order._id.toString(),
-                sender: 'client'
+                sender: 'client',
+                content: content.trim(),
+                timestamp: newMessage.timestamp
             });
         }
         
