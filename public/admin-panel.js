@@ -215,29 +215,32 @@ function initializeSocketIO() {
         });
         
         // Réception d'un nouveau message
-        socket.on('new_message', (message) => {
-            console.log('Nouveau message reçu:', message);
+       socket.on('new_message', (message) => {
+    console.log('Nouveau message reçu:', message);
+    
+    // Si le message est pour la commande actuellement ouverte
+    if (currentDeliveryId === message.orderId) {
+        // Vérifier si le message a bien le bon expéditeur
+        if (message.sender === 'client' || message.sender === 'livreur') {
+            // Ajouter le message au chat avec le bon expéditeur
+            addChatMessage(message.sender, message.content, new Date(message.timestamp));
             
-            // Si le message est pour la commande actuellement ouverte
-            if (currentDeliveryId === message.orderId) {
-                // Ajouter le message au chat
-                addChatMessage(message.sender, message.content, new Date(message.timestamp));
-                
-                // Faire défiler vers le bas
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-                
-                // Marquer le message comme lu si nécessaire
-                if (message.sender === 'client') {
-                    socket.emit('mark_read', { orderId: currentDeliveryId });
-                }
-            } else {
-                // Ajouter une notification visuelle pour cette commande
-                const chatButton = document.querySelector(`.chat-button[data-id="${message.orderId}"]`);
-                if (chatButton) {
-                    chatButton.classList.add('new-message');
-                }
+            // Faire défiler vers le bas
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Marquer le message comme lu si nécessaire (uniquement si c'est un message client)
+            if (message.sender === 'client') {
+                socket.emit('mark_read', { orderId: currentDeliveryId });
             }
-        });
+        }
+    } else {
+        // Ajouter une notification visuelle pour cette commande
+        const chatButton = document.querySelector(`.chat-button[data-id="${message.orderId}"]`);
+        if (chatButton) {
+            chatButton.classList.add('new-message');
+        }
+    }
+});
         
         // Notification d'utilisateur en train d'écrire
         socket.on('user_typing', (data) => {
@@ -1097,15 +1100,16 @@ function sendChatMessage() {
     // Arrêter l'indicateur de frappe
     handleTyping(false);
     
-    // Ajouter le message à l'interface immédiatement pour une UX réactive
-    addChatMessage('livreur', messageText, new Date());
-    
-    // Faire défiler vers le bas
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    
     // Si connecté via Socket.io, envoyer le message par ce canal
     if (socket && socket.connected) {
         console.log(`Envoi de message via Socket.io pour la commande ${currentDeliveryId}`);
+        
+        // Ajouter le message à l'interface AVANT l'envoi pour éviter le double affichage
+        // car le message reviendra via l'événement 'new_message'
+        addChatMessage('livreur', messageText, new Date());
+        
+        // Faire défiler vers le bas
+        chatMessages.scrollTop = chatMessages.scrollHeight;
         
         socket.emit('send_message', {
             orderId: currentDeliveryId,
@@ -1148,6 +1152,12 @@ function sendChatMessage() {
                 setTimeout(() => {
                     errorNotification.remove();
                 }, 3000);
+            } else {
+                // Ajouter le message à l'interface seulement en cas de succès
+                addChatMessage('livreur', messageText, new Date());
+                
+                // Faire défiler vers le bas
+                chatMessages.scrollTop = chatMessages.scrollHeight;
             }
         })
         .catch(error => {
