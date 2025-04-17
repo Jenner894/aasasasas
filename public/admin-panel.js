@@ -1048,18 +1048,18 @@ function sendChatMessage() {
     if (socket && socket.connected) {
         console.log(`Envoi de message via Socket.io pour la commande ${currentDeliveryId}`);
         
-        // Envoyer le message via Socket.io
+        // Envoyer le message via Socket.io avec indication explicite que c'est un message de l'admin
         socket.emit('send_message', {
             orderId: currentDeliveryId,
-            content: messageText
+            content: messageText,
+            // On ne définit pas sender ici car c'est le serveur qui le déterminera
+            // en fonction du rôle de l'utilisateur dans sa session
         });
         
-        // Ajouter le message à l'interface APRÈS l'envoi
-        // Spécifier explicitement l'expéditeur comme 'livreur' puisque nous sommes dans le panel admin
-        addChatMessage('livreur', messageText, new Date());
-        
-        // Faire défiler vers le bas
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        // Faire défiler vers le bas après envoi du message
+        setTimeout(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 100);
         
         // Réactiver le bouton après un court délai
         setTimeout(() => {
