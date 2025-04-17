@@ -159,7 +159,10 @@ io.on('connection', (socket) => {
     });
     
     // Traiter un nouveau message
-   socket.on('send_message', async (data) => {
+socket.on('send_message', async (data) => {
+        console.log('Rôle de l\'utilisateur qui envoie le message:', socket.userRole);
+    console.log('Expéditeur déterminé:', socket.userRole === 'admin' ? 'livreur' : 'client');
+    
     if (!data.orderId || !data.content) {
         socket.emit('error', { message: 'Données incomplètes' });
         return;
@@ -174,8 +177,15 @@ io.on('connection', (socket) => {
         }
         
         // Déterminer le type d'expéditeur en fonction du rôle
-        const senderType = socket.userRole === 'admin' ? 'livreur' : 'client';
+        // Ajoutez des logs pour déboguer
+        console.log("Rôle de l'utilisateur:", socket.userRole);
         
+        // Forcer l'expéditeur à être "livreur" si l'utilisateur est admin
+        let senderType = 'client'; // Valeur par défaut
+        if (socket.userRole === 'admin') {
+            senderType = 'livreur';
+            console.log("Expéditeur forcé à 'livreur' car admin");
+        }
         // Trouver ou créer la conversation
         let conversation = await Conversation.findOne({ orderId: order._id });
         if (!conversation) {
