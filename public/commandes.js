@@ -276,7 +276,47 @@ function setupSocketEvents() {
         
         // Si le message est pour la commande actuellement ouverte dans le chat
         if (currentChatOrderId && (message.orderId === currentChatOrderId || message.displayId === currentChatOrderId)) {
-            // Ajouter le message au chat
+            // *** CORRECTION: Éviter les doublons ***
+            // Vérifier si c'est notre propre message (envoyé par nous)
+            if (message.sender === 'client') {
+                // Chercher si nous avons déjà ce message dans notre interface
+                const existingMessages = document.querySelectorAll('.message.message-user');
+                
+                let isDuplicate = false;
+                existingMessages.forEach(msgElem => {
+                    // Vérifier par ID de message
+                    if (msgElem.dataset.messageId === message.id) {
+                        isDuplicate = true;
+                        return;
+                    }
+                    
+                    // Vérifier par contenu + timestamp proche
+                    const contentElem = msgElem.querySelector('.message-content');
+                    if (contentElem && contentElem.textContent === message.content) {
+                        // Vérifier si c'est un message récent (moins de 5 secondes)
+                        const messageTime = new Date(message.timestamp);
+                        const now = new Date();
+                        if (Math.abs(now - messageTime) < 5000) {
+                            isDuplicate = true;
+                            
+                            // Si c'est un message en attente, mettre à jour son ID
+                            if (msgElem.dataset.isPending === 'true') {
+                                msgElem.dataset.isPending = 'false';
+                                msgElem.dataset.messageId = message.id;
+                                msgElem.classList.remove('message-pending');
+                            }
+                        }
+                    }
+                });
+                
+                // Si c'est un duplicata, ne pas l'ajouter
+                if (isDuplicate) {
+                    console.log('Message ignoré car duplicata');
+                    return;
+                }
+            }
+            
+            // Ajouter le message au chat (seulement s'il n'est pas un duplicata)
             addMessageToChat(message);
             
             // Marquer le message comme lu si c'est un message du livreur
@@ -1674,9 +1714,14 @@ function handleSendMessage() {
     const timeString = formatMessageTime(now);
     const dateString = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
     
+    // Générer un ID temporaire unique pour ce message
+    const tempMessageId = 'msg_' + Date.now();
+    
     // CORRECTION: Utiliser message-user sans ajouter d'élément de nom d'expéditeur
     const tempMessageElement = document.createElement('div');
     tempMessageElement.className = 'message message-user message-pending';
+    tempMessageElement.id = tempMessageId; // Ajouter un ID au message
+    tempMessageElement.dataset.isPending = 'true'; // Marquer comme message en attente
     
     // N'ajoutez PAS de div pour le nom de l'expéditeur pour les messages utilisateur
     
@@ -1707,7 +1752,8 @@ function handleSendMessage() {
         
         socket.emit('send_message', {
             orderId: idToUse,
-            content: messageText
+            content: messageText,
+            tempMessageId: tempMessageId // Transmettre l'ID temporaire
         });
         
         // Attendre confirmation ou timeout
@@ -1718,9 +1764,16 @@ function handleSendMessage() {
             console.log("Message confirmé par le serveur:", data);
             messageConfirmed = true;
             
-            // Remplacer le message temporaire par un message confirmé
-            tempMessageElement.classList.remove('message-pending');
-            timeDiv.textContent = `${dateString}, ${timeString}`;
+            // Vérifier si la réponse contient une référence à notre message temporaire
+            if (data.messageData && tempMessageId) {
+                // Remplacer le message temporaire par un message confirmé
+                tempMessageElement.classList.remove('message-pending');
+                tempMessageElement.dataset.isPending = 'false';
+                timeDiv.textContent = `${dateString}, ${timeString}`;
+                
+                // Important: stocker l'ID réel du message pour éviter les duplications
+                tempMessageElement.dataset.messageId = data.messageId;
+            }
             
             // Réactiver le bouton d'envoi
             if (sendButton) {
@@ -1745,7 +1798,8 @@ function handleSendMessage() {
     function sendViaREST() {
         // Préparer les données du message
         const messageData = {
-            content: messageText
+            content: messageText,
+            tempMessageId: tempMessageId
         };
         
         // Envoyer le message via l'API
@@ -1770,7 +1824,13 @@ function handleSendMessage() {
             if (data.success) {
                 // Mettre à jour le message temporaire
                 tempMessageElement.classList.remove('message-pending');
+                tempMessageElement.dataset.isPending = 'false';
                 timeDiv.textContent = `${dateString}, ${timeString}`;
+                
+                // Important: stocker l'ID réel du message
+                if (data.message && data.message._id) {
+                    tempMessageElement.dataset.messageId = data.message._id;
+                }
                 
                 // Stocker l'ID MongoDB si disponible
                 if (data.message && data.message.orderId && !orderIdElement.dataset.mongoId) {
