@@ -1133,6 +1133,44 @@ header {
         opacity: 1;
     }
 }
+    /* Style pour le bouton chat avec nouveau message */
+.chat-button.new-message {
+    position: relative;
+    animation: pulse 1.5s infinite;
+    background-color: #ff6b6b;
+}
+
+/* Animation de pulsation pour attirer l'attention */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 107, 107, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+    }
+}
+
+/* Variante avec un badge de notification */
+.chat-button[data-unread]:after {
+    content: attr(data-unread);
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #ff3838;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border: 2px solid white;
+}
 </style>
 </head>
 <body>
