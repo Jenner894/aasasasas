@@ -141,7 +141,7 @@ function setupSocketListeners() {
             }
         } else {
             // Mettre à jour les badges de notification si besoin
-            // (Vous pourriez implémenter cela plus tard)
+            // Vous pourriez implémenter cela plus tard
         }
     });
     
@@ -165,6 +165,32 @@ function setupSocketListeners() {
         }
     });
     
+    // Réception d'une notification (nouveau)
+    socket.on('notification', (data) => {
+        console.log('Notification reçue:', data);
+        
+        // Si c'est une notification de nouveau message
+        if (data.type === 'new_message' && data.sender === 'client') {
+            // Ajouter une notification visuelle ou sonore ici
+            // Par exemple, faire clignoter un bouton ou jouer un son
+            
+            // Si le chat de cette commande est ouvert, rejoindre la salle et charger les messages
+            if (currentDeliveryId === data.orderId) {
+                // Recharger les messages pour voir le nouveau message
+                loadChatMessages(currentDeliveryId);
+            } else {
+                // Ajouter une notification visuelle (par exemple, un badge) sur la ligne de la commande
+                const chatButton = document.querySelector(`.chat-button[data-id="${data.orderId}"]`);
+                if (chatButton) {
+                    // Ajouter une classe pour indiquer un nouveau message
+                    chatButton.classList.add('new-message');
+                    // Ou ajouter un badge avec le nombre de messages non lus
+                    // chatButton.setAttribute('data-unread', '1');
+                }
+            }
+        }
+    });
+    
     // Erreur
     socket.on('error', (error) => {
         console.error('Erreur Socket.io:', error);
@@ -176,6 +202,19 @@ function setupSocketListeners() {
         
         if (chatMessages) {
             chatMessages.appendChild(errorMessage);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    });
+    
+    // Message système (nouveau)
+    socket.on('system_message', (data) => {
+        console.log('Message système reçu:', data);
+        
+        if (chatMessages && currentDeliveryId) {
+            const systemMessage = document.createElement('div');
+            systemMessage.className = 'system-message';
+            systemMessage.textContent = data.message;
+            chatMessages.appendChild(systemMessage);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     });
@@ -648,6 +687,7 @@ function updateDeliveryStatus() {
 
 // Ouverture du chat avec un client
 function openChat(deliveryId, username) {
+    // Conserver l'ID de la commande actuelle
     currentDeliveryId = deliveryId;
     chatCustomerName.textContent = username;
     
@@ -667,23 +707,37 @@ function openChat(deliveryId, username) {
     overlay.classList.add('active');
     chatModal.classList.add('active');
     
-    // Si socket.io est connecté, rejoindre la salle de chat
+    // Si la connexion Socket.io est établie
     if (socket && socket.connected) {
+        console.log(`Rejoindre la salle de chat pour la commande: ${deliveryId}`);
+        
+        // Quitter d'abord toutes les salles spécifiques aux commandes
+        socket.emit('leave_all_rooms');
+        
+        // Puis rejoindre la salle de chat pour cette commande
         socket.emit('join_order_chat', { orderId: deliveryId });
-    }
-    
-    // Charger les messages réels du chat
-    loadChatMessages(deliveryId);
-    
-    // Marquer les messages comme lus
-    if (socket && socket.connected) {
+        
+        // Marquer les messages comme lus
         markMessagesAsRead();
+    } else {
+        console.warn('Socket.io non connecté! Les messages en temps réel ne fonctionneront pas.');
     }
+    
+    // Charger les messages du chat
+    loadChatMessages(deliveryId);
     
     // Focus sur le champ d'entrée
     setTimeout(() => {
         chatInputField.focus();
     }, 300);
+    
+    // Si l'interface a un bouton de notification pour cette commande, supprimer la notification
+    const chatButton = document.querySelector(`.chat-button[data-id="${deliveryId}"]`);
+    if (chatButton) {
+        chatButton.classList.remove('new-message');
+        // Ou réinitialiser le compteur de messages non lus
+        // chatButton.removeAttribute('data-unread');
+    }
 }
 
 // Chargement des messages de chat (version réelle)
