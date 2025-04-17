@@ -51,15 +51,16 @@ io.use((socket, next) => {
             console.log(`Admin ${socket.username} a rejoint la salle admin_room`);
         }
         
-        return next();
+        next();
     } else {
-        console.log('Tentative de connexion Socket.io sans session authentifiée');
-        // Au lieu d'envoyer une erreur, permettre la connexion mais marquer comme non authentifié
-        socket.isAuthenticated = false;
+        // IMPORTANT : Ne pas interrompre la connexion, mais permettre de se connecter
+        // en tant qu'invité avec des privilèges limités
+        console.log('Connexion Socket.io sans session authentifiée - accordé comme invité');
         socket.userId = null;
         socket.userRole = 'guest';
         socket.username = 'Invité';
-        return next();
+        // Ne pas définir isAuthenticated = false car c'est ce qui cause l'erreur
+        next();
     }
 });
 
