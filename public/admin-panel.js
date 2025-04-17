@@ -299,18 +299,7 @@ function initializeSocketIO() {
         // Confirmation d'envoi de message
 socket.on('message_sent', (data) => {
     console.log('Message envoyé avec succès:', data);
-    
-    // Mettre à jour l'interface avec le message envoyé
-    if (data.messageData && chatMessages) {
-        // Utiliser le message confirmé depuis le serveur
-        const messageData = data.messageData;
-        
-        // Vérifier si c'est pour la conversation actuelle
-        if (currentDeliveryId === messageData.orderId) {
-            addChatMessage(messageData.sender, messageData.content, new Date(messageData.timestamp));
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-    }
+
 });
         
         // Erreur
