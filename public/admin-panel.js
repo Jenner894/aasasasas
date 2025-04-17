@@ -165,6 +165,8 @@ function joinChatRoom(deliveryId) {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 }
+
+// Correction de la fonction d'initialisation Socket.io pour admin-panel.js
 function initializeSocketIO() {
     // Vérification si Socket.io est déjà initialisé
     if (socket && socket.connected) {
@@ -215,32 +217,32 @@ function initializeSocketIO() {
         });
         
         // Réception d'un nouveau message
-      socket.on('new_message', (message) => {
-    console.log('Nouveau message reçu:', message);
-    
-    // Si le message est pour la commande actuellement ouverte
-    if (currentDeliveryId === message.orderId) {
-        // Vérifier si le message a un expéditeur valide
-        if (message.sender === 'client' || message.sender === 'livreur') {
-            // Ajouter le message au chat avec l'expéditeur correct
-            addChatMessage(message.sender, message.content, new Date(message.timestamp));
+        socket.on('new_message', (message) => {
+            console.log('Nouveau message reçu:', message);
             
-            // Faire défiler vers le bas
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            // Marquer les messages comme lus uniquement si c'est un message client
-            if (message.sender === 'client') {
-                socket.emit('mark_read', { orderId: currentDeliveryId });
+            // Si le message est pour la commande actuellement ouverte
+            if (currentDeliveryId === message.orderId) {
+                // Vérifier si le message a un expéditeur valide
+                if (message.sender === 'client' || message.sender === 'livreur') {
+                    // Ajouter le message au chat avec l'expéditeur correct
+                    addChatMessage(message.sender, message.content, new Date(message.timestamp));
+                    
+                    // Faire défiler vers le bas
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    
+                    // Marquer les messages comme lus uniquement si c'est un message client
+                    if (message.sender === 'client') {
+                        socket.emit('mark_read', { orderId: currentDeliveryId });
+                    }
+                }
+            } else {
+                // Ajouter une notification visuelle pour cette commande
+                const chatButton = document.querySelector(`.chat-button[data-id="${message.orderId}"]`);
+                if (chatButton) {
+                    chatButton.classList.add('new-message');
+                }
             }
-        }
-    } else {
-        // Ajouter une notification visuelle pour cette commande
-        const chatButton = document.querySelector(`.chat-button[data-id="${message.orderId}"]`);
-        if (chatButton) {
-            chatButton.classList.add('new-message');
-        }
-    }
-});
+        });
         
         // Notification d'utilisateur en train d'écrire
         socket.on('user_typing', (data) => {
@@ -297,10 +299,9 @@ function initializeSocketIO() {
         });
         
         // Confirmation d'envoi de message
-socket.on('message_sent', (data) => {
-    console.log('Message envoyé avec succès:', data);
-
-});
+        socket.on('message_sent', (data) => {
+            console.log('Message envoyé avec succès:', data);
+        });
         
         // Erreur
         socket.on('error', (error) => {
@@ -1044,31 +1045,69 @@ function sendChatMessage() {
     // Arrêter l'indicateur de frappe
     handleTyping(false);
     
+    // Créer un message temporaire "en cours d'envoi"
+    const now = new Date();
+    const tempMessage = document.createElement('div');
+    tempMessage.className = 'message message-admin message-pending fade-in';
+    
+    const senderDiv = document.createElement('div');
+    senderDiv.className = 'message-sender';
+    senderDiv.textContent = 'Livreur';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.textContent = messageText;
+    
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'message-time';
+    timeDiv.textContent = formatMessageTime(now) + ' (envoi en cours...)';
+    
+    tempMessage.appendChild(senderDiv);
+    tempMessage.appendChild(contentDiv);
+    tempMessage.appendChild(timeDiv);
+    
+    chatMessages.appendChild(tempMessage);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
     // Si connecté via Socket.io, envoyer le message par ce canal
     if (socket && socket.connected) {
         console.log(`Envoi de message via Socket.io pour la commande ${currentDeliveryId}`);
         
-        // Envoyer le message via Socket.io avec indication explicite que c'est un message de l'admin
+        // Envoyer le message via Socket.io
         socket.emit('send_message', {
             orderId: currentDeliveryId,
-            content: messageText,
-            // On ne définit pas sender ici car c'est le serveur qui le déterminera
-            // en fonction du rôle de l'utilisateur dans sa session
+            content: messageText
         });
         
-        // Faire défiler vers le bas après envoi du message
-        setTimeout(() => {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }, 100);
+        let messageConfirmed = false;
         
-        // Réactiver le bouton après un court délai
-        setTimeout(() => {
+        // Écouter la confirmation - une seule fois
+        socket.once('message_sent', (data) => {
+            console.log("Message confirmé par le serveur:", data);
+            messageConfirmed = true;
+            
+            // Mettre à jour le message temporaire
+            tempMessage.classList.remove('message-pending');
+            timeDiv.textContent = formatMessageTime(now);
+            
+            // Réactiver le bouton d'envoi
             sendChatMessageBtn.disabled = false;
-        }, 300);
+        });
+        
+        // Définir un timeout pour fallback vers API REST si pas de confirmation
+        setTimeout(() => {
+            if (!messageConfirmed) {
+                console.warn("Pas de confirmation Socket.io, utilisation de l'API REST");
+                sendViaREST();
+            }
+        }, 2000);
     } else {
         console.warn('Socket.io non connecté, utilisation de l\'API REST');
-        
-        // Fallback: utiliser l'API HTTP classique
+        sendViaREST();
+    }
+    
+    // Fonction pour envoyer via l'API REST
+    function sendViaREST() {
+        // Appel à l'API HTTP classique
         fetch(`/api/orders/${currentDeliveryId}/chat/livreur`, {
             method: 'POST',
             headers: {
@@ -1087,6 +1126,10 @@ function sendChatMessage() {
             if (!data.success) {
                 console.error('Erreur lors de l\'envoi du message:', data.message);
                 
+                // Mettre à jour le message temporaire comme erreur
+                tempMessage.classList.add('error');
+                timeDiv.textContent = formatMessageTime(now) + ' (échec)';
+                
                 // Afficher un message d'erreur
                 const errorNotification = document.createElement('div');
                 errorNotification.className = 'notification error';
@@ -1098,16 +1141,19 @@ function sendChatMessage() {
                     errorNotification.remove();
                 }, 3000);
             } else {
-                // Ajouter le message à l'interface seulement en cas de succès
-                // S'assurer que le message est ajouté en tant que 'livreur' et non 'client'
-                addChatMessage('livreur', messageText, new Date());
+                // Mettre à jour le message temporaire
+                tempMessage.classList.remove('message-pending');
+                timeDiv.textContent = formatMessageTime(now);
                 
-                // Faire défiler vers le bas
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                console.log('Message envoyé avec succès via API REST');
             }
         })
         .catch(error => {
             console.error('Erreur lors de l\'envoi du message:', error);
+            
+            // Mettre à jour le message temporaire comme erreur
+            tempMessage.classList.add('error');
+            timeDiv.textContent = formatMessageTime(now) + ' (échec)';
             
             // Afficher un message d'erreur
             const errorNotification = document.createElement('div');
@@ -1127,7 +1173,6 @@ function sendChatMessage() {
     }
 }
 
-// Ajout d'un message au chat
 // Ajout d'un message au chat
 function addChatMessage(sender, content, timestamp) {
     const messageDiv = document.createElement('div');
@@ -1157,13 +1202,9 @@ function addChatMessage(sender, content, timestamp) {
     }
     
     chatMessages.appendChild(messageDiv);
-}
-// Formatage de l'heure pour les messages
-function formatMessageTime(timestamp) {
-    return timestamp.toLocaleTimeString('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    
+    // Faire défiler vers le bas
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 // Fonction utilitaire pour formater les dates
