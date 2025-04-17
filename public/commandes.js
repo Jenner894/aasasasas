@@ -493,11 +493,11 @@ function addMessageToChat(messageData) {
         messageElement.className = 'system-message fade-in';
         messageElement.textContent = messageData.content;
     } else {
-        // Message utilisateur ou livreur
+        // CORRECTION: Utilisez "message-user" pour les messages du client et "message-other" pour ceux du livreur
         messageElement = document.createElement('div');
-        messageElement.className = `message message-${messageData.sender === 'client' ? 'user' : 'other'} fade-in`;
+        messageElement.className = messageData.sender === 'client' ? 'message message-user fade-in' : 'message message-other fade-in';
         
-        // Ajouter l'expéditeur pour les messages du livreur
+        // Ajouter l'expéditeur UNIQUEMENT pour les messages du livreur
         if (messageData.sender === 'livreur') {
             const senderDiv = document.createElement('div');
             senderDiv.className = 'message-sender';
@@ -537,7 +537,6 @@ function addMessageToChat(messageData) {
         });
     }
     
-    
     // Ajouter un effet de highlight temporaire pour le nouveau message
     setTimeout(() => {
         messageElement.classList.add('highlight');
@@ -546,6 +545,94 @@ function addMessageToChat(messageData) {
         }, 1000);
     }, 100);
 }
+function addChatStyles() {
+    // S'assurer que les styles n'ont pas déjà été ajoutés
+    if (document.getElementById('chat-custom-styles')) return;
+    
+    const styles = document.createElement('style');
+    styles.id = 'chat-custom-styles';
+    styles.textContent = `
+        /* Style des bulles de message pour l'utilisateur (client) */
+        .message.message-user {
+            align-self: flex-end;
+            background-color: #DCF8C6;
+            border-radius: 15px 15px 0 15px;
+            margin-left: auto;
+            margin-right: 10px;
+            max-width: 80%;
+            padding: 10px 15px;
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        /* Style des bulles de message pour le livreur */
+        .message.message-other {
+            align-self: flex-start;
+            background-color: #F2F2F2;
+            border-radius: 15px 15px 15px 0;
+            margin-right: auto;
+            margin-left: 10px;
+            max-width: 80%;
+            padding: 10px 15px;
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        /* Conteneur des messages */
+        #chat-messages {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            height: 100%;
+            padding: 15px;
+        }
+        
+        /* Style pour l'expéditeur */
+        .message-sender {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        /* Style pour le contenu du message */
+        .message-content {
+            word-wrap: break-word;
+            font-size: 1em;
+        }
+        
+        /* Style pour l'horodatage */
+        .message-time {
+            font-size: 0.75em;
+            color: #999;
+            text-align: right;
+            margin-top: 5px;
+        }
+        
+        /* Messages temporaires/en cours d'envoi */
+        .message.message-pending {
+            opacity: 0.7;
+        }
+        
+        /* Messages avec erreur */
+        .message.message-error {
+            border-left: 3px solid #e74c3c;
+        }
+        
+        /* Animation de mise en évidence */
+        .message.highlight {
+            animation: message-highlight 1s ease;
+        }
+        
+        @keyframes message-highlight {
+            0% { background-color: rgba(255, 255, 0, 0.3); }
+            100% { background-color: inherit; }
+        }
+    `;
+    
+    document.head.appendChild(styles);
+}
+
 // Fonction pour mettre à jour le badge de messages non lus
 function updateUnreadBadge(orderId) {
     console.log(`Mise à jour des badges pour la commande: ${orderId}`);
@@ -1584,15 +1671,25 @@ function handleSendMessage() {
     }
     
     const now = new Date();
-    const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const timeString = formatMessageTime(now);
     const dateString = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
     
+    // CORRECTION: Utiliser message-user sans ajouter d'élément de nom d'expéditeur
     const tempMessageElement = document.createElement('div');
     tempMessageElement.className = 'message message-user message-pending';
-    tempMessageElement.innerHTML = `
-        <div class="message-content">${messageText}</div>
-        <div class="message-time">${dateString}, ${timeString} (envoi en cours...)</div>
-    `;
+    
+    // N'ajoutez PAS de div pour le nom de l'expéditeur pour les messages utilisateur
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.textContent = messageText;
+    
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'message-time';
+    timeDiv.textContent = `${dateString}, ${timeString} (envoi en cours...)`;
+    
+    tempMessageElement.appendChild(contentDiv);
+    tempMessageElement.appendChild(timeDiv);
     
     chatMessages.appendChild(tempMessageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -1623,7 +1720,7 @@ function handleSendMessage() {
             
             // Remplacer le message temporaire par un message confirmé
             tempMessageElement.classList.remove('message-pending');
-            tempMessageElement.querySelector('.message-time').textContent = `${dateString}, ${timeString}`;
+            timeDiv.textContent = `${dateString}, ${timeString}`;
             
             // Réactiver le bouton d'envoi
             if (sendButton) {
@@ -1673,7 +1770,7 @@ function handleSendMessage() {
             if (data.success) {
                 // Mettre à jour le message temporaire
                 tempMessageElement.classList.remove('message-pending');
-                tempMessageElement.querySelector('.message-time').textContent = `${dateString}, ${timeString}`;
+                timeDiv.textContent = `${dateString}, ${timeString}`;
                 
                 // Stocker l'ID MongoDB si disponible
                 if (data.message && data.message.orderId && !orderIdElement.dataset.mongoId) {
@@ -1687,7 +1784,7 @@ function handleSendMessage() {
             } else {
                 // Marquer le message comme échoué
                 tempMessageElement.classList.add('message-error');
-                tempMessageElement.querySelector('.message-time').textContent = 
+                timeDiv.textContent = 
                     `${dateString}, ${timeString} (échec de l'envoi: ${data.message || 'Erreur inconnue'})`;
                 
                 // Afficher une notification d'erreur
@@ -1699,7 +1796,7 @@ function handleSendMessage() {
             
             // Marquer le message comme échoué
             tempMessageElement.classList.add('message-error');
-            tempMessageElement.querySelector('.message-time').textContent = 
+            timeDiv.textContent = 
                 `${dateString}, ${timeString} (échec de l'envoi)`;
             
             // Afficher une notification d'erreur
@@ -1889,7 +1986,7 @@ function displayChatMessages(messages) {
     messages.forEach(message => {
         // Formater la date
         const messageDate = new Date(message.timestamp);
-        const timeString = messageDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        const timeString = formatMessageTime(messageDate);
         const dateString = messageDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
         
         // Créer l'élément HTML pour le message
@@ -1901,11 +1998,11 @@ function displayChatMessages(messages) {
             messageElement.className = 'system-message';
             messageElement.textContent = message.content;
         } else {
-            // Message utilisateur ou livreur
+            // CORRECTION: Utilisez "message-user" pour les messages du client et "message-other" pour ceux du livreur
             messageElement = document.createElement('div');
-            messageElement.className = `message message-${message.sender === 'client' ? 'user' : 'other'}`;
+            messageElement.className = message.sender === 'client' ? 'message message-user' : 'message message-other';
             
-            // Ajouter l'expéditeur pour les messages du livreur
+            // Ajouter l'expéditeur UNIQUEMENT pour les messages du livreur
             if (message.sender === 'livreur') {
                 const senderDiv = document.createElement('div');
                 senderDiv.className = 'message-sender';
@@ -2176,7 +2273,6 @@ function formatMessageTime(date) {
         minute: '2-digit'
     });
 }
-
 function addChatMessage(sender, content, timestamp) {
     const chatMessages = document.getElementById('chat-messages');
     if (!chatMessages) return;
@@ -2197,22 +2293,27 @@ function addChatMessage(sender, content, timestamp) {
         messageDiv.className = 'system-message fade-in';
         messageDiv.textContent = content;
     } else {
-        // Distinction claire entre les messages du livreur (admin) et du client
-        messageDiv.className = sender === 'livreur' ? 'message message-admin fade-in' : 'message message-customer fade-in';
+        // CORRECTION: Utilisez "message-user" pour les messages du client et "message-other" pour ceux du livreur
+        messageDiv.className = sender === 'client' ? 'message message-user fade-in' : 'message message-other fade-in';
         
-        const senderDiv = document.createElement('div');
-        senderDiv.className = 'message-sender';
-        senderDiv.textContent = sender === 'livreur' ? 'Livreur' : 'Client';
+        // Ajouter l'expéditeur UNIQUEMENT pour les messages du livreur
+        if (sender === 'livreur') {
+            const senderDiv = document.createElement('div');
+            senderDiv.className = 'message-sender';
+            senderDiv.textContent = 'Livreur';
+            messageDiv.appendChild(senderDiv);
+        }
         
+        // Ajouter le contenu du message
         const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
         contentDiv.textContent = content;
+        messageDiv.appendChild(contentDiv);
         
+        // Ajouter l'horodatage
         const timeDiv = document.createElement('div');
         timeDiv.className = 'message-time';
         timeDiv.textContent = `${dateString}, ${timeString}`;
-        
-        messageDiv.appendChild(senderDiv);
-        messageDiv.appendChild(contentDiv);
         messageDiv.appendChild(timeDiv);
     }
     
@@ -2230,6 +2331,7 @@ function addChatMessage(sender, content, timestamp) {
         }, 1000);
     }, 100);
 }
+
 function loadChatMessages(orderId) {
     const chatMessages = document.getElementById('chat-messages');
     if (!chatMessages) return;
@@ -2823,6 +2925,9 @@ function initChatModal() {
                     <div class="chat-messages" id="chat-messages">
                         <div class="loading-indicator">Chargement des messages...</div>
                     </div>
+                    <div id="typing-indicator" style="display:none;" class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
                     <div class="chat-input">
                         <input type="text" placeholder="Tapez votre message..." id="chat-input-text">
                         <button id="send-message">➤</button>
@@ -2851,6 +2956,9 @@ function initChatModal() {
     
     // Attacher immédiatement les gestionnaires d'événements pour l'envoi
     attachChatSendEventHandlers();
+    
+    // Ajouter les styles personnalisés pour les bulles de chat
+    addChatStyles();
     
     console.log("Modal de chat initialisé");
     return chatModal;
