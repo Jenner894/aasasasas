@@ -160,11 +160,16 @@ io.on('connection', (socket) => {
     
     // Traiter un nouveau message
 socket.on('send_message', async (data) => {
-        console.log('Rôle de l\'utilisateur qui envoie le message:', socket.userRole);
-    console.log('Expéditeur déterminé:', socket.userRole === 'admin' ? 'livreur' : 'client');
+    // Log détaillé pour le débogage
+    console.log('===== DÉBUT TRAITEMENT SEND_MESSAGE =====');
+    console.log('Données reçues:', data);
+    console.log('Rôle de l\'utilisateur:', socket.userRole);
+    console.log('ID utilisateur:', socket.userId);
+    console.log('Nom utilisateur:', socket.username);
     
     if (!data.orderId || !data.content) {
         socket.emit('error', { message: 'Données incomplètes' });
+        console.log('ERREUR: Données incomplètes');
         return;
     }
     
@@ -173,38 +178,44 @@ socket.on('send_message', async (data) => {
         let order = await Order.findById(data.orderId);
         if (!order) {
             socket.emit('error', { message: 'Commande non trouvée' });
+            console.log('ERREUR: Commande non trouvée:', data.orderId);
             return;
         }
         
-        // Déterminer le type d'expéditeur en fonction du rôle
-        // Ajoutez des logs pour déboguer
-        console.log("Rôle de l'utilisateur:", socket.userRole);
+        // CORRECTION IMPORTANTE : Détermination explicite du type d'expéditeur
+        let senderType;
         
-        // Forcer l'expéditeur à être "livreur" si l'utilisateur est admin
-        let senderType = 'client'; // Valeur par défaut
+        // Admin/livreur: on force le type à "livreur" pour l'admin
         if (socket.userRole === 'admin') {
             senderType = 'livreur';
-            console.log("Expéditeur forcé à 'livreur' car admin");
+            console.log('Expéditeur défini explicitement comme "livreur" car l\'utilisateur est un admin');
         }
+        // Client: on force le type à "client" pour les non-admin
+        else {
+            senderType = 'client';
+            console.log('Expéditeur défini explicitement comme "client" car l\'utilisateur n\'est pas un admin');
+        }
+        
         // Trouver ou créer la conversation
         let conversation = await Conversation.findOne({ orderId: order._id });
         if (!conversation) {
+            console.log('Création d\'une nouvelle conversation pour la commande:', order._id);
             conversation = new Conversation({
                 orderId: order._id,
                 participants: {
-                    user: senderType === 'client' ? socket.userId : order.user,
-                    deliveryPerson: senderType === 'livreur' ? socket.userId : null
+                    user: order.user,
+                    deliveryPerson: socket.userRole === 'admin' ? socket.userId : null
                 },
                 lastMessageAt: new Date()
             });
             await conversation.save();
         }
         
-        // Créer le message
+        // Créer le message avec le senderType déterminé ci-dessus
         const newMessage = new Message({
             conversationId: conversation._id,
             orderId: order._id,
-            sender: senderType,
+            sender: senderType, // Utilisation du type d'expéditeur correctement déterminé
             content: data.content.trim(),
             timestamp: new Date(),
             userId: socket.userId,
@@ -213,6 +224,7 @@ socket.on('send_message', async (data) => {
         });
         
         await newMessage.save();
+        console.log('Message enregistré avec succès, sender:', senderType);
         
         // Mettre à jour les compteurs de messages non lus
         if (senderType === 'livreur') {
@@ -230,7 +242,7 @@ socket.on('send_message', async (data) => {
             id: newMessage._id.toString(),
             orderId: order._id.toString(),
             displayId: order.orderNumber || order._id.toString(),
-            sender: senderType,
+            sender: senderType, // Utiliser le senderType déterminé
             content: data.content.trim(),
             timestamp: newMessage.timestamp,
             isRead: false
@@ -239,6 +251,7 @@ socket.on('send_message', async (data) => {
         // Émettre le message à tous les clients dans la salle de commande
         // SAUF à l'émetteur du message pour éviter le double affichage
         socket.to(`order_${order._id}`).emit('new_message', messageData);
+        console.log(`Message émis aux autres clients dans la salle order_${order._id}`);
         
         // Si le message est du client, notifier aussi tous les admins
         if (senderType === 'client') {
@@ -250,9 +263,8 @@ socket.on('send_message', async (data) => {
                 content: data.content.trim(),
                 timestamp: newMessage.timestamp
             });
+            console.log('Notification envoyée aux admins pour un message client');
         }
-        
-        console.log(`Message envoyé dans la salle order_${order._id} par ${senderType}`);
         
         // Confirmer la réception du message
         socket.emit('message_sent', {
@@ -260,6 +272,9 @@ socket.on('send_message', async (data) => {
             messageId: newMessage._id.toString(),
             messageData: messageData  // Renvoyer les données du message à l'émetteur
         });
+        
+        console.log(`Message envoyé avec succès dans la salle order_${order._id} par ${senderType}`);
+        console.log('===== FIN TRAITEMENT SEND_MESSAGE =====');
         
     } catch (error) {
         console.error('Erreur lors de l\'envoi du message via Socket.io:', error);
@@ -1976,65 +1991,6 @@ app.post('/api/orders/delivery', isAuthenticated, async (req, res) => {
         });
     } catch (error) {
         console.error('Erreur lors de la création de la commande avec livraison:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Erreur lors de la création de la commande' 
-        });
-    }
-});
-app.post('/api/orders/simple-delivery', isAuthenticated, async (req, res) => {
-    try {
-        const { 
-            productName,
-            quantity,
-            totalPrice, 
-            deliveryType,
-            deliveryAddress,
-            deliveryTimeSlot
-        } = req.body;
-        
-        // Validation des données basiques
-        if (!productName || !quantity || !totalPrice || !deliveryAddress) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Tous les champs sont requis' 
-            });
-        }
-        
-        // Vérification du créneau horaire pour livraison planifiée
-        if (deliveryType === 'scheduled' && !deliveryTimeSlot) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Créneau horaire requis pour livraison planifiée' 
-            });
-        }
-        
-        // Création de la commande
-        const newOrder = new Order({
-            user: req.session.user.id,
-            productName,
-            quantity,
-            totalPrice,
-            status: 'En attente',
-            delivery: {
-                type: deliveryType || 'instant',
-                address: deliveryAddress,
-                timeSlot: deliveryTimeSlot
-            }
-        });
-        
-        await newOrder.save();
-        
-        // NOUVEAU: Création automatique d'une conversation pour cette commande
-        await createInitialChat(newOrder._id, req.session.user.id);
-        
-        res.status(201).json({ 
-            success: true, 
-            message: 'Commande créée avec succès',
-            order: newOrder 
-        });
-    } catch (error) {
-        console.error('Erreur lors de la création de la commande simple:', error);
         res.status(500).json({ 
             success: false, 
             message: 'Erreur lors de la création de la commande' 
