@@ -215,20 +215,20 @@ function initializeSocketIO() {
         });
         
         // Réception d'un nouveau message
-       socket.on('new_message', (message) => {
+      socket.on('new_message', (message) => {
     console.log('Nouveau message reçu:', message);
     
     // Si le message est pour la commande actuellement ouverte
     if (currentDeliveryId === message.orderId) {
-        // Vérifier si le message a bien le bon expéditeur
+        // Vérifier si le message a un expéditeur valide
         if (message.sender === 'client' || message.sender === 'livreur') {
-            // Ajouter le message au chat avec le bon expéditeur
+            // Ajouter le message au chat avec l'expéditeur correct
             addChatMessage(message.sender, message.content, new Date(message.timestamp));
             
             // Faire défiler vers le bas
             chatMessages.scrollTop = chatMessages.scrollHeight;
             
-            // Marquer le message comme lu si nécessaire (uniquement si c'est un message client)
+            // Marquer les messages comme lus uniquement si c'est un message client
             if (message.sender === 'client') {
                 socket.emit('mark_read', { orderId: currentDeliveryId });
             }
@@ -964,7 +964,6 @@ function openChat(deliveryId, username) {
         // chatButton.removeAttribute('data-unread');
     }
 }
-// Chargement des messages de chat (version réelle)
 function loadChatMessages(deliveryId) {
     // Vider les messages précédents
     chatMessages.innerHTML = '';
@@ -1007,8 +1006,9 @@ function loadChatMessages(deliveryId) {
                 return;
             }
             
-            // Ajouter les messages au chat
+            // Ajouter les messages au chat avec les bons expéditeurs
             data.messages.forEach(msg => {
+                // Ici on s'assure de passer le bon expéditeur à addChatMessage
                 addChatMessage(msg.sender, msg.content, new Date(msg.timestamp));
             });
             
@@ -1020,63 +1020,6 @@ function loadChatMessages(deliveryId) {
             
             // Afficher un message d'erreur
             chatMessages.innerHTML = '';
-            const errorMessage = document.createElement('div');
-            errorMessage.className = 'system-message';
-            errorMessage.textContent = 'Erreur lors du chargement des messages. Veuillez réessayer.';
-            chatMessages.appendChild(errorMessage);
-        });
-}
-
-
-function loadChatMessages(deliveryId) {
-    // Afficher un indicateur de chargement
-    const loadingMessage = document.createElement('div');
-    loadingMessage.className = 'system-message';
-    loadingMessage.textContent = 'Chargement des messages...';
-    chatMessages.appendChild(loadingMessage);
-    
-    // Appel à l'API pour récupérer les messages de chat
-    fetch(`/api/orders/${deliveryId}/chat`)
-        .then(response => response.json())
-        .then(data => {
-            // Supprimer l'indicateur de chargement
-            loadingMessage.remove();
-            
-            if (!data.success) {
-                console.error('Erreur lors du chargement des messages:', data.message);
-                
-                // Afficher un message d'erreur
-                const errorMessage = document.createElement('div');
-                errorMessage.className = 'system-message';
-                errorMessage.textContent = 'Erreur lors du chargement des messages.';
-                chatMessages.appendChild(errorMessage);
-                return;
-            }
-            
-            // Si aucun message n'est trouvé
-            if (data.messages.length === 0) {
-                const noMessagesNotice = document.createElement('div');
-                noMessagesNotice.className = 'system-message';
-                noMessagesNotice.textContent = 'Aucun message dans cette conversation.';
-                chatMessages.appendChild(noMessagesNotice);
-                return;
-            }
-            
-            // Ajouter les messages au chat
-            data.messages.forEach(msg => {
-                addChatMessage(msg.sender, msg.content, new Date(msg.timestamp));
-            });
-            
-            // Faire défiler vers le bas
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        })
-        .catch(error => {
-            console.error('Erreur lors du chargement des messages:', error);
-            
-            // Supprimer l'indicateur de chargement
-            loadingMessage.remove();
-            
-            // Afficher un message d'erreur
             const errorMessage = document.createElement('div');
             errorMessage.className = 'system-message';
             errorMessage.textContent = 'Erreur lors du chargement des messages. Veuillez réessayer.';
@@ -1116,17 +1059,18 @@ function sendChatMessage() {
     if (socket && socket.connected) {
         console.log(`Envoi de message via Socket.io pour la commande ${currentDeliveryId}`);
         
-        // Ajouter le message à l'interface AVANT l'envoi pour éviter le double affichage
-        // car le message reviendra via l'événement 'new_message'
-        addChatMessage('livreur', messageText, new Date());
-        
-        // Faire défiler vers le bas
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        
+        // Envoyer le message via Socket.io
         socket.emit('send_message', {
             orderId: currentDeliveryId,
             content: messageText
         });
+        
+        // Ajouter le message à l'interface APRÈS l'envoi
+        // Spécifier explicitement l'expéditeur comme 'livreur' puisque nous sommes dans le panel admin
+        addChatMessage('livreur', messageText, new Date());
+        
+        // Faire défiler vers le bas
+        chatMessages.scrollTop = chatMessages.scrollHeight;
         
         // Réactiver le bouton après un court délai
         setTimeout(() => {
@@ -1166,6 +1110,7 @@ function sendChatMessage() {
                 }, 3000);
             } else {
                 // Ajouter le message à l'interface seulement en cas de succès
+                // S'assurer que le message est ajouté en tant que 'livreur' et non 'client'
                 addChatMessage('livreur', messageText, new Date());
                 
                 // Faire défiler vers le bas
@@ -1194,6 +1139,7 @@ function sendChatMessage() {
 }
 
 // Ajout d'un message au chat
+// Ajout d'un message au chat
 function addChatMessage(sender, content, timestamp) {
     const messageDiv = document.createElement('div');
     
@@ -1201,6 +1147,8 @@ function addChatMessage(sender, content, timestamp) {
         messageDiv.className = 'system-message fade-in';
         messageDiv.textContent = content;
     } else {
+        // Distinction claire entre les messages du livreur (admin) et du client
+        // Utiliser message-admin pour le livreur et message-customer pour le client
         messageDiv.className = sender === 'livreur' ? 'message message-admin fade-in' : 'message message-customer fade-in';
         
         const senderDiv = document.createElement('div');
@@ -1221,7 +1169,6 @@ function addChatMessage(sender, content, timestamp) {
     
     chatMessages.appendChild(messageDiv);
 }
-
 // Formatage de l'heure pour les messages
 function formatMessageTime(timestamp) {
     return timestamp.toLocaleTimeString('fr-FR', {
