@@ -5,53 +5,28 @@ const http = require('http');
 const axios = require('axios');
 const helmet = require('helmet');
 const cors = require('cors');
-const server = http.createServer(app);
+
 const socketIo = require('socket.io');
 const session = require('express-session');
 const mongoose = require('mongoose');
 
 // Remplacez l'initialisation de Socket.io par ce code
+// Initialisation de Socket.io
 const io = socketIo(server, {
     cors: {
-        origin: '*', // Autorise les connexions de n'importe quelle origine
+        origin: '*',
         methods: ["GET", "POST"],
         credentials: true
     },
-    allowEIO3: true, // Pour assurer la compatibilité
-    pingTimeout: 60000 // Augmenter le timeout pour les connexions lentes
+    allowEIO3: true,
+    pingTimeout: 60000
 });
 
 require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 
 
-// Initialisation de l'authentification pour Socket.io
-io.use((socket, next) => {
-    // Accéder à la session depuis socket.request
-    if (socket.request.session && socket.request.session.user) {
-        // Stocker les infos utilisateur dans l'objet socket
-        socket.userId = socket.request.session.user.id;
-        socket.userRole = socket.request.session.user.role;
-        socket.username = socket.request.session.user.username;
-        
-        console.log(`Socket.io: Utilisateur authentifié - ${socket.username} (${socket.userRole})`);
-        
-        // Si c'est un admin, le faire rejoindre la salle admin
-        if (socket.userRole === 'admin') {
-            socket.join('admin_room');
-            console.log(`Admin ${socket.username} a rejoint la salle admin_room`);
-        }
-        
-        next();
-    } else {
-        // Permettre la connexion en tant qu'invité avec privilèges limités
-        console.log('Connexion Socket.io sans session authentifiée - accordé comme invité');
-        socket.userId = null;
-        socket.userRole = 'guest';
-        socket.username = 'Invité';
-        next();
-    }
-});
+
 
 // Configuration des événements Socket.io
 // Remplacez la section de gestion des événements Socket.io par ce code
@@ -171,8 +146,7 @@ socket.on('send_message', async (data) => {
             return;
         }
         
-        // Détermination explicite du type d'expéditeur basée sur le rôle stocké dans l'objet socket
-        // et non sur la session (qui n'est pas accessible ici de la même manière)
+        // Détermination EXPLICITE du type d'expéditeur basée sur le rôle de l'utilisateur
         let senderType;
         
         if (socket.userRole === 'admin') {
@@ -692,14 +666,41 @@ const sessionMiddleware = session({
 
 // Utilisez ce middleware dans Express
 app.use(sessionMiddleware);
+const server = http.createServer(app);
 
 // Configuration de Socket.io avec le partage de session
-const wrap = middleware => (socket, next) => middleware(socket.request, socket.request.res, next);
+const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
+
 
 // Ajoutez ce middleware à Socket.io
 io.use(wrap(sessionMiddleware));
 
-
+io.use((socket, next) => {
+    // Accéder à la session depuis socket.request
+    if (socket.request.session && socket.request.session.user) {
+        // Stocker les infos utilisateur dans l'objet socket
+        socket.userId = socket.request.session.user.id;
+        socket.userRole = socket.request.session.user.role;
+        socket.username = socket.request.session.user.username;
+        
+        console.log(`Socket.io: Utilisateur authentifié - ${socket.username} (${socket.userRole})`);
+        
+        // Si c'est un admin, le faire rejoindre la salle admin
+        if (socket.userRole === 'admin') {
+            socket.join('admin_room');
+            console.log(`Admin ${socket.username} a rejoint la salle admin_room`);
+        }
+        
+        next();
+    } else {
+        // Permettre la connexion en tant qu'invité avec privilèges limités
+        console.log('Connexion Socket.io sans session authentifiée - accordé comme invité');
+        socket.userId = null;
+        socket.userRole = 'guest';
+        socket.username = 'Invité';
+        next();
+    }
+});
 async function updateDeliveryQueue() {
     try {
         // Récupérer toutes les commandes non livrées et non annulées
