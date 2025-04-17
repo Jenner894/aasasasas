@@ -165,7 +165,17 @@ function joinChatRoom(deliveryId) {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 }
-
+// Fonction utilitaire pour formater l'heure des messages
+function formatMessageTime(date) {
+    if (!(date instanceof Date)) {
+        date = new Date(date);
+    }
+    
+    return date.toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
 // Correction de la fonction d'initialisation Socket.io pour admin-panel.js
 function initializeSocketIO() {
     // Vérification si Socket.io est déjà initialisé
