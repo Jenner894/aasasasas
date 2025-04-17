@@ -356,100 +356,66 @@ function setupSocketEvents() {
 }
 // Fonction pour rejoindre un canal de chat spécifique à une commande
 function joinChatRoom(orderId) {
-    if (!orderId) {
-        console.error('❌ Impossible de rejoindre la salle: ID de commande manquant');
-        return;
-    }
-    
-    if (!socket) {
-        console.error('❌ Socket non initialisé, impossible de rejoindre la salle');
-        // Initialiser Socket.io et réessayer
-        initSocketConnection();
+    if (!window.socket || !window.socket.connected) {
+        console.warn('Socket.io non connecté, initialisation...');
+        initializeSocketConnection();
         
-        // Attendre un peu puis réessayer
+        // Attendre que la connexion soit établie avant de rejoindre
         setTimeout(() => {
-            if (socket) joinChatRoom(orderId);
+            if (window.socket && window.socket.connected) {
+                joinChatRoom(orderId);
+            }
         }, 1000);
+        
         return;
     }
     
-    if (!socket.connected) {
-        console.warn('⚠️ Socket.io non connecté, tentative de reconnexion...');
-        socket.connect();
-        
-        // Attendre la reconnexion avant de rejoindre la salle
-        socket.once('connect', () => {
-            _joinRoom(orderId);
-        });
-    } else {
-        _joinRoom(orderId);
-    }
+    console.log(`Rejoindre la salle de chat pour la commande: ${orderId}`);
     
-    function _joinRoom(id) {
-        // Quitter la salle précédente si nécessaire
-        if (currentChatOrderId) {
-            console.log(`Quitter la salle: order_${currentChatOrderId}`);
-            socket.emit('leave_order_chat', { orderId: currentChatOrderId });
-        }
-        
-        // Rejoindre la nouvelle salle
-        const roomName = `order_${id}`;
-        console.log(`✅ Rejoindre la salle de chat: ${roomName}`);
-        socket.emit('join_order_chat', { orderId: id });
-        currentChatOrderId = id;
-        
-        // Marquer les messages comme lus
-        socket.emit('mark_read', { orderId: id });
-        
-        // Ajouter un indicateur visuel
-        const chatContainer = document.querySelector('.chat-container');
-        if (chatContainer) {
-            // Supprimer tout indicateur existant
-            const existingIndicator = document.querySelector('.socket-status-indicator');
-            if (existingIndicator) existingIndicator.remove();
-            
-            // Créer un nouvel indicateur
-            const indicator = document.createElement('div');
-            indicator.className = 'socket-status-indicator';
-            indicator.innerHTML = '<span class="status-dot"></span> Chat en direct connecté';
-            
-            // Styles pour l'indicateur
-            indicator.style.fontSize = '12px';
-            indicator.style.color = '#4CAF50';
-            indicator.style.display = 'flex';
-            indicator.style.alignItems = 'center';
-            indicator.style.position = 'absolute';
-            indicator.style.top = '10px';
-            indicator.style.right = '40px';
-            
-            const dot = indicator.querySelector('.status-dot');
-            dot.style.width = '8px';
-            dot.style.height = '8px';
-            dot.style.backgroundColor = '#4CAF50';
-            dot.style.borderRadius = '50%';
-            dot.style.marginRight = '5px';
-            dot.style.animation = 'pulse 2s infinite';
-            
-            // Ajouter une règle CSS pour l'animation
-            if (!document.getElementById('socket-indicator-style')) {
-                const style = document.createElement('style');
-                style.id = 'socket-indicator-style';
-                style.textContent = `
-                    @keyframes pulse {
-                        0% { opacity: 0.6; }
-                        50% { opacity: 1; }
-                        100% { opacity: 0.6; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-            
-            // Ajouter l'indicateur au conteneur de chat
-            chatContainer.appendChild(indicator);
-        }
+    // Quitter d'abord toutes les salles
+    window.socket.emit('leave_all_rooms');
+    
+    // Rejoindre la nouvelle salle
+    window.socket.emit('join_order_chat', { orderId: orderId });
+    
+    // Marquer les messages comme lus
+    window.socket.emit('mark_read', { orderId: orderId });
+    
+    // Afficher un message de connexion
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+        const connectionMessage = document.createElement('div');
+        connectionMessage.className = 'system-message';
+        connectionMessage.textContent = 'Connecté à la conversation en temps réel';
+        chatMessages.appendChild(connectionMessage);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 }
+function initChat() {
+    // Initialiser la connexion Socket.io
+    initializeSocketConnection();
+    
+    // Créer et configurer l'indicateur de frappe
+    createTypingIndicator();
+    
+    // Configurer les événements du chat
+    setupChatEvents();
+    
+    // Ajouter la fonction formatMessageTime si elle n'existe pas
+    if (typeof window.formatMessageTime !== 'function') {
+        window.formatMessageTime = formatMessageTime;
+    }
+    
+    console.log('Système de chat initialisé avec succès');
+}
 
+// Exécuter l'initialisation au chargement de la page
+document.addEventListener('DOMContentLoaded', initChat);
+
+// Si le document est déjà chargé, initialiser maintenant
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    initChat();
+}
 function updateBadgeForButton(button, count) {
     // S'assurer que le bouton a une position relative pour le positionnement absolu du badge
     button.style.position = 'relative';
@@ -1968,98 +1934,466 @@ function displayChatMessages(messages) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 function sendChatMessage() {
-    const inputField = document.getElementById('chat-input-text');
-    if (!inputField) return;
+    const inputField = document.getElementById('chat-input-field');
+    const chatMessages = document.getElementById('chat-messages');
+    const sendButton = document.getElementById('send-chat-message');
+    
+    if (!inputField || !chatMessages) return;
     
     const messageText = inputField.value.trim();
     if (!messageText) return;
     
+    // Désactiver temporairement le bouton d'envoi
+    if (sendButton) sendButton.disabled = true;
+    
     // Récupérer l'ID de la commande
-    const orderIdElement = document.getElementById('chat-order-id');
-    if (!orderIdElement) return;
+    const chatOrderId = document.getElementById('chat-order-id');
+    if (!chatOrderId) return;
     
-    // Récupérer l'ID visible (BD*) et l'ID MongoDB
-    const visibleOrderId = orderIdElement.textContent;
-    const mongoId = orderIdElement.dataset.mongoId;
+    const orderId = chatOrderId.dataset.mongoId || chatOrderId.textContent;
     
-    console.log("Envoi du message pour la commande:", visibleOrderId);
-    console.log("ID MongoDB:", mongoId);
-    
-    // Utiliser l'ID MongoDB s'il existe, sinon utiliser l'ID visible
-    let idToUse = mongoId || visibleOrderId;
-    
-    console.log("ID utilisé pour l'envoi:", idToUse);
-    
-    // Effacer le champ de saisie immédiatement
+    // Vider le champ de saisie
     inputField.value = '';
     
-    // Afficher un message temporaire (optimistic UI)
+    // Créer un message temporaire "en cours d'envoi"
+    const now = new Date();
+    const dateString = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    const timeString = formatMessageTime(now);
+    
+    const tempMessage = document.createElement('div');
+    tempMessage.className = 'message message-customer message-pending fade-in';
+    
+    const senderDiv = document.createElement('div');
+    senderDiv.className = 'message-sender';
+    senderDiv.textContent = 'Client';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.textContent = messageText;
+    
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'message-time';
+    timeDiv.textContent = `${dateString}, ${timeString} (envoi en cours...)`;
+    
+    tempMessage.appendChild(senderDiv);
+    tempMessage.appendChild(contentDiv);
+    tempMessage.appendChild(timeDiv);
+    
+    chatMessages.appendChild(tempMessage);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Fonction pour envoyer via Socket.io
+    function sendViaSocket() {
+        if (window.socket && window.socket.connected) {
+            window.socket.emit('send_message', {
+                orderId: orderId,
+                content: messageText
+            });
+            
+            // Écouter la confirmation - une seule fois
+            window.socket.once('message_sent', (data) => {
+                // Mettre à jour le message temporaire
+                tempMessage.classList.remove('message-pending');
+                timeDiv.textContent = `${dateString}, ${timeString}`;
+                
+                // Réactiver le bouton d'envoi
+                if (sendButton) sendButton.disabled = false;
+            });
+            
+            // Définir un timeout pour fallback vers API REST si pas de confirmation
+            setTimeout(() => {
+                if (tempMessage.classList.contains('message-pending')) {
+                    console.warn("Pas de confirmation Socket.io, fallback API REST");
+                    sendViaRest();
+                }
+            }, 3000);
+            
+            return true;
+        }
+        return false;
+    }
+    
+    // Fonction pour envoyer via API REST
+    function sendViaRest() {
+        fetch(`/api/orders/${orderId}/chat/client`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: messageText }),
+            credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mettre à jour le message temporaire
+                tempMessage.classList.remove('message-pending');
+                timeDiv.textContent = `${dateString}, ${timeString}`;
+                
+                // Stocker l'ID MongoDB si disponible
+                if (data.message && data.message.orderId) {
+                    chatOrderId.dataset.mongoId = data.message.orderId;
+                }
+            } else {
+                // Erreur
+                tempMessage.classList.add('error');
+                timeDiv.textContent = `${dateString}, ${timeString} (échec: ${data.message || 'Erreur'})`;
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de l\'envoi du message:', error);
+            tempMessage.classList.add('error');
+            timeDiv.textContent = `${dateString}, ${timeString} (échec de connexion)`;
+        })
+        .finally(() => {
+            // Réactiver le bouton d'envoi
+            if (sendButton) sendButton.disabled = false;
+        });
+    }
+    
+    // Essayer d'abord via Socket.io, sinon utiliser l'API REST
+    if (!sendViaSocket()) {
+        sendViaRest();
+    }
+}
+function createTypingIndicator() {
+    // Vérifier si l'indicateur existe déjà
+    if (document.getElementById('typing-indicator')) return;
+    
     const chatMessages = document.getElementById('chat-messages');
     if (!chatMessages) return;
     
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const dateString = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    const typingIndicator = document.createElement('div');
+    typingIndicator.className = 'typing-indicator fade-in';
+    typingIndicator.innerHTML = '<span></span><span></span><span></span>';
+    typingIndicator.id = 'typing-indicator';
+    typingIndicator.style.display = 'none';
     
-    const tempMessageElement = document.createElement('div');
-    tempMessageElement.className = 'message message-user message-pending';
-    tempMessageElement.innerHTML = `
-        <div class="message-content">${messageText}</div>
-        <div class="message-time">${dateString}, ${timeString} (envoi en cours...)</div>
-    `;
+    chatMessages.appendChild(typingIndicator);
     
-    chatMessages.appendChild(tempMessageElement);
+    // Ajouter les styles CSS pour l'animation
+    if (!document.getElementById('typing-indicator-style')) {
+        const style = document.createElement('style');
+        style.id = 'typing-indicator-style';
+        style.textContent = `
+            .typing-indicator {
+                display: flex;
+                padding: 8px;
+                width: 70px;
+                background-color: #f0f0f0;
+                border-radius: 15px;
+                margin: 10px 0;
+            }
+            
+            .typing-indicator span {
+                height: 8px;
+                width: 8px;
+                background-color: #606060;
+                border-radius: 50%;
+                margin: 0 3px;
+                display: inline-block;
+                animation: typing-bounce 1.4s infinite ease-in-out both;
+            }
+            
+            .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+            .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+            .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+            
+            @keyframes typing-bounce {
+                0%, 80%, 100% { transform: scale(0); }
+                40% { transform: scale(1); }
+            }
+            
+            .fade-in {
+                animation: fadeIn 0.3s ease-in-out;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// Fonction pour gérer la saisie (notification "en train d'écrire")
+function handleTyping(isTyping) {
+    if (!window.socket || !window.socket.connected) return;
+    
+    const chatOrderId = document.getElementById('chat-order-id');
+    if (!chatOrderId) return;
+    
+    const orderId = chatOrderId.dataset.mongoId || chatOrderId.textContent;
+    
+    // Envoyer l'état de frappe au serveur
+    window.socket.emit('typing', {
+        orderId: orderId,
+        typing: isTyping
+    });
+}
+function setupChatEvents() {
+    // S'assurer que l'indicateur de frappe est créé
+    createTypingIndicator();
+    
+    // Attachement des événements pour l'input du chat
+    const chatInputField = document.getElementById('chat-input-field');
+    if (chatInputField) {
+        // Supprimer les événements existants
+        const newInput = chatInputField.cloneNode(true);
+        chatInputField.parentNode.replaceChild(newInput, chatInputField);
+        
+        // Attacher les nouveaux événements
+        newInput.addEventListener('input', () => handleTyping(true));
+        newInput.addEventListener('blur', () => handleTyping(false));
+        newInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendChatMessage();
+                handleTyping(false);
+            }
+        });
+    }
+    
+    // Attachement des événements pour le bouton d'envoi
+    const sendChatMessageBtn = document.getElementById('send-chat-message');
+    if (sendChatMessageBtn) {
+        // Supprimer les événements existants
+        const newButton = sendChatMessageBtn.cloneNode(true);
+        sendChatMessageBtn.parentNode.replaceChild(newButton, sendChatMessageBtn);
+        
+        // Attacher le nouvel événement
+        newButton.addEventListener('click', () => {
+            sendChatMessage();
+            handleTyping(false);
+        });
+    }
+}
+function formatMessageTime(date) {
+    if (!(date instanceof Date)) {
+        date = new Date(date);
+    }
+    
+    return date.toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function addChatMessage(sender, content, timestamp) {
+    const chatMessages = document.getElementById('chat-messages');
+    if (!chatMessages) return;
+    
+    // Formater la date
+    const messageDate = new Date(timestamp);
+    const timeString = formatMessageTime(messageDate);
+    const dateString = messageDate.toLocaleDateString('fr-FR', { 
+        day: 'numeric', 
+        month: 'long' 
+    });
+    
+    // Créer l'élément du message
+    const messageDiv = document.createElement('div');
+    
+    if (sender === 'system') {
+        // Message système
+        messageDiv.className = 'system-message fade-in';
+        messageDiv.textContent = content;
+    } else {
+        // Distinction claire entre les messages du livreur (admin) et du client
+        messageDiv.className = sender === 'livreur' ? 'message message-admin fade-in' : 'message message-customer fade-in';
+        
+        const senderDiv = document.createElement('div');
+        senderDiv.className = 'message-sender';
+        senderDiv.textContent = sender === 'livreur' ? 'Livreur' : 'Client';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.textContent = content;
+        
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'message-time';
+        timeDiv.textContent = `${dateString}, ${timeString}`;
+        
+        messageDiv.appendChild(senderDiv);
+        messageDiv.appendChild(contentDiv);
+        messageDiv.appendChild(timeDiv);
+    }
+    
+    // Ajouter le message au chat
+    chatMessages.appendChild(messageDiv);
+    
+    // Faire défiler vers le bas
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
-    // Préparer les données du message
-    const messageData = {
-        content: messageText
-    };
+    // Ajouter une animation de mise en évidence
+    setTimeout(() => {
+        messageDiv.classList.add('highlight');
+        setTimeout(() => {
+            messageDiv.classList.remove('highlight');
+        }, 1000);
+    }, 100);
+}
+function loadChatMessages(orderId) {
+    const chatMessages = document.getElementById('chat-messages');
+    if (!chatMessages) return;
     
-    // Envoyer le message
-    fetch(`/api/orders/${idToUse}/chat/client`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(messageData),
-        credentials: 'include'
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log("Réponse de l'API après envoi:", data);
-        
-        if (data.success) {
-            // Supprimer le message temporaire
-            tempMessageElement.remove();
-            
-            // Recharger tous les messages pour s'assurer qu'ils sont à jour
-            loadChatHistory(visibleOrderId);
-            
-            // Stocker l'ID MongoDB si disponible
-            if (data.message && data.message.orderId && !orderIdElement.dataset.mongoId) {
-                orderIdElement.dataset.mongoId = data.message.orderId;
+    // Afficher un indicateur de chargement
+    chatMessages.innerHTML = '<div class="loading-indicator">Chargement des messages...</div>';
+    
+    // Vérifier d'abord si l'ID est au format MongoDB ou BD*
+    const isMongoId = /^[0-9a-fA-F]{24}$/.test(orderId);
+    const isBdFormat = orderId.startsWith('BD');
+    
+    // URL de l'API avec l'ID approprié
+    const apiUrl = `/api/orders/${orderId}/chat`;
+    
+    // Requête API pour charger les messages
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Vider le conteneur de messages
+                chatMessages.innerHTML = '';
+                
+                // Si aucun message, afficher un message par défaut
+                if (!data.messages || data.messages.length === 0) {
+                    chatMessages.innerHTML = '<div class="system-message">Aucun message dans cette conversation.</div>';
+                    return;
+                }
+                
+                // Afficher chaque message
+                data.messages.forEach(message => {
+                    addChatMessage(message.sender, message.content, message.timestamp);
+                });
+                
+                // Faire défiler jusqu'au bas
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Si un ID MongoDB est renvoyé par l'API, le stocker pour les futures interactions
+                if (data.orderId) {
+                    const chatOrderId = document.getElementById('chat-order-id');
+                    if (chatOrderId && !isBdFormat) {
+                        chatOrderId.dataset.mongoId = data.orderId;
+                    }
+                    
+                    // Rejoindre la salle de chat Socket.io avec l'ID MongoDB
+                    if (window.socket && window.socket.connected) {
+                        window.socket.emit('join_order_chat', { orderId: data.orderId });
+                    }
+                }
+            } else {
+                chatMessages.innerHTML = `<div class="error-message">${data.message || 'Erreur lors du chargement des messages'}</div>`;
             }
-        } else {
-            // Marquer le message comme échoué
-            tempMessageElement.classList.add('message-error');
-            tempMessageElement.querySelector('.message-time').textContent = 
-                `${dateString}, ${timeString} (échec de l'envoi: ${data.message || 'Erreur inconnue'})`;
+        })
+        .catch(error => {
+            console.error('Erreur lors du chargement des messages:', error);
+            chatMessages.innerHTML = '<div class="error-message">Erreur de connexion au serveur</div>';
+        });
+}
+function initializeSocketConnection() {
+    if (typeof io === 'undefined') {
+        console.warn('Socket.io non disponible, chargement dynamique...');
+        const script = document.createElement('script');
+        script.src = '/socket.io/socket.io.js';
+        script.onload = _initSocket;
+        document.head.appendChild(script);
+    } else {
+        _initSocket();
+    }
+    
+    function _initSocket() {
+        // Si un socket existe déjà et est connecté, ne rien faire
+        if (window.socket && window.socket.connected) {
+            console.log('Socket.io déjà connecté');
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Erreur lors de l\'envoi du message:', error);
         
-        // Marquer le message comme échoué
-        tempMessageElement.classList.add('message-error');
-        tempMessageElement.querySelector('.message-time').textContent = 
-            `${dateString}, ${timeString} (échec de l'envoi)`;
-    });
+        // Initialiser Socket.io avec des options de reconnexion
+        window.socket = io({
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 20000,
+            withCredentials: true
+        });
+        
+        // Événement de connexion
+        window.socket.on('connect', () => {
+            console.log('Connecté au serveur Socket.io!');
+            
+            // Si un chat est actuellement ouvert, rejoindre la salle
+            const chatOrderId = document.getElementById('chat-order-id');
+            if (chatOrderId && chatOrderId.textContent) {
+                const mongoId = chatOrderId.dataset.mongoId || chatOrderId.textContent;
+                window.socket.emit('join_order_chat', { orderId: mongoId });
+            }
+        });
+        
+        // Événement de déconnexion
+        window.socket.on('disconnect', (reason) => {
+            console.log('Déconnecté du serveur Socket.io, raison:', reason);
+        });
+        
+        // Événement de réception d'un nouveau message
+        window.socket.on('new_message', (message) => {
+            console.log('Nouveau message reçu:', message);
+            const chatOrderId = document.getElementById('chat-order-id');
+            
+            // Vérifier si le message concerne la conversation actuelle
+            if (chatOrderId && (chatOrderId.textContent === message.displayId || chatOrderId.dataset.mongoId === message.orderId)) {
+                // Ajouter le message au chat
+                addChatMessage(message.sender, message.content, message.timestamp);
+                
+                // Marquer le message comme lu si c'est un message du livreur
+                if (message.sender === 'livreur') {
+                    window.socket.emit('mark_read', { orderId: message.orderId });
+                }
+            } else {
+                // Mettre à jour les indicateurs de nouveaux messages pour cette commande
+                updateUnreadMessageIndicators(message.orderId);
+            }
+        });
+        
+        // Événement "utilisateur en train d'écrire"
+        window.socket.on('user_typing', (data) => {
+            if (data.role === 'livreur') {
+                const typingIndicator = document.getElementById('typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.style.display = data.typing ? 'block' : 'none';
+                    
+                    // Faire défiler vers le bas pour montrer l'indicateur
+                    const chatMessages = document.getElementById('chat-messages');
+                    if (chatMessages && data.typing) {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+                }
+            }
+        });
+    }
+}
+function updateUnreadMessageIndicators(orderId) {
+    // Récupérer le nombre de messages non lus via API
+    fetch(`/api/orders/${orderId}/unread-messages`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.unreadCount > 0) {
+                // Mettre à jour les badges sur les boutons de chat
+                const buttons = document.querySelectorAll(`.chat-btn[data-mongo-id="${orderId}"], .chat-btn[data-order="${orderId}"]`);
+                buttons.forEach(button => {
+                    // Ajouter ou mettre à jour le badge
+                    let badge = button.querySelector('.unread-badge');
+                    if (!badge) {
+                        badge = document.createElement('div');
+                        badge.className = 'unread-badge';
+                        button.appendChild(badge);
+                    }
+                    
+                    badge.textContent = data.unreadCount > 99 ? '99+' : data.unreadCount;
+                    badge.classList.add('visible');
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la récupération des messages non lus:', error);
+        });
 }
 
 // Initialiser les compteurs de messages non lus
