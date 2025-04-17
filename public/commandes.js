@@ -178,34 +178,18 @@ let currentChatOrderId = null;
 function initSocketConnection() {
     // Vérifier si Socket.io est chargé
     if (typeof io === 'undefined') {
-        console.error('Socket.io n\'est pas chargé. Vérifiez votre inclusion de script.');
-        
-        // Afficher une alerte visible pour aider au débogage
-        const errorDiv = document.createElement('div');
-        errorDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
-        errorDiv.style.color = 'white';
-        errorDiv.style.padding = '10px';
-        errorDiv.style.position = 'fixed';
-        errorDiv.style.top = '0';
-        errorDiv.style.left = '0';
-        errorDiv.style.right = '0';
-        errorDiv.style.zIndex = '9999';
-        errorDiv.textContent = 'ERREUR: Socket.io n\'est pas chargé correctement. Les messages en temps réel ne fonctionneront pas.';
-        document.body.prepend(errorDiv);
+        console.error('Socket.io n\'est pas chargé. Inclusion dynamique...');
         
         // Tenter de charger Socket.io dynamiquement
         const script = document.createElement('script');
         script.src = '/socket.io/socket.io.js';
         script.onload = () => {
-            errorDiv.style.backgroundColor = 'rgba(0, 128, 0, 0.8)';
-            errorDiv.textContent = 'Socket.io chargé avec succès! Rafraîchissez la page.';
-            setTimeout(() => {
-                errorDiv.remove();
-                initSocketConnection(); // Réessayer l'initialisation
-            }, 2000);
+            console.log('Socket.io chargé avec succès!');
+            // Réessayer l'initialisation
+            setTimeout(initSocketConnection, 100);
         };
         script.onerror = () => {
-            errorDiv.textContent = 'Impossible de charger Socket.io dynamiquement. Vérifiez la configuration du serveur.';
+            console.error('Impossible de charger Socket.io dynamiquement');
         };
         document.head.appendChild(script);
         return;
@@ -220,14 +204,14 @@ function initSocketConnection() {
             socket.disconnect();
         }
         
-        // Connexion au serveur Socket.io avec des options de débogage
+        // Connexion au serveur Socket.io avec des options améliorées
         socket = io({
-            reconnectionAttempts: 5,
-            timeout: 10000,
             reconnection: true,
+            reconnectionAttempts: 5,
             reconnectionDelay: 1000,
             reconnectionDelayMax: 5000,
-            randomizationFactor: 0.5
+            timeout: 20000,
+            withCredentials: true // Important pour les cookies de session
         });
         
         // Événement de connexion réussie
@@ -235,26 +219,7 @@ function initSocketConnection() {
             console.log('✅ Connecté au serveur Socket.io avec succès! ID:', socket.id);
             
             // Notifier l'utilisateur de la connexion réussie
-            const notifDiv = document.createElement('div');
-            notifDiv.style.backgroundColor = 'rgba(76, 175, 80, 0.9)';
-            notifDiv.style.color = 'white';
-            notifDiv.style.padding = '10px';
-            notifDiv.style.position = 'fixed';
-            notifDiv.style.bottom = '20px';
-            notifDiv.style.right = '20px';
-            notifDiv.style.borderRadius = '5px';
-            notifDiv.style.zIndex = '9999';
-            notifDiv.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-            notifDiv.textContent = '✓ Connexion en temps réel établie';
-            document.body.appendChild(notifDiv);
-            
-            setTimeout(() => {
-                notifDiv.style.opacity = '0';
-                notifDiv.style.transition = 'opacity 0.5s ease';
-                setTimeout(() => {
-                    notifDiv.remove();
-                }, 500);
-            }, 3000);
+            showNotification('✓ Connexion en temps réel établie', 'success');
             
             // Configurer les événements après connexion réussie
             setupSocketEvents();
@@ -279,32 +244,16 @@ function initSocketConnection() {
         socket.on('disconnect', (reason) => {
             console.log('❌ Déconnecté du serveur Socket.io, raison:', reason);
             
-            if (reason === 'io server disconnect') {
-                // La déconnexion est intentionnelle côté serveur, tentative de reconnexion
-                socket.connect();
+            if (reason === 'io server disconnect' || reason === 'transport close') {
+                // La déconnexion est une erreur de transport, tenter de reconnecter
+                setTimeout(() => {
+                    console.log('Tentative de reconnexion après déconnexion...');
+                    socket.connect();
+                }, 1000);
             }
             
             // Afficher une notification de déconnexion
-            const disconnectNotif = document.createElement('div');
-            disconnectNotif.style.backgroundColor = 'rgba(255, 71, 87, 0.9)';
-            disconnectNotif.style.color = 'white';
-            disconnectNotif.style.padding = '10px';
-            disconnectNotif.style.position = 'fixed';
-            disconnectNotif.style.bottom = '20px';
-            disconnectNotif.style.right = '20px';
-            disconnectNotif.style.borderRadius = '5px';
-            disconnectNotif.style.zIndex = '9999';
-            disconnectNotif.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-            disconnectNotif.textContent = '⚠️ Connexion au chat perdue, tentative de reconnexion...';
-            document.body.appendChild(disconnectNotif);
-            
-            setTimeout(() => {
-                disconnectNotif.style.opacity = '0';
-                disconnectNotif.style.transition = 'opacity 0.5s ease';
-                setTimeout(() => {
-                    disconnectNotif.remove();
-                }, 500);
-            }, 5000);
+            showNotification('⚠️ Connexion au chat perdue, tentative de reconnexion...', 'warning');
         });
         
         // Indiquer que les événements ont été configurés
@@ -314,8 +263,98 @@ function initSocketConnection() {
         console.error('❌ Erreur lors de l\'initialisation de Socket.io:', error);
     }
 }
+function setupSocketEvents() {
+    if (!socket) return;
+    
+    // Éviter de configurer plusieurs fois
+    if (socket.eventsConfigured) return;
+    socket.eventsConfigured = true;
+    
+    // Réception d'un nouveau message
+    socket.on('new_message', (message) => {
+        console.log('Nouveau message reçu:', message);
+        
+        // Si le message est pour la commande actuellement ouverte dans le chat
+        if (currentChatOrderId && (message.orderId === currentChatOrderId || message.displayId === currentChatOrderId)) {
+            // Ajouter le message au chat
+            addMessageToChat(message);
+            
+            // Marquer le message comme lu si c'est un message du livreur
+            if (message.sender === 'livreur') {
+                socket.emit('mark_read', { orderId: message.orderId });
+            }
+        } else {
+            // Mettre à jour le badge de notification pour cette commande
+            updateUnreadBadge(message.orderId || message.displayId);
+            
+            // Si c'est un message du livreur, montrer une notification
+            if (message.sender === 'livreur') {
+                showNotification(`💬 Nouveau message du livreur pour la commande #${message.displayId || message.orderId.substr(-6)}`, 'info');
+            }
+        }
+    });
+    
+    // Notification d'utilisateur en train d'écrire
+    socket.on('user_typing', (data) => {
+        if (data.role === 'livreur' && currentChatOrderId && 
+            (data.orderId === currentChatOrderId || 
+             document.getElementById('chat-order-id')?.textContent === data.orderId)) {
+            
+            // Afficher/masquer l'indicateur de frappe
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.style.display = data.typing ? 'block' : 'none';
+            }
+        }
+    });
+    
+    // Notification que les messages ont été lus
+    socket.on('messages_read', (data) => {
+        if (data.role === 'livreur') {
+            console.log('Le livreur a lu vos messages');
+            
+            // On pourrait ajouter un indicateur visuel ici
+            const messages = document.querySelectorAll('.message.message-user');
+            messages.forEach(msg => {
+                msg.classList.add('read');
+            });
+        }
+    });
+    
+    // Message système (notification générale)
+    socket.on('system_message', (data) => {
+        console.log('Message système:', data.message);
+        
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) {
+            const systemMessage = document.createElement('div');
+            systemMessage.className = 'system-message';
+            systemMessage.textContent = data.message;
+            chatMessages.appendChild(systemMessage);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    });
+    
+    // Erreur
+    socket.on('error', (error) => {
+        console.error('Erreur Socket.io:', error);
+        
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) {
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'system-message error-message';
+            errorMessage.textContent = `Erreur: ${error.message || 'Une erreur est survenue'}`;
+            chatMessages.appendChild(errorMessage);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    });
+    
+    // Confirmation d'envoi de message
+    socket.on('message_sent', (data) => {
+        console.log('Message envoyé avec succès:', data);
+    });
+}
 // Fonction pour rejoindre un canal de chat spécifique à une commande
-// Fonction améliorée pour rejoindre un canal de chat
 function joinChatRoom(orderId) {
     if (!orderId) {
         console.error('❌ Impossible de rejoindre la salle: ID de commande manquant');
@@ -324,6 +363,13 @@ function joinChatRoom(orderId) {
     
     if (!socket) {
         console.error('❌ Socket non initialisé, impossible de rejoindre la salle');
+        // Initialiser Socket.io et réessayer
+        initSocketConnection();
+        
+        // Attendre un peu puis réessayer
+        setTimeout(() => {
+            if (socket) joinChatRoom(orderId);
+        }, 1000);
         return;
     }
     
@@ -343,14 +389,17 @@ function joinChatRoom(orderId) {
         // Quitter la salle précédente si nécessaire
         if (currentChatOrderId) {
             console.log(`Quitter la salle: order_${currentChatOrderId}`);
-            socket.emit('leave_room', { room: `order_${currentChatOrderId}` });
+            socket.emit('leave_order_chat', { orderId: currentChatOrderId });
         }
         
         // Rejoindre la nouvelle salle
         const roomName = `order_${id}`;
         console.log(`✅ Rejoindre la salle de chat: ${roomName}`);
-        socket.emit('join_room', { room: roomName });
+        socket.emit('join_order_chat', { orderId: id });
         currentChatOrderId = id;
+        
+        // Marquer les messages comme lus
+        socket.emit('mark_read', { orderId: id });
         
         // Ajouter un indicateur visuel
         const chatContainer = document.querySelector('.chat-container');
@@ -362,7 +411,7 @@ function joinChatRoom(orderId) {
             // Créer un nouvel indicateur
             const indicator = document.createElement('div');
             indicator.className = 'socket-status-indicator';
-            indicator.innerHTML = '<span class="status-dot"></span> Connecté au chat en direct';
+            indicator.innerHTML = '<span class="status-dot"></span> Chat en direct connecté';
             
             // Styles pour l'indicateur
             indicator.style.fontSize = '12px';
@@ -400,6 +449,7 @@ function joinChatRoom(orderId) {
         }
     }
 }
+
 function updateBadgeForButton(button, count) {
     // S'assurer que le bouton a une position relative pour le positionnement absolu du badge
     button.style.position = 'relative';
@@ -1581,11 +1631,6 @@ function handleSendMessage() {
     chatMessages.appendChild(tempMessageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
-    // Préparer les données du message
-    const messageData = {
-        content: messageText
-    };
-    
     // Désactiver temporairement le bouton d'envoi
     const sendButton = document.getElementById('send-message');
     if (sendButton) {
@@ -1593,82 +1638,115 @@ function handleSendMessage() {
         sendButton.style.opacity = '0.5';
     }
     
-    // Envoyer le message via l'API
-    fetch(`/api/orders/${idToUse}/chat/client`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(messageData),
-        credentials: 'include'
-    })
-    .then(response => {
-        console.log("Réponse reçue:", response.status);
-        if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log("Réponse de l'API après envoi:", data);
+    // Essayer d'abord via Socket.io si disponible
+    if (socket && socket.connected) {
+        console.log("Envoi via Socket.io");
         
-        if (data.success) {
-            // Supprimer le message temporaire
-            tempMessageElement.remove();
+        socket.emit('send_message', {
+            orderId: idToUse,
+            content: messageText
+        });
+        
+        // Attendre confirmation ou timeout
+        let messageConfirmed = false;
+        
+        // Écouter la confirmation - une seule fois
+        socket.once('message_sent', (data) => {
+            console.log("Message confirmé par le serveur:", data);
+            messageConfirmed = true;
             
-            // Nous n'avons pas besoin de recharger tout l'historique
-            // Le message sera affiché via l'événement Socket.io
-            // Si l'événement Socket.io ne le fait pas dans les 500ms, on l'ajoute manuellement
-            setTimeout(() => {
-                const messageElements = chatMessages.querySelectorAll('.message-content');
-                let found = false;
+            // Remplacer le message temporaire par un message confirmé
+            tempMessageElement.classList.remove('message-pending');
+            tempMessageElement.querySelector('.message-time').textContent = `${dateString}, ${timeString}`;
+            
+            // Réactiver le bouton d'envoi
+            if (sendButton) {
+                sendButton.disabled = false;
+                sendButton.style.opacity = '1';
+            }
+        });
+        
+        // Définir un timeout pour fallback vers API REST si pas de confirmation
+        setTimeout(() => {
+            if (!messageConfirmed) {
+                console.warn("Pas de confirmation Socket.io, envoi via API REST");
+                sendViaREST();
+            }
+        }, 2000);
+    } else {
+        console.log("Socket.io non disponible, envoi via API REST");
+        sendViaREST();
+    }
+    
+    // Fonction pour envoyer via l'API REST
+    function sendViaREST() {
+        // Préparer les données du message
+        const messageData = {
+            content: messageText
+        };
+        
+        // Envoyer le message via l'API
+        fetch(`/api/orders/${idToUse}/chat/client`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(messageData),
+            credentials: 'include'
+        })
+        .then(response => {
+            console.log("Réponse reçue:", response.status);
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Réponse de l'API après envoi:", data);
+            
+            if (data.success) {
+                // Mettre à jour le message temporaire
+                tempMessageElement.classList.remove('message-pending');
+                tempMessageElement.querySelector('.message-time').textContent = `${dateString}, ${timeString}`;
                 
-                for (const element of messageElements) {
-                    if (element.textContent === messageText) {
-                        found = true;
-                        break;
+                // Stocker l'ID MongoDB si disponible
+                if (data.message && data.message.orderId && !orderIdElement.dataset.mongoId) {
+                    orderIdElement.dataset.mongoId = data.message.orderId;
+                    
+                    // Si on a maintenant un ID MongoDB, rejoindre le bon canal Socket.io
+                    if (socket && socket.connected) {
+                        joinChatRoom(data.message.orderId);
                     }
                 }
+            } else {
+                // Marquer le message comme échoué
+                tempMessageElement.classList.add('message-error');
+                tempMessageElement.querySelector('.message-time').textContent = 
+                    `${dateString}, ${timeString} (échec de l'envoi: ${data.message || 'Erreur inconnue'})`;
                 
-                if (!found) {
-                    // Message non reçu via Socket.io, l'ajouter manuellement
-                    const messageElement = document.createElement('div');
-                    messageElement.className = 'message message-user';
-                    messageElement.innerHTML = `
-                        <div class="message-content">${messageText}</div>
-                        <div class="message-time">${dateString}, ${timeString}</div>
-                    `;
-                    chatMessages.appendChild(messageElement);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }
-            }, 500);
-            
-            // Stocker l'ID MongoDB si disponible
-            if (data.message && data.message.orderId && !orderIdElement.dataset.mongoId) {
-                orderIdElement.dataset.mongoId = data.message.orderId;
+                // Afficher une notification d'erreur
+                showNotification(`❌ Erreur: ${data.message || 'Impossible d\'envoyer le message'}`, 'error');
             }
-        } else {
+        })
+        .catch(error => {
+            console.error('Erreur lors de l\'envoi du message:', error);
+            
             // Marquer le message comme échoué
             tempMessageElement.classList.add('message-error');
             tempMessageElement.querySelector('.message-time').textContent = 
-                `${dateString}, ${timeString} (échec de l'envoi: ${data.message || 'Erreur inconnue'})`;
-        }
-    })
-    .catch(error => {
-        console.error('Erreur lors de l\'envoi du message:', error);
-        
-        // Marquer le message comme échoué
-        tempMessageElement.classList.add('message-error');
-        tempMessageElement.querySelector('.message-time').textContent = 
-            `${dateString}, ${timeString} (échec de l'envoi)`;
-    })
-    .finally(() => {
-        // Réactiver le bouton d'envoi
-        if (sendButton) {
-            sendButton.disabled = false;
-            sendButton.style.opacity = '1';
-        }
-    });
+                `${dateString}, ${timeString} (échec de l'envoi)`;
+            
+            // Afficher une notification d'erreur
+            showNotification('❌ Erreur de connexion. Veuillez réessayer.', 'error');
+        })
+        .finally(() => {
+            // Réactiver le bouton d'envoi
+            if (sendButton) {
+                sendButton.disabled = false;
+                sendButton.style.opacity = '1';
+            }
+        });
+    }
 }
 
 // Ajouter des styles pour les animations des notifications
