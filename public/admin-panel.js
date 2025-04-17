@@ -175,14 +175,14 @@ function initializeSocketIO() {
     try {
         console.log('Initialisation de Socket.io...');
         
-        // Création d'une nouvelle connexion Socket.io avec options de reconnexion
+        // Création d'une nouvelle connexion Socket.io avec options améliorées
         socket = io({
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
             reconnectionDelayMax: 5000,
             timeout: 20000,
-            withCredentials: true // Important pour transmettre les cookies de session
+            withCredentials: true // Crucial pour transmettre les cookies de session
         });
         
         // Connexion établie
