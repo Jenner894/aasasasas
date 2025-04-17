@@ -159,16 +159,14 @@ io.on('connection', (socket) => {
     });
     
     // Traiter un nouveau message
-    socket.on('send_message', async (data) => {
-        if (!data.orderId || !data.content) {
-            socket.emit('error', { message: 'Données incomplètes' });
-            return;
-        }
-        
-        try {
-
-            
-// Vérifier l'existence de la commande
+   socket.on('send_message', async (data) => {
+    if (!data.orderId || !data.content) {
+        socket.emit('error', { message: 'Données incomplètes' });
+        return;
+    }
+    
+    try {
+        // Vérifier l'existence de la commande
         let order = await Order.findById(data.orderId);
         if (!order) {
             socket.emit('error', { message: 'Commande non trouvée' });
@@ -229,7 +227,8 @@ io.on('connection', (socket) => {
         };
         
         // Émettre le message à tous les clients dans la salle de commande
-        io.to(`order_${order._id}`).emit('new_message', messageData);
+        // SAUF à l'émetteur du message pour éviter le double affichage
+        socket.to(`order_${order._id}`).emit('new_message', messageData);
         
         // Si le message est du client, notifier aussi tous les admins
         if (senderType === 'client') {
@@ -248,7 +247,8 @@ io.on('connection', (socket) => {
         // Confirmer la réception du message
         socket.emit('message_sent', {
             success: true,
-            messageId: newMessage._id.toString()
+            messageId: newMessage._id.toString(),
+            messageData: messageData  // Renvoyer les données du message à l'émetteur
         });
         
     } catch (error) {
