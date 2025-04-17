@@ -5,13 +5,82 @@ const http = require('http');
 const axios = require('axios');
 const helmet = require('helmet');
 const cors = require('cors');
-
 const socketIo = require('socket.io');
 const session = require('express-session');
 const mongoose = require('mongoose');
 
-// Remplacez l'initialisation de Socket.io par ce code
-// Initialisation de Socket.io
+// Configuration pour servir les fichiers statiques depuis le dossier 'public'
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Middleware d'authentification par session
+const isAuthenticated = (req, res, next) => {
+  if (req.session && req.session.user) {
+    return next();
+  } else {
+    res.redirect('/login.html'); // Redirection vers la page de login si non authentifié
+  }
+};
+require('dotenv').config();
+const PORT = process.env.PORT || 3000;
+
+
+// Middleware de sécurité avec helmet
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "*"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
+// Middleware pour déboguer les sessions
+const debugSession = (req, res, next) => {
+  console.log('Session user:', req.session?.user);
+  next();
+};
+
+// Middleware pour parser le JSON et les données de formulaire
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Configuration CORS
+const allowedOrigins = ['https://allob-1.onrender.com', 'http://localhost:3000'];
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+const server = http.createServer(app);
+
+// Configuration des sessions
+const sessionMiddleware = session({
+    secret: process.env.SESSION_SECRET || 'mySecret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false, 
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000 // 24 heures
+    }
+});
+
+// Utilisez ce middleware dans Express
+app.use(sessionMiddleware);
+
+// MAINTENANT on peut initialiser Socket.io avec le serveur
 const io = socketIo(server, {
     cors: {
         origin: '*',
@@ -22,10 +91,39 @@ const io = socketIo(server, {
     pingTimeout: 60000
 });
 
-require('dotenv').config();
-const PORT = process.env.PORT || 3000;
+// Wrapper pour partager le middleware de session avec Socket.io
+const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
 
-
+// Appliquer le middleware de session à Socket.io
+io.use(wrap(sessionMiddleware));
+io.use((socket, next) => {
+    // Accéder à la session depuis socket.request
+    if (socket.request.session && socket.request.session.user) {
+        // Stocker les infos utilisateur dans l'objet socket
+        socket.userId = socket.request.session.user.id;
+        socket.userRole = socket.request.session.user.role;
+        socket.username = socket.request.session.user.username;
+        socket.isAuthenticated = true;
+        
+        console.log(`Socket.io: Utilisateur authentifié - ${socket.username} (${socket.userRole})`);
+        
+        // Si c'est un admin, le faire rejoindre la salle admin
+        if (socket.userRole === 'admin') {
+            socket.join('admin_room');
+            console.log(`Admin ${socket.username} a rejoint la salle admin_room`);
+        }
+        
+        next();
+    } else {
+        // Permettre la connexion en tant qu'invité avec privilèges limités
+        console.log('Connexion Socket.io sans session authentifiée - accordé comme invité');
+        socket.userId = null;
+        socket.userRole = 'guest';
+        socket.username = 'Invité';
+        socket.isAuthenticated = false;
+        next();
+    }
+});
 
 
 // Configuration des événements Socket.io
@@ -600,107 +698,7 @@ UserSchema.methods.regenerateKeys = function() {
     this.keys = newKey;
     return this.save();
 };
-// Configuration pour servir les fichiers statiques depuis le dossier 'public'
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Middleware d'authentification par session
-const isAuthenticated = (req, res, next) => {
-  if (req.session && req.session.user) {
-    return next();
-  } else {
-    res.redirect('/login.html'); // Redirection vers la page de login si non authentifié
-  }
-};
-
-// Middleware de sécurité avec helmet
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "*"],
-      },
-    },
-    crossOriginEmbedderPolicy: false,
-  })
-);
-
-// Middleware pour déboguer les sessions
-const debugSession = (req, res, next) => {
-  console.log('Session user:', req.session?.user);
-  next();
-};
-
-// Middleware pour parser le JSON et les données de formulaire
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Configuration CORS
-const allowedOrigins = ['https://allob-1.onrender.com', 'http://localhost:3000'];
-app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(null, false);
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-// Configuration des sessions
-const sessionMiddleware = session({
-    secret: process.env.SESSION_SECRET || 'mySecret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: false, 
-        httpOnly: true,
-        sameSite: 'lax',
-        maxAge: 24 * 60 * 60 * 1000 // 24 heures
-    }
-});
-
-// Utilisez ce middleware dans Express
-app.use(sessionMiddleware);
-const server = http.createServer(app);
-
-// Configuration de Socket.io avec le partage de session
-const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
-
-
-// Ajoutez ce middleware à Socket.io
-io.use(wrap(sessionMiddleware));
-
-io.use((socket, next) => {
-    // Accéder à la session depuis socket.request
-    if (socket.request.session && socket.request.session.user) {
-        // Stocker les infos utilisateur dans l'objet socket
-        socket.userId = socket.request.session.user.id;
-        socket.userRole = socket.request.session.user.role;
-        socket.username = socket.request.session.user.username;
-        
-        console.log(`Socket.io: Utilisateur authentifié - ${socket.username} (${socket.userRole})`);
-        
-        // Si c'est un admin, le faire rejoindre la salle admin
-        if (socket.userRole === 'admin') {
-            socket.join('admin_room');
-            console.log(`Admin ${socket.username} a rejoint la salle admin_room`);
-        }
-        
-        next();
-    } else {
-        // Permettre la connexion en tant qu'invité avec privilèges limités
-        console.log('Connexion Socket.io sans session authentifiée - accordé comme invité');
-        socket.userId = null;
-        socket.userRole = 'guest';
-        socket.username = 'Invité';
-        next();
-    }
-});
 async function updateDeliveryQueue() {
     try {
         // Récupérer toutes les commandes non livrées et non annulées
