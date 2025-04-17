@@ -739,7 +739,6 @@ function openChat(deliveryId, username) {
         // chatButton.removeAttribute('data-unread');
     }
 }
-
 // Chargement des messages de chat (version réelle)
 function loadChatMessages(deliveryId) {
     // Vider les messages précédents
