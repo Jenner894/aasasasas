@@ -1075,13 +1075,14 @@ app.post('/api/products', isAuthenticated, async (req, res) => {
             category, 
             priceOptions, 
             thcContent, 
-            videoUrl, 
+            videoPath,   // Changé de videoUrl à videoPath
+            gifPath,     // Nouveau champ pour GIF
             inStock 
         } = req.body;
         
-        // Validation des données
-        if (!name || !description || !category || !priceOptions || !videoUrl) {
-            return res.status(400).json({ success: false, message: 'Tous les champs obligatoires doivent être remplis' });
+        // Validation des données - supprimé la validation d'URL
+        if (!name || !description || !category || !priceOptions) {
+            return res.status(400).json({ success: false, message: 'Nom, description, catégorie et options de prix sont requis' });
         }
         
         // Vérification que les options de prix sont valides
@@ -1102,7 +1103,8 @@ app.post('/api/products', isAuthenticated, async (req, res) => {
             category,
             priceOptions,
             thcContent: thcContent || 0,
-            videoUrl,
+            videoPath: videoPath || 'video/default.mp4',  // Utiliser videoPath au lieu de videoUrl
+            gifPath: gifPath || 'images/default-product.gif',
             inStock: inStock !== undefined ? inStock : true
         });
         
@@ -1129,13 +1131,14 @@ app.put('/api/products/:id', isAuthenticated, async (req, res) => {
             category, 
             priceOptions, 
             thcContent, 
-            videoUrl, 
+            videoPath,   // Changé de videoUrl à videoPath
+            gifPath,     // Nouveau champ pour GIF
             inStock 
         } = req.body;
         
-        // Validation des données
-        if (!name || !description || !category || !priceOptions || !videoUrl) {
-            return res.status(400).json({ success: false, message: 'Tous les champs obligatoires doivent être remplis' });
+        // Validation des données - supprimé la validation d'URL
+        if (!name || !description || !category || !priceOptions) {
+            return res.status(400).json({ success: false, message: 'Nom, description, catégorie et options de prix sont requis' });
         }
         
         // Vérification que les options de prix sont valides
@@ -1158,7 +1161,8 @@ app.put('/api/products/:id', isAuthenticated, async (req, res) => {
                 category,
                 priceOptions,
                 thcContent: thcContent || 0,
-                videoUrl,
+                videoPath: videoPath || 'video/default.mp4',  // Utiliser videoPath au lieu de videoUrl
+                gifPath: gifPath || 'images/default-product.gif',
                 inStock: inStock !== undefined ? inStock : true,
                 updatedAt: Date.now()
             },
