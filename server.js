@@ -420,7 +420,7 @@ const ProductSchema = new mongoose.Schema({
     category: { 
         type: String, 
         required: true,
-        enum: ['Fleurs', 'Résines'] // Correction de "Fleur" à "Fleurs"
+        enum: ['Fleurs', 'Résines']
     },
     // Utilisation uniquement de priceOptions pour les prix
     priceOptions: [{
@@ -433,9 +433,16 @@ const ProductSchema = new mongoose.Schema({
         min: 0,
         max: 100
     },
-    videoUrl: { 
+    // Utilisation d'un chemin local au lieu d'une URL
+    videoPath: { 
         type: String,
-        required: true
+        required: true,
+        default: 'video/default.mp4'
+    },
+    // Champ supplémentaire pour le chemin du GIF
+    gifPath: {
+        type: String,
+        default: 'images/default-product.gif'
     },
     inStock: { 
         type: Boolean, 
