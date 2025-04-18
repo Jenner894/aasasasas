@@ -26,6 +26,8 @@ const productVideo = document.getElementById('product-video');
 const priceOptionsContainer = document.getElementById('price-options-container');
 const addPriceOptionBtn = document.getElementById('add-price-option');
 const productThc = document.getElementById('product-thc');
+const productVideo = document.getElementById('product-video'); // Le champ reste le même mais stockera maintenant un chemin
+const productGif = document.getElementById('product-gif');  
 const thcValue = document.getElementById('thc-value');
 const cancelProductBtn = document.getElementById('cancel-product-btn');
 const saveProductBtn = document.getElementById('save-product-btn');
@@ -147,113 +149,38 @@ function loadProducts() {
 
 // Affichage des produits
 function displayProducts() {
-    const productsContainer = document.getElementById('products-container');
-    
-    if (!productsContainer) {
-        console.error('Conteneur de produits non trouvé');
-        return;
-    }
-    
-    productsContainer.innerHTML = '';
-    
-    if (!products || products.length === 0) {
-        productsContainer.innerHTML = '<div class="no-products">Aucun produit disponible</div>';
-        return;
-    }
+    productsTableBody.innerHTML = '';
     
     products.forEach(product => {
-        console.log('Processing product:', product); // Déboguer chaque produit
+        const row = document.createElement('tr');
         
-        const productCard = document.createElement('div');
-        productCard.className = 'product-card';
-        productCard.dataset.id = product._id;
-        productCard.dataset.category = product.category ? product.category.toLowerCase() : ''; // Ajouter la catégorie comme attribut de données
+        // Prix minimum pour affichage dans le tableau
+        let minPrice = Infinity;
+        product.priceOptions.forEach(option => {
+            if (option.price < minPrice) {
+                minPrice = option.price;
+            }
+        });
         
-        // Vérifier si inStock existe, sinon utiliser true par défaut
-        const isInStock = product.inStock !== undefined ? product.inStock : true;
+        // Formater le prix minimum
+        const formattedMinPrice = minPrice !== Infinity ? `${minPrice.toFixed(2)} €` : 'N/A';
         
-        const stockBadge = isInStock ? 
-            '<span class="stock-badge in-stock">En stock</span>' : 
-            '<span class="stock-badge out-of-stock">Rupture de stock</span>';
-        
-        // Normaliser les propriétés du produit - corriger les incohérences
-        // Utiliser le nouveau format de chemin pour les vidéos et GIFs
-        const videoPath = product.videoPath || product.videoUrl || "video/default.mp4";
-        const gifPath = product.gifPath || "images/default-product.gif";
-        const name = product.name || "Produit sans nom";
-        const category = product.category || "Non catégorisé";
-        const thcContent = product.thcContent || product.thc || "N/A";
-        const description = product.description || "Aucune description disponible";
-        
-        // Vérifier si les options de prix existent et sont valides
-        let quantityOptionsHTML = '';
-        if (product.priceOptions && Array.isArray(product.priceOptions) && product.priceOptions.length > 0) {
-            // Trier les options par quantité croissante
-            const sortedOptions = [...product.priceOptions].sort((a, b) => a.quantity - b.quantity);
-            
-            quantityOptionsHTML = sortedOptions.map(option => {
-                return `<option value="${option.quantity}" data-price="${option.price.toFixed(2)}">
-                    ${option.quantity}g - ${option.price.toFixed(2)}€
-                </option>`;
-            }).join('');
-        } else {
-            // Si aucune option de prix n'est disponible, afficher un message
-            quantityOptionsHTML = '<option value="0" data-price="0.00">Prix non disponible</option>';
-        }
-        
-        // Définir le prix initial à afficher (première option)
-        const basePrice = product.priceOptions && product.priceOptions.length > 0 
-            ? Number(product.priceOptions[0].price).toFixed(2) 
-            : '0.00';
-        
-        // Utiliser un GIF au lieu d'une vidéo
-        productCard.innerHTML = `
-            <div class="product-image-container">
-                <img class="product-gif" src="${gifPath}" alt="${name}">
-            </div>
-            <div class="product-info">
-                <h3 class="product-name">${name}</h3>
-                <div class="product-category">${category}</div>
-                <div class="product-thc">THC: ${thcContent}%</div>
-                <p class="product-description">${description}</p>
-                <div class="product-price-container">
-                    <div class="product-price">
-                        ${basePrice}€/g
-                    </div>
-                    <div class="quantity-selector">
-                        <select class="quantity-dropdown" data-product-id="${product._id}">
-                            ${quantityOptionsHTML}
-                        </select>
-                    </div>
-                </div>
-                ${stockBadge}
-                <button class="add-to-cart-btn" data-product-id="${product._id}" data-product-name="${name}" data-product-category="${category}">
-                    Ajouter au panier
-                </button>
-            </div>
+        // Afficher le chemin de la vidéo et du GIF dans le tableau
+        row.innerHTML = `
+            <td>${product.name}</td>
+            <td><span class="category-badge category-${product.category}">${product.category}</span></td>
+            <td>${truncateText(product.description, 50)}</td>
+            <td>À partir de ${formattedMinPrice}/g</td>
+            <td>${product.thcContent}%</td>
+            <td><span class="stock-badge stock-${product.inStock}">${product.inStock ? 'En stock' : 'Épuisé'}</span></td>
+            <td class="table-actions">
+                <button class="action-button edit-button" data-id="${product._id}">Modifier</button>
+                <button class="action-button delete-button" data-id="${product._id}">Supprimer</button>
+            </td>
         `;
         
-        productsContainer.appendChild(productCard);
-        
-        // Ajouter un écouteur d'événement pour le changement de quantité
-        const quantityDropdown = productCard.querySelector('.quantity-dropdown');
-        quantityDropdown.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const price = selectedOption.getAttribute('data-price');
-            const grams = selectedOption.value;
-            
-            const priceDisplay = productCard.querySelector('.product-price');
-            priceDisplay.textContent = `${price}€ pour ${grams}g`;
-        });
+        productsTableBody.appendChild(row);
     });
-    
-    // Initialiser l'affichage du prix pour la première option de chaque produit
-    document.querySelectorAll('.quantity-dropdown').forEach(dropdown => {
-        // Simuler un événement de changement pour mettre à jour l'affichage initial
-        const event = new Event('change');
-        dropdown.dispatchEvent(event);
-    });
-}
     
     // Ajouter les écouteurs d'événements pour les boutons d'action
     document.querySelectorAll('.edit-button').forEach(button => {
@@ -286,13 +213,18 @@ function openAddProductModal() {
     productThc.value = 20;
     updateThcValue();
     
+    // Réinitialiser les champs de vidéo et GIF
+    productVideo.value = 'video/default.mp4';
+    if (productGif) {
+        productGif.value = 'images/default-product.gif';
+    }
+    
     // Changer le titre du modal
     productModalTitle.textContent = 'Ajouter un produit';
     
     // Ouvrir le modal
     productModal.classList.add('active');
 }
-
 // Ouverture du modal de modification de produit
 function openEditProductModal(id) {
     currentProductId = id;
