@@ -437,19 +437,38 @@
             color: #555;
         }
 
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 1rem;
-        }
+.form-control {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    width: 100%;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
 
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary-blue);
-        }
+.form-control:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+.form-text {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #6c757d;
+}
+        /* Style pour indiquer que ce n'est pas un champ URL obligatoire */
+#product-video::placeholder,
+#product-gif::placeholder {
+    color: #adb5bd;
+}
 
+/* Pas de validation d'URL, donc pas de style d'erreur spécifique */
+#product-video:invalid,
+#product-gif:invalid {
+    border-color: inherit;
+    box-shadow: none;
+}
         .form-row {
             display: flex;
             gap: 15px;
