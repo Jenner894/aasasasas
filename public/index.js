@@ -1167,7 +1167,8 @@ function generateOrderSummary() {
                 '<span class="stock-badge out-of-stock">Rupture de stock</span>';
             
             // Normaliser les propriétés du produit - corriger les incohérences
-            const videoUrl = product.videoPath || product.videoUrl || product.video || "/video/default.mp4";
+            const videoUrl = product.videoUrl || product.videoPath || 
+                 "https://drive.google.com/uc?export=download&id=DEFAULT_FILE_ID";
             const name = product.name || "Produit sans nom";
             const category = product.category || "Non catégorisé";
             const thcContent = product.thcContent || product.thc || "N/A";
