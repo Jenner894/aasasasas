@@ -22,7 +22,6 @@ const productName = document.getElementById('product-name');
 const productCategory = document.getElementById('product-category');
 const productStock = document.getElementById('product-stock');
 const productDescription = document.getElementById('product-description');
-const productVideo = document.getElementById('product-video');
 const priceOptionsContainer = document.getElementById('price-options-container');
 const addPriceOptionBtn = document.getElementById('add-price-option');
 const productThc = document.getElementById('product-thc');
