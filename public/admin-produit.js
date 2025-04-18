@@ -22,10 +22,10 @@ const productName = document.getElementById('product-name');
 const productCategory = document.getElementById('product-category');
 const productStock = document.getElementById('product-stock');
 const productDescription = document.getElementById('product-description');
+const productVideo = document.getElementById('product-video');
 const priceOptionsContainer = document.getElementById('price-options-container');
 const addPriceOptionBtn = document.getElementById('add-price-option');
 const productThc = document.getElementById('product-thc');
-const productVideo = document.getElementById('product-video'); // Le champ reste le même mais stockera maintenant un chemin
 const productGif = document.getElementById('product-gif');  
 const thcValue = document.getElementById('thc-value');
 const cancelProductBtn = document.getElementById('cancel-product-btn');
@@ -109,6 +109,37 @@ function setupEventListeners() {
     cancelDeleteBtn.addEventListener('click', closeConfirmDialog);
     confirmDeleteBtn.addEventListener('click', deleteProduct);
 }
+
+// Mise à jour de la valeur THC affichée
+function updateThcValue() {
+    thcValue.textContent = `${productThc.value}%`;
+}
+
+// Ajout d'une option de prix
+function addPriceOption(event, quantity = '', price = '') {
+    const priceOption = document.createElement('div');
+    priceOption.className = 'price-option';
+    
+    priceOption.innerHTML = `
+        <input type="number" class="form-control price-quantity" placeholder="Quantité (g)" min="0.1" step="0.1" required value="${quantity}">
+        <input type="number" class="form-control price-value" placeholder="Prix (€)" min="0.1" step="0.1" required value="${price}">
+        <button type="button" class="price-option-delete">×</button>
+    `;
+    
+    priceOptionsContainer.appendChild(priceOption);
+    
+    // Ajouter un écouteur d'événement pour le bouton de suppression
+    const deleteButton = priceOption.querySelector('.price-option-delete');
+    deleteButton.addEventListener('click', () => {
+        // Ne pas supprimer s'il n'y a qu'une seule option de prix
+        if (priceOptionsContainer.children.length > 1) {
+            priceOption.remove();
+        } else {
+            showNotification('Vous devez avoir au moins une option de prix', 'error');
+        }
+    });
+}
+
 
 // Chargement des produits depuis la base de données
 function loadProducts() {
@@ -197,6 +228,7 @@ function truncateText(text, maxLength) {
     return text.substring(0, maxLength) + '...';
 }
 
+
 // Ouverture du modal d'ajout de produit
 function openAddProductModal() {
     // Réinitialiser le formulaire
@@ -224,6 +256,7 @@ function openAddProductModal() {
     // Ouvrir le modal
     productModal.classList.add('active');
 }
+
 // Fermeture du modal de produit
 function closeProductModal() {
     productModal.classList.remove('active');
@@ -417,7 +450,6 @@ function deleteProduct() {
         confirmDeleteBtn.textContent = 'Supprimer';
     });
 }
-
 // Affichage d'une notification
 function showNotification(message, type) {
     notification.textContent = message;
