@@ -1198,11 +1198,12 @@ function generateOrderSummary() {
             const placeholderPath = '/images/video-placeholder.jpg';
             
             productCard.innerHTML = `
-                <div class="product-video-container">
-                    <video class="product-video" controls preload="none" poster="${placeholderPath}">
-                        <source src="${videoUrl}" type="video/mp4">
-                        Votre navigateur ne supporte pas les vidéos HTML5.
-                    </video>
+    <div class="product-video-container">
+        <video class="product-video" controls preload="metadata" poster="${placeholderPath}">
+            <source src="${videoUrl}" type="video/mp4">
+            Votre navigateur ne supporte pas les vidéos HTML5.
+        </video>
+    </div>
                 </div>
                 <div class="product-info">
                     <h3 class="product-name">${name}</h3>
