@@ -263,6 +263,9 @@ function initSocketConnection() {
         console.error('❌ Erreur lors de l\'initialisation de Socket.io:', error);
     }
 }
+
+
+
 function setupSocketEvents() {
     if (!socket) return;
     
@@ -271,56 +274,17 @@ function setupSocketEvents() {
     socket.eventsConfigured = true;
     
     // Réception d'un nouveau message
-    socket.on('new_message', (message) => {
-        console.log('Nouveau message reçu:', message);
-        
+socket.to(`order_${order._id}`).emit('new_message', messageData);
+console.log(`Message émis aux autres clients dans la salle order_${order._id}`);
         // Si le message est pour la commande actuellement ouverte dans le chat
         if (currentChatOrderId && (message.orderId === currentChatOrderId || message.displayId === currentChatOrderId)) {
-            // *** CORRECTION: Éviter les doublons ***
-            // Vérifier si c'est notre propre message (envoyé par nous)
-            if (message.sender === 'client') {
-                // Chercher si nous avons déjà ce message dans notre interface
-                const existingMessages = document.querySelectorAll('.message.message-user');
+            // CORRECTION CRITIQUE: Ne pas ajouter le message si c'est notre propre message
+            // Les messages du client sont créés localement, on ne veut afficher que ceux du livreur
+            if (message.sender !== 'client') {
+                // Ajouter directement le message au chat (seulement les messages du livreur)
+                addMessageToChat(message);
                 
-                let isDuplicate = false;
-                existingMessages.forEach(msgElem => {
-                    // Vérifier par ID de message
-                    if (msgElem.dataset.messageId === message.id) {
-                        isDuplicate = true;
-                        return;
-                    }
-                    
-                    // Vérifier par contenu + timestamp proche
-                    const contentElem = msgElem.querySelector('.message-content');
-                    if (contentElem && contentElem.textContent === message.content) {
-                        // Vérifier si c'est un message récent (moins de 5 secondes)
-                        const messageTime = new Date(message.timestamp);
-                        const now = new Date();
-                        if (Math.abs(now - messageTime) < 5000) {
-                            isDuplicate = true;
-                            
-                            // Si c'est un message en attente, mettre à jour son ID
-                            if (msgElem.dataset.isPending === 'true') {
-                                msgElem.dataset.isPending = 'false';
-                                msgElem.dataset.messageId = message.id;
-                                msgElem.classList.remove('message-pending');
-                            }
-                        }
-                    }
-                });
-                
-                // Si c'est un duplicata, ne pas l'ajouter
-                if (isDuplicate) {
-                    console.log('Message ignoré car duplicata');
-                    return;
-                }
-            }
-            
-            // Ajouter le message au chat (seulement s'il n'est pas un duplicata)
-            addMessageToChat(message);
-            
-            // Marquer le message comme lu si c'est un message du livreur
-            if (message.sender === 'livreur') {
+                // Marquer le message comme lu si c'est un message du livreur
                 socket.emit('mark_read', { orderId: message.orderId });
             }
         } else {
@@ -368,7 +332,7 @@ function setupSocketEvents() {
         const chatMessages = document.getElementById('chat-messages');
         if (chatMessages) {
             const systemMessage = document.createElement('div');
-            systemMessage.className = 'system-message';
+            systemMessage.className = 'system-message fade-in';
             systemMessage.textContent = data.message;
             chatMessages.appendChild(systemMessage);
             chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -1703,6 +1667,9 @@ function handleSendMessage() {
     // Effacer le champ de saisie immédiatement
     inputField.value = '';
     
+    // Créer un identifiant temporaire unique pour le message
+    const tempMessageId = 'msg_' + Date.now();
+    
     // Afficher un message temporaire (optimistic UI)
     const chatMessages = document.getElementById('chat-messages');
     if (!chatMessages) {
@@ -1714,14 +1681,11 @@ function handleSendMessage() {
     const timeString = formatMessageTime(now);
     const dateString = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
     
-    // Générer un ID temporaire unique pour ce message
-    const tempMessageId = 'msg_' + Date.now();
-    
     // CORRECTION: Utiliser message-user sans ajouter d'élément de nom d'expéditeur
     const tempMessageElement = document.createElement('div');
     tempMessageElement.className = 'message message-user message-pending';
-    tempMessageElement.id = tempMessageId; // Ajouter un ID au message
-    tempMessageElement.dataset.isPending = 'true'; // Marquer comme message en attente
+    tempMessageElement.id = tempMessageId;
+    tempMessageElement.dataset.tempId = tempMessageId;
     
     // N'ajoutez PAS de div pour le nom de l'expéditeur pour les messages utilisateur
     
@@ -1753,7 +1717,7 @@ function handleSendMessage() {
         socket.emit('send_message', {
             orderId: idToUse,
             content: messageText,
-            tempMessageId: tempMessageId // Transmettre l'ID temporaire
+            tempMessageId: tempMessageId // Envoyer l'ID temporaire
         });
         
         // Attendre confirmation ou timeout
@@ -1764,15 +1728,15 @@ function handleSendMessage() {
             console.log("Message confirmé par le serveur:", data);
             messageConfirmed = true;
             
-            // Vérifier si la réponse contient une référence à notre message temporaire
-            if (data.messageData && tempMessageId) {
-                // Remplacer le message temporaire par un message confirmé
-                tempMessageElement.classList.remove('message-pending');
-                tempMessageElement.dataset.isPending = 'false';
-                timeDiv.textContent = `${dateString}, ${timeString}`;
-                
-                // Important: stocker l'ID réel du message pour éviter les duplications
-                tempMessageElement.dataset.messageId = data.messageId;
+            // Mettre à jour le message temporaire avec le vrai ID du message
+            tempMessageElement.classList.remove('message-pending');
+            tempMessageElement.dataset.isPending = 'false';
+            tempMessageElement.dataset.messageId = data.messageId;
+            timeDiv.textContent = `${dateString}, ${timeString}`;
+            
+            // Stocker également l'ID MongoDB de la commande si fourni
+            if (data.messageData && data.messageData.orderId && !orderIdElement.dataset.mongoId) {
+                orderIdElement.dataset.mongoId = data.messageData.orderId;
             }
             
             // Réactiver le bouton d'envoi
@@ -1788,7 +1752,7 @@ function handleSendMessage() {
                 console.warn("Pas de confirmation Socket.io, envoi via API REST");
                 sendViaREST();
             }
-        }, 2000);
+        }, 3000);
     } else {
         console.log("Socket.io non disponible, envoi via API REST");
         sendViaREST();
