@@ -441,11 +441,11 @@ const ProductSchema = new mongoose.Schema({
         max: 100
     },
     // Utilisation d'un chemin local au lieu d'une URL
-    videoPath: { 
-        type: String,
-        required: true,
-        default: 'video/default.mp4'
-    },
+videoUrl: { 
+    type: String,
+    required: true,
+    default: 'https://drive.google.com/uc?export=download&id=DEFAULT_FILE_ID'
+},
     // Champ supplémentaire pour le chemin du GIF
     gifPath: {
         type: String,
