@@ -847,11 +847,17 @@
                         <label for="product-description">Description *</label>
                         <textarea id="product-description" class="form-control" rows="4" required></textarea>
                     </div>
-                    <div class="form-group">
-                        <label for="product-video">URL de la vidéo *</label>
-                        <input type="url" id="product-video" class="form-control" required
-                            placeholder="https://youtu.be/...">
-                    </div>
+<div class="form-group">
+    <label for="product-video">Chemin de la vidéo</label>
+    <input type="text" id="product-video" class="form-control" placeholder="ex: video/purple.MP4">
+    <small class="form-text text-muted">Entrez le chemin local de la vidéo (ex: video/nom-fichier.mp4)</small>
+</div>
+
+<div class="form-group">
+    <label for="product-gif">Chemin du GIF</label>
+    <input type="text" id="product-gif" class="form-control" placeholder="ex: images/purple.gif">
+    <small class="form-text text-muted">Entrez le chemin local du GIF (ex: images/nom-fichier.gif)</small>
+</div>
                     <div class="form-group">
                         <label>Options de prix *</label>
                         <div id="price-options-container" class="price-options-container">
