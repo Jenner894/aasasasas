@@ -274,8 +274,9 @@ function setupSocketEvents() {
     socket.eventsConfigured = true;
     
     // Réception d'un nouveau message
-socket.to(`order_${order._id}`).emit('new_message', messageData);
-console.log(`Message émis aux autres clients dans la salle order_${order._id}`);
+    socket.on('new_message', (message) => {
+        console.log('Nouveau message reçu:', message);
+        
         // Si le message est pour la commande actuellement ouverte dans le chat
         if (currentChatOrderId && (message.orderId === currentChatOrderId || message.displayId === currentChatOrderId)) {
             // CORRECTION CRITIQUE: Ne pas ajouter le message si c'est notre propre message
