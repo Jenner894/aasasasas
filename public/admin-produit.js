@@ -284,7 +284,6 @@ function displayProducts() {
         const event = new Event('change');
         dropdown.dispatchEvent(event);
     });
-}
     
     // Ajouter les écouteurs d'événements pour les boutons d'action
     document.querySelectorAll('.edit-button').forEach(button => {
@@ -295,7 +294,6 @@ function displayProducts() {
         button.addEventListener('click', () => openConfirmDialog(button.dataset.id));
     });
 }
-
 // Tronquer le texte
 function truncateText(text, maxLength) {
     if (text.length <= maxLength) return text;
