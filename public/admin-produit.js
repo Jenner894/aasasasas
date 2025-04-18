@@ -178,7 +178,6 @@ function loadProducts() {
 }
 
 // Affichage des produits
-// Affichage des produits
 function displayProducts() {
     // Vider le corps du tableau
     productsTableBody.innerHTML = '';
@@ -222,19 +221,9 @@ function displayProducts() {
         productsTableBody.appendChild(row);
     });
     
-    // Ajouter les écouteurs d'événements pour les boutons d'action
-    document.querySelectorAll('.edit-button').forEach(button => {
-        button.addEventListener('click', () => openEditProductModal(button.dataset.id));
-    });
-    
-    document.querySelectorAll('.delete-button').forEach(button => {
-        button.addEventListener('click', () => openConfirmDialog(button.dataset.id));
-    });
-    
     // Masquer le message "Aucun produit" et l'indicateur de chargement
     noProductsMessage.style.display = 'none';
     loadingIndicator.style.display = 'none';
-}
     
     // Ajouter les écouteurs d'événements pour les boutons d'action
     document.querySelectorAll('.edit-button').forEach(button => {
@@ -245,6 +234,7 @@ function displayProducts() {
         button.addEventListener('click', () => openConfirmDialog(button.dataset.id));
     });
 }
+
 // Tronquer le texte
 function truncateText(text, maxLength) {
     if (text.length <= maxLength) return text;
