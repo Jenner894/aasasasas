@@ -279,13 +279,11 @@ function setupSocketEvents() {
         
         // Si le message est pour la commande actuellement ouverte dans le chat
         if (currentChatOrderId && (message.orderId === currentChatOrderId || message.displayId === currentChatOrderId)) {
-            // CORRECTION CRITIQUE: Ne pas ajouter le message si c'est notre propre message
-            // Les messages du client sont créés localement, on ne veut afficher que ceux du livreur
-            if (message.sender !== 'client') {
-                // Ajouter directement le message au chat (seulement les messages du livreur)
-                addMessageToChat(message);
-                
-                // Marquer le message comme lu si c'est un message du livreur
+            // MODIFICATION : Afficher tous les messages, qu'ils viennent du client ou du livreur
+            addMessageToChat(message);
+            
+            // Marquer le message comme lu si c'est un message du livreur
+            if (message.sender === 'livreur') {
                 socket.emit('mark_read', { orderId: message.orderId });
             }
         } else {
@@ -1657,52 +1655,14 @@ function handleSendMessage() {
     const visibleOrderId = orderIdElement.textContent;
     const mongoId = orderIdElement.dataset.mongoId;
     
-    console.log("Envoi du message pour la commande:", visibleOrderId);
-    console.log("ID MongoDB:", mongoId);
-    
     // Utiliser l'ID MongoDB s'il existe, sinon utiliser l'ID visible
     let idToUse = mongoId || visibleOrderId;
-    
-    console.log("ID utilisé pour l'envoi:", idToUse);
     
     // Effacer le champ de saisie immédiatement
     inputField.value = '';
     
-    // Créer un identifiant temporaire unique pour le message
-    const tempMessageId = 'msg_' + Date.now();
-    
-    // Afficher un message temporaire (optimistic UI)
-    const chatMessages = document.getElementById('chat-messages');
-    if (!chatMessages) {
-        console.error("Conteneur de messages introuvable");
-        return;
-    }
-    
-    const now = new Date();
-    const timeString = formatMessageTime(now);
-    const dateString = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
-    
-    // CORRECTION: Utiliser message-user sans ajouter d'élément de nom d'expéditeur
-    const tempMessageElement = document.createElement('div');
-    tempMessageElement.className = 'message message-user message-pending';
-    tempMessageElement.id = tempMessageId;
-    tempMessageElement.dataset.tempId = tempMessageId;
-    
-    // N'ajoutez PAS de div pour le nom de l'expéditeur pour les messages utilisateur
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    contentDiv.textContent = messageText;
-    
-    const timeDiv = document.createElement('div');
-    timeDiv.className = 'message-time';
-    timeDiv.textContent = `${dateString}, ${timeString} (envoi en cours...)`;
-    
-    tempMessageElement.appendChild(contentDiv);
-    tempMessageElement.appendChild(timeDiv);
-    
-    chatMessages.appendChild(tempMessageElement);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    // MODIFICATION: Ne pas afficher de message temporaire
+    // On n'affichera que le message confirmé par le serveur
     
     // Désactiver temporairement le bouton d'envoi
     const sendButton = document.getElementById('send-message');
@@ -1717,11 +1677,9 @@ function handleSendMessage() {
         
         socket.emit('send_message', {
             orderId: idToUse,
-            content: messageText,
-            tempMessageId: tempMessageId // Envoyer l'ID temporaire
+            content: messageText
         });
         
-        // Attendre confirmation ou timeout
         let messageConfirmed = false;
         
         // Écouter la confirmation - une seule fois
@@ -1729,13 +1687,10 @@ function handleSendMessage() {
             console.log("Message confirmé par le serveur:", data);
             messageConfirmed = true;
             
-            // Mettre à jour le message temporaire avec le vrai ID du message
-            tempMessageElement.classList.remove('message-pending');
-            tempMessageElement.dataset.isPending = 'false';
-            tempMessageElement.dataset.messageId = data.messageId;
-            timeDiv.textContent = `${dateString}, ${timeString}`;
+            // MODIFICATION: Ne rien faire ici, car on n'a pas de message temporaire à mettre à jour
+            // Le message sera affiché via l'événement 'new_message' uniquement
             
-            // Stocker également l'ID MongoDB de la commande si fourni
+            // Stocker l'ID MongoDB de la commande si fourni
             if (data.messageData && data.messageData.orderId && !orderIdElement.dataset.mongoId) {
                 orderIdElement.dataset.mongoId = data.messageData.orderId;
             }
@@ -1763,8 +1718,7 @@ function handleSendMessage() {
     function sendViaREST() {
         // Préparer les données du message
         const messageData = {
-            content: messageText,
-            tempMessageId: tempMessageId
+            content: messageText
         };
         
         // Envoyer le message via l'API
@@ -1787,15 +1741,8 @@ function handleSendMessage() {
             console.log("Réponse de l'API après envoi:", data);
             
             if (data.success) {
-                // Mettre à jour le message temporaire
-                tempMessageElement.classList.remove('message-pending');
-                tempMessageElement.dataset.isPending = 'false';
-                timeDiv.textContent = `${dateString}, ${timeString}`;
-                
-                // Important: stocker l'ID réel du message
-                if (data.message && data.message._id) {
-                    tempMessageElement.dataset.messageId = data.message._id;
-                }
+                // MODIFICATION: Ne rien faire ici, car on n'a pas de message temporaire à mettre à jour
+                // Le message sera affiché lorsque le serveur enverra l'événement
                 
                 // Stocker l'ID MongoDB si disponible
                 if (data.message && data.message.orderId && !orderIdElement.dataset.mongoId) {
@@ -1807,22 +1754,12 @@ function handleSendMessage() {
                     }
                 }
             } else {
-                // Marquer le message comme échoué
-                tempMessageElement.classList.add('message-error');
-                timeDiv.textContent = 
-                    `${dateString}, ${timeString} (échec de l'envoi: ${data.message || 'Erreur inconnue'})`;
-                
                 // Afficher une notification d'erreur
                 showNotification(`❌ Erreur: ${data.message || 'Impossible d\'envoyer le message'}`, 'error');
             }
         })
         .catch(error => {
             console.error('Erreur lors de l\'envoi du message:', error);
-            
-            // Marquer le message comme échoué
-            tempMessageElement.classList.add('message-error');
-            timeDiv.textContent = 
-                `${dateString}, ${timeString} (échec de l'envoi)`;
             
             // Afficher une notification d'erreur
             showNotification('❌ Erreur de connexion. Veuillez réessayer.', 'error');
@@ -1836,7 +1773,6 @@ function handleSendMessage() {
         });
     }
 }
-
 // Ajouter des styles pour les animations des notifications
 function addNotificationStyles() {
     if (!document.getElementById('notification-animations')) {
