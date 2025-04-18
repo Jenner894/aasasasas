@@ -11,7 +11,13 @@ const mongoose = require('mongoose');
 
 // Configuration pour servir les fichiers statiques depuis le dossier 'public'
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use('/video', express.static(path.join(__dirname, 'public/video'), {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.mp4') || path.endsWith('.MP4')) {
+            res.setHeader('Content-Type', 'video/mp4');
+        }
+    }
+}));
 // Middleware d'authentification par session
 const isAuthenticated = (req, res, next) => {
   if (req.session && req.session.user) {
