@@ -224,6 +224,15 @@ function openAddProductModal() {
     // Ouvrir le modal
     productModal.classList.add('active');
 }
+// Fermeture du modal de produit
+function closeProductModal() {
+    productModal.classList.remove('active');
+}
+
+// Ajout d'une option de prix par défaut
+function addDefaultPriceOption() {
+    addPriceOption(null, 1, 10);
+}
 // Ouverture du modal de modification de produit
 function openEditProductModal(id) {
     currentProductId = id;
