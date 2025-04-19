@@ -420,7 +420,6 @@ socket.on('send_message', async (data) => {
         console.log('Client déconnecté:', socket.id);
     });
 });
-
 const ProductSchema = new mongoose.Schema({
     name: { 
         type: String, 
@@ -447,16 +446,15 @@ const ProductSchema = new mongoose.Schema({
         min: 0,
         max: 100
     },
-    // Utilisation d'un chemin local au lieu d'une URL
-videoUrl: { 
-    type: String,
-    required: true,
-    default: 'https://drive.google.com/uc?export=download&id=DEFAULT_FILE_ID'
-},
-    // Champ supplémentaire pour le chemin du GIF
-    gifPath: {
+    // Lien direct externe pour la vidéo
+    videoUrl: { 
         type: String,
-        default: 'images/default-product.gif'
+        default: ''
+    },
+    // Lien direct externe pour l'image de vignette
+    gifUrl: {
+        type: String,
+        default: ''
     },
     inStock: { 
         type: Boolean, 
@@ -1089,12 +1087,12 @@ app.post('/api/products', isAuthenticated, async (req, res) => {
             category, 
             priceOptions, 
             thcContent, 
-            videoPath,   // Changé de videoUrl à videoPath
-            gifPath,     // Nouveau champ pour GIF
+            videoUrl,   // Lien direct vers la vidéo
+            gifUrl,     // Lien direct vers l'image
             inStock 
         } = req.body;
         
-        // Validation des données - supprimé la validation d'URL
+        // Validation des données
         if (!name || !description || !category || !priceOptions) {
             return res.status(400).json({ success: false, message: 'Nom, description, catégorie et options de prix sont requis' });
         }
@@ -1117,8 +1115,8 @@ app.post('/api/products', isAuthenticated, async (req, res) => {
             category,
             priceOptions,
             thcContent: thcContent || 0,
-            videoPath: videoPath || 'video/default.mp4',  // Utiliser videoPath au lieu de videoUrl
-            gifPath: gifPath || 'images/default-product.gif',
+            videoUrl: videoUrl || '',
+            gifUrl: gifUrl || '',
             inStock: inStock !== undefined ? inStock : true
         });
         
@@ -1145,12 +1143,12 @@ app.put('/api/products/:id', isAuthenticated, async (req, res) => {
             category, 
             priceOptions, 
             thcContent, 
-            videoPath,   // Changé de videoUrl à videoPath
-            gifPath,     // Nouveau champ pour GIF
+            videoUrl,   // Lien direct vers la vidéo
+            gifUrl,     // Lien direct vers l'image
             inStock 
         } = req.body;
         
-        // Validation des données - supprimé la validation d'URL
+        // Validation des données
         if (!name || !description || !category || !priceOptions) {
             return res.status(400).json({ success: false, message: 'Nom, description, catégorie et options de prix sont requis' });
         }
@@ -1175,8 +1173,8 @@ app.put('/api/products/:id', isAuthenticated, async (req, res) => {
                 category,
                 priceOptions,
                 thcContent: thcContent || 0,
-                videoPath: videoPath || 'video/default.mp4',  // Utiliser videoPath au lieu de videoUrl
-                gifPath: gifPath || 'images/default-product.gif',
+                videoUrl: videoUrl || '',
+                gifUrl: gifUrl || '',
                 inStock: inStock !== undefined ? inStock : true,
                 updatedAt: Date.now()
             },
