@@ -636,9 +636,9 @@ function addChatStyles() {
     document.head.appendChild(styles);
 }
 function showNotification(message, type = 'info') {
-    // Vérifier si la fonction existe déjà
-    if (typeof window.showNotification === 'function') {
-        return window.showNotification(message, type);
+    // Si on a déjà une fonction de notification définie globalement, l'utiliser
+    if (typeof window.showNotificationFunc === 'function') {
+        return window.showNotificationFunc(message, type);
     }
     
     // Créer l'élément de notification
