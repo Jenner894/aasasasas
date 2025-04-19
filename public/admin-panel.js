@@ -730,9 +730,25 @@ function applyFilters() {
         
         return true;
     });
+
+    // Tri des commandes par position dans la file d'attente (de 1 à XXX)
+    const sortedDeliveries = filteredDeliveries.sort((a, b) => {
+        // Les commandes avec une position définie seront triées d'abord
+        const positionA = a.queueInfo && a.queueInfo.position ? a.queueInfo.position : Number.MAX_SAFE_INTEGER;
+        const positionB = b.queueInfo && b.queueInfo.position ? b.queueInfo.position : Number.MAX_SAFE_INTEGER;
+
+        // Pour les commandes sans position (livrées ou annulées), utiliser la date de création comme critère secondaire
+        if (positionA === Number.MAX_SAFE_INTEGER && positionB === Number.MAX_SAFE_INTEGER) {
+            // Les commandes les plus récentes en premier
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        }
+
+        // Sinon, trier par position croissante (1, 2, 3...)
+        return positionA - positionB;
+    });
     
-    // Afficher les résultats
-    displayDeliveries(filteredDeliveries);
+    // Afficher les résultats triés
+    displayDeliveries(sortedDeliveries);
 }
 
 // Affichage des livraisons
