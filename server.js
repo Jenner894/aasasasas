@@ -2922,7 +2922,7 @@ app.get('/commandes', isAuthenticated, (req, res) => {
 app.get('/profil', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'profil.html'));
 });
-app.get('/register', isAuthenticated, (req, res) => {
+app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
