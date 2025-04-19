@@ -1166,13 +1166,17 @@ function displayProducts() {
             '<span class="stock-badge in-stock">En stock</span>' : 
             '<span class="stock-badge out-of-stock">Rupture de stock</span>';
         
-        // Normaliser les propriétés du produit en utilisant les URL Google Drive
+        // Normaliser les propriétés du produit
         const videoUrl = product.videoUrl || 
                         "https://drive.google.com/uc?export=download&id=DEFAULT_FILE_ID";
         const name = product.name || "Produit sans nom";
         const category = product.category || "Non catégorisé";
         const thcContent = product.thcContent || product.thc || "N/A";
         const description = product.description || "Aucune description disponible";
+        
+        // URL d'image placeholder (peut être aussi sur Google Drive)
+        const placeholderUrl = product.gifUrl || 
+                             "https://via.placeholder.com/400x300";
         
         // Vérifier si les options de prix existent et sont valides
         let quantityOptionsHTML = '';
@@ -1195,16 +1199,17 @@ function displayProducts() {
             ? Number(product.priceOptions[0].price).toFixed(2) 
             : '0.00';
         
-        // URL d'image placeholder (peut être aussi sur Google Drive)
-        const placeholderUrl = product.gifUrl || 
-                             "https://drive.google.com/uc?export=download&id=DEFAULT_PLACEHOLDER_ID";
-        
+        // Nouvelle structure avec image floue et lien vers la vidéo
         productCard.innerHTML = `
-<div class="product-video-container">
-    <video class="product-video" controls preload="metadata" poster="${placeholderUrl}">
-        <source src="${videoUrl}" type="video/mp4">
-        Votre navigateur ne supporte pas les vidéos HTML5.
-    </video>
+<div class="product-image-container">
+    <div class="blurred-image" style="background-image: url('${placeholderUrl}');">
+        <a href="${videoUrl}" target="_blank" class="video-link">
+            <div class="play-button">
+                <span class="play-icon">▶</span>
+                <span class="play-text">Voir la vidéo</span>
+            </div>
+        </a>
+    </div>
 </div>
             <div class="product-info">
                 <h3 class="product-name">${name}</h3>
@@ -1249,7 +1254,6 @@ function displayProducts() {
         dropdown.dispatchEvent(event);
     });
 }
-
     // Mise à jour compteur commandes
     function updateOrdersCount() {
         const ordersCountElement = document.getElementById('orders-count');
