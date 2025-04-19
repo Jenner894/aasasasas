@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (existingModal) {
         existingModal.remove();
     }
-    
+     addDisabledButtonStyles();
     // Créer le modal de chat immédiatement
     initChatModal();
     
@@ -841,11 +841,20 @@ function updateOrderStatus(orderId, newStatus) {
             // Afficher une notification de changement de statut
             showStatusChangeNotification(displayOrderId || orderId, oldStatus, newStatus);
             
-            // Si la commande est livrée, masquer l'indicateur de position de file d'attente
-            if (newStatus === 'Livré') {
+            // Si la commande est livrée ou annulée, masquer l'indicateur de position de file d'attente
+            // et désactiver le bouton de chat
+            if (newStatus === 'Livré' || newStatus === 'Annulé') {
                 const queueIndicator = card.querySelector('.queue-position-indicator');
                 if (queueIndicator) {
                     queueIndicator.style.display = 'none';
+                }
+                
+                // Désactiver le bouton de chat
+                const chatButton = card.querySelector('.chat-btn');
+                if (chatButton) {
+                    chatButton.classList.add('disabled');
+                    chatButton.disabled = true;
+                    chatButton.querySelector('.chat-btn-icon').nextSibling.textContent = ' Chat indisponible';
                 }
             }
             
@@ -867,6 +876,14 @@ function updateOrderStatus(orderId, newStatus) {
                 // SANS chercher une autre commande à afficher
                 showNoQueueMessage();
                 // On ne cherche plus d'autres commandes à afficher
+                
+                // Désactiver le bouton de chat dans la file d'attente
+                const inlineChatBtn = document.getElementById('inline-chat-btn');
+                if (inlineChatBtn) {
+                    inlineChatBtn.classList.add('disabled');
+                    inlineChatBtn.disabled = true;
+                    inlineChatBtn.querySelector('.chat-btn-text').textContent = 'Chat indisponible';
+                }
             } else {
                 // Sinon, mettre à jour le statut affiché
                 queueStatusElement.textContent = newStatus;
@@ -879,6 +896,7 @@ function updateOrderStatus(orderId, newStatus) {
         }
     }
 }
+
 // Créer un élément HTML pour une commande
 function createOrderElement(order) {
     // Formater la date
@@ -923,6 +941,9 @@ function createOrderElement(order) {
             console.error('Erreur lors de la mise à jour de l\'orderNumber:', error);
         });
     }
+    
+    // Vérifier si la commande est livrée ou annulée
+    const isDeliveredOrCancelled = order.status === 'Livré' || order.status === 'Annulé';
     
     // Structure de la carte de commande
     orderCard.innerHTML = `
@@ -981,8 +1002,8 @@ function createOrderElement(order) {
                 <button class="action-btn queue-btn" data-order="${displayOrderId}" data-id="${order._id}">
                     <span class="queue-btn-icon">🔢</span> File d'attente
                 </button>
-                <button class="action-btn chat-btn" data-order="${displayOrderId}" data-mongo-id="${order._id}">
-                    <span class="chat-btn-icon">💬</span> Chatter avec le livreur
+                <button class="action-btn chat-btn ${isDeliveredOrCancelled ? 'disabled' : ''}" data-order="${displayOrderId}" data-mongo-id="${order._id}" ${isDeliveredOrCancelled ? 'disabled' : ''}>
+                    <span class="chat-btn-icon">💬</span> ${isDeliveredOrCancelled ? 'Chat indisponible' : 'Chatter avec le livreur'}
                 </button>
                 <button class="action-btn secondary tracking-btn">
                     <span class="tracking-btn-icon">🔄</span> Actualiser le suivi
@@ -992,6 +1013,29 @@ function createOrderElement(order) {
     `;
     
     return orderCard;
+}
+function addDisabledButtonStyles() {
+    // Vérifier si les styles existent déjà
+    if (!document.getElementById('disabled-button-styles')) {
+        const style = document.createElement('style');
+        style.id = 'disabled-button-styles';
+        style.textContent = `
+            .action-btn.disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                background-color: #f0f0f0;
+                color: #888;
+                border: 1px solid #ddd;
+            }
+            
+            .action-btn.disabled:hover {
+                background-color: #f0f0f0;
+                transform: none;
+                box-shadow: none;
+            }
+        `;
+        document.head.appendChild(style);
+    }
 }
 
 // Générer les étapes de suivi en fonction du statut
@@ -1751,6 +1795,12 @@ function handleChatButtonClick(e) {
         e.preventDefault();
         e.stopPropagation();
         
+        // Vérifier si le bouton est désactivé
+        if (chatButton.classList.contains('disabled') || chatButton.disabled) {
+            showNotification('Le chat n\'est plus disponible pour les commandes livrées ou annulées', 'info');
+            return;
+        }
+        
         const orderId = chatButton.getAttribute('data-order');
         const mongoId = chatButton.getAttribute('data-mongo-id');
         
@@ -1791,6 +1841,17 @@ function setupInlineChatButton() {
             
             const queueOrderIdElement = document.getElementById('queue-active-order-id');
             if (queueOrderIdElement && queueOrderIdElement.textContent) {
+                // Vérifier si la commande est livrée ou annulée
+                const queueStatusElement = document.getElementById('inline-queue-status');
+                const isDeliveredOrCancelled = queueStatusElement && 
+                    (queueStatusElement.textContent === 'Livré' || queueStatusElement.textContent === 'Annulé');
+                
+                if (isDeliveredOrCancelled) {
+                    // Afficher un message indiquant que le chat n'est plus disponible
+                    showNotification('Le chat n\'est plus disponible pour les commandes livrées ou annulées', 'info');
+                    return;
+                }
+                
                 const orderId = queueOrderIdElement.textContent;
                 const mongoId = queueOrderIdElement.dataset.mongoId;
                 
@@ -1806,6 +1867,7 @@ function setupInlineChatButton() {
         inlineChatBtn.parentNode.replaceChild(newButton, inlineChatBtn);
     }
 }
+
 
 // Ajouter des styles CSS pour le badge de notification
 function addNotificationStyles() {
