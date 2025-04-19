@@ -2933,27 +2933,63 @@ document.addEventListener('DOMContentLoaded', function() {
     // Ajouter le sélecteur de tri
     addSortingSelector();
     
-    // FIX : Ajouter des écouteurs d'événements pour les liens de la sidebar
+    // FIX : Ajouter des écouteurs d'événements pour les liens de la sidebar sans utiliser eval()
     const sidebarItems = document.querySelectorAll('.sidebar-item');
     sidebarItems.forEach(item => {
-        // Préserver le onclick défini dans le HTML
+        // Au lieu d'utiliser eval() avec l'attribut onclick, extraire directement l'URL
+        // et l'utiliser avec window.location.href
+        const onclickAttr = item.getAttribute('onclick');
+        
+        // Si l'élément a un attribut onclick
+        if (onclickAttr) {
+            // Analyser l'attribut onclick pour extraire l'URL
+            // L'attribut est généralement de la forme: window.location.href='/dashboard'
+            const hrefMatch = onclickAttr.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/);
+            
+            if (hrefMatch && hrefMatch[1]) {
+                const targetUrl = hrefMatch[1];
+                
+                // Supprimer l'attribut onclick pour éviter la duplication
+                item.removeAttribute('onclick');
+                
+                // Ajouter un gestionnaire d'événement qui navigue vers l'URL
+                item.addEventListener('click', function() {
+                    // Naviguer vers l'URL extraite
+                    window.location.href = targetUrl;
+                    
+                    // Fermer la sidebar sur mobile après un petit délai
+                    if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
+                        setTimeout(() => {
+                            sidebar.classList.remove('open');
+                        }, 300);
+                    }
+                });
+            }
+        }
+    });
+    
+    // Mise en évidence de l'élément actif dans la sidebar
+    const currentPath = window.location.pathname;
+    
+    // Identifier l'élément de menu correspondant à la page actuelle
+    sidebarItems.forEach(item => {
         const onclickAttr = item.getAttribute('onclick');
         if (onclickAttr) {
-            // Supprimer l'attribut onclick pour éviter la duplication
-            item.removeAttribute('onclick');
-            
-            // Ajouter un gestionnaire d'événement qui exécute le même code
-            item.addEventListener('click', function() {
-                // Évaluer la commande onclick
-                eval(onclickAttr);
+            const hrefMatch = onclickAttr.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/);
+            if (hrefMatch && hrefMatch[1]) {
+                const targetUrl = hrefMatch[1];
+                const targetPath = targetUrl.split('?')[0]; // Ignorer les paramètres de requête
                 
-                // Fermer la sidebar sur mobile après un petit délai
-                if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
-                    setTimeout(() => {
-                        sidebar.classList.remove('open');
-                    }, 300);
+                // Vérifier si le chemin cible correspond à l'URL actuelle
+                if (currentPath === targetPath || 
+                    (currentPath.endsWith('/') && currentPath.slice(0, -1) === targetPath) ||
+                    (targetPath.endsWith('/') && targetPath.slice(0, -1) === currentPath)) {
+                    // Marquer cet élément comme actif
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
                 }
-            });
+            }
         }
     });
 });
