@@ -635,7 +635,97 @@ function addChatStyles() {
     
     document.head.appendChild(styles);
 }
-
+function showNotification(message, type = 'info') {
+    // Vérifier si la fonction existe déjà
+    if (typeof window.showNotification === 'function') {
+        return window.showNotification(message, type);
+    }
+    
+    // Créer l'élément de notification
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-icon">${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}</div>
+        <div class="notification-content">${message}</div>
+        <div class="notification-close">×</div>
+    `;
+    
+    // Styles pour la notification
+    notification.style.position = 'fixed';
+    notification.style.bottom = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = type === 'success' ? '#4caf50' : 
+                                        type === 'error' ? '#f44336' : 
+                                        type === 'warning' ? '#ff9800' : '#2196f3';
+    notification.style.color = 'white';
+    notification.style.padding = '12px 16px';
+    notification.style.borderRadius = '4px';
+    notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+    notification.style.display = 'flex';
+    notification.style.alignItems = 'center';
+    notification.style.minWidth = '250px';
+    notification.style.zIndex = '9999';
+    notification.style.animation = 'slideIn 0.3s ease-out forwards';
+    
+    // Style pour l'icône
+    notification.querySelector('.notification-icon').style.marginRight = '12px';
+    notification.querySelector('.notification-icon').style.fontSize = '20px';
+    
+    // Style pour le contenu
+    notification.querySelector('.notification-content').style.flex = '1';
+    
+    // Style pour le bouton de fermeture
+    const closeBtn = notification.querySelector('.notification-close');
+    closeBtn.style.marginLeft = '12px';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.style.fontSize = '20px';
+    
+    // Ajouter la notification au document
+    document.body.appendChild(notification);
+    
+    // Gérer la fermeture
+    closeBtn.addEventListener('click', () => {
+        notification.style.animation = 'slideOut 0.3s ease-out forwards';
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 300);
+    });
+    
+    // Ajouter les animations CSS si elles n'existent pas déjà
+    if (!document.getElementById('notification-animations')) {
+        const style = document.createElement('style');
+        style.id = 'notification-animations';
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Fermer automatiquement après 4 secondes
+    setTimeout(() => {
+        if (document.body.contains(notification)) {
+            notification.style.animation = 'slideOut 0.3s ease-out forwards';
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }
+    }, 4000);
+    
+    // Stocker la fonction pour une réutilisation ultérieure
+    window.showNotification = showNotification;
+}
 // Fonction pour mettre à jour le badge de messages non lus
 function updateUnreadBadge(orderId) {
     console.log(`Mise à jour des badges pour la commande: ${orderId}`);
@@ -922,7 +1012,118 @@ function getStatusClass(status) {
             return 'pending';
     }
 }
-
+document.addEventListener('DOMContentLoaded', function() {
+    // Ajouter un écouteur d'événement pour les boutons d'actualisation de suivi
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.tracking-btn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const button = e.target.closest('.tracking-btn');
+            const card = button.closest('.order-card');
+            
+            if (card) {
+                // Récupérer l'ID de la commande
+                const orderId = card.getAttribute('data-order-id');
+                const displayId = card.querySelector('.order-id')?.textContent.match(/Commande #([A-Z0-9]+)/)?.at(1);
+                
+                // Afficher un indicateur de chargement sur le bouton
+                const originalText = button.innerHTML;
+                button.innerHTML = '<span class="tracking-btn-icon">🔄</span> Actualisation...';
+                button.disabled = true;
+                
+                // Actualiser les informations de la commande
+                refreshOrderStatus(orderId || displayId, card, function() {
+                    // Restaurer le bouton après l'actualisation
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    
+                    // Afficher une notification de succès
+                    showNotification('Statut de la commande actualisé', 'success');
+                });
+            }
+        }
+    });
+});
+function refreshOrderStatus(orderId, orderCard, callback) {
+    console.log(`Actualisation du statut pour la commande: ${orderId}`);
+    
+    // Afficher un indicateur de chargement dans la section de suivi
+    const trackingSteps = orderCard.querySelector('.tracking-steps');
+    if (trackingSteps) {
+        trackingSteps.innerHTML = '<div class="loading-indicator">Actualisation du suivi...</div>';
+    }
+    
+    // Récupérer les informations de statut depuis l'API
+    fetch(`/api/orders/${orderId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const order = data.order;
+                
+                // Mettre à jour le statut affiché
+                const statusElement = orderCard.querySelector('.order-status');
+                if (statusElement) {
+                    // Sauvegarder l'ancien statut pour la notification
+                    const oldStatus = statusElement.textContent;
+                    
+                    // Mettre à jour le texte et la classe
+                    statusElement.textContent = order.status;
+                    statusElement.className = 'order-status';
+                    statusElement.classList.add(`status-${getStatusClass(order.status)}`);
+                    
+                    // Mettre à jour l'attribut data-status de la carte
+                    orderCard.setAttribute('data-status', getStatusClass(order.status));
+                    
+                    // Si le statut a changé, afficher une notification
+                    if (oldStatus !== order.status) {
+                        showStatusChangeNotification(orderId, oldStatus, order.status);
+                    }
+                }
+                
+                // Mettre à jour les étapes de suivi
+                if (trackingSteps) {
+                    trackingSteps.innerHTML = `<div class="tracking-line"></div>${generateTrackingSteps(order.status)}`;
+                }
+                
+                // Si la commande est également affichée dans la section de file d'attente, mettre à jour
+                const queueOrderId = document.getElementById('queue-active-order-id');
+                if (queueOrderId && (queueOrderId.textContent === orderId || queueOrderId.dataset.mongoId === orderId)) {
+                    updateInlineQueueData(orderId);
+                }
+                
+                // Mettre à jour également les points de statut dans la section de file d'attente
+                updateInlineQueueStepMarkers(order.status);
+            } else {
+                // En cas d'erreur, restaurer les étapes de suivi
+                if (trackingSteps) {
+                    const currentStatus = orderCard.querySelector('.order-status')?.textContent || 'En attente';
+                    trackingSteps.innerHTML = `<div class="tracking-line"></div>${generateTrackingSteps(currentStatus)}`;
+                }
+                
+                // Afficher une notification d'erreur
+                showNotification('Erreur lors de l\'actualisation du suivi', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de l\'actualisation du statut:', error);
+            
+            // En cas d'erreur, restaurer les étapes de suivi
+            if (trackingSteps) {
+                const currentStatus = orderCard.querySelector('.order-status')?.textContent || 'En attente';
+                trackingSteps.innerHTML = `<div class="tracking-line"></div>${generateTrackingSteps(currentStatus)}`;
+            }
+            
+            // Afficher une notification d'erreur
+            showNotification('Erreur de connexion lors de l\'actualisation', 'error');
+        })
+        .finally(() => {
+            // Exécuter le callback de fin si fourni
+            if (typeof callback === 'function') {
+                callback();
+            }
+        });
+}
 // Configuration des modals et boutons
 function setupModals() {
     // Configuration du modal de chat
@@ -1165,8 +1366,17 @@ function updateInlineQueueData(orderId) {
 
 // Mettre à jour les marqueurs d'étape de la file d'attente
 function updateInlineQueueStepMarkers(status) {
+    console.log("Mise à jour des marqueurs de statut pour:", status);
+    
     // Récupérer tous les marqueurs d'étape
     const markers = document.querySelectorAll('#queue-details .queue-marker');
+    
+    if (!markers || markers.length === 0) {
+        console.log("Aucun marqueur trouvé dans la file d'attente");
+        return;
+    }
+    
+    console.log(`${markers.length} marqueurs trouvés dans la file d'attente`);
     
     // Réinitialiser tous les marqueurs
     markers.forEach(marker => {
@@ -1240,7 +1450,18 @@ function updateInlineQueueStepMarkers(status) {
     // Mettre à jour la barre de progression
     const progressBar = document.getElementById('inline-queue-progress');
     if (progressBar) {
+        console.log(`Progression mise à jour: ${progressPercentage}%`);
         progressBar.style.width = `${progressPercentage}%`;
+    } else {
+        console.log("Barre de progression non trouvée");
+    }
+    
+    // Mettre à jour le texte de statut
+    const queueStatus = document.getElementById('inline-queue-status');
+    if (queueStatus) {
+        queueStatus.textContent = status;
+        queueStatus.className = 'queue-status';
+        queueStatus.classList.add(`status-${getStatusClass(status)}`);
     }
 }
 
