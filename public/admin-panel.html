@@ -1171,6 +1171,25 @@ header {
     font-weight: bold;
     border: 2px solid white;
 }
+       .position-column {
+        font-weight: bold;
+        text-align: center;
+        font-size: 1.1rem;
+    }
+    
+    /* Style pour les commandes terminées ou annulées */
+    .position-column:contains("✓") {
+        color: #4CAF50;
+    }
+    
+    .position-column:contains("✗") {
+        color: #F44336;
+    }
+    
+    /* Style pour la position active dans la file */
+    .position-column:contains("#") {
+        color: #2196F3;
+    }
 </style>
 </head>
 <body>
@@ -1288,18 +1307,18 @@ header {
             <!-- Tableau des livraisons -->
             <div class="deliveries-container">
                 <table class="deliveries-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Client</th>
-                            <th>Produit</th>
-                            <th>Type</th>
-                            <th>Heure/Date</th>
-                            <th>Adresse</th>
-                            <th>Statut</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
+<thead>
+    <tr>
+        <th>Position</th> <!-- Remplace la colonne "ID" -->
+        <th>Client</th>
+        <th>Produit</th>
+        <th>Type</th>
+        <th>Heure</th>
+        <th>Adresse</th>
+        <th>Statut</th>
+        <th>Actions</th>
+    </tr>
+</thead>
                     <tbody id="deliveries-table-body">
                         <!-- Les livraisons seront ajoutées dynamiquement ici -->
                     </tbody>
