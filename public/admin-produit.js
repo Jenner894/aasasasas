@@ -257,10 +257,10 @@ function openAddProductModal() {
     productThc.value = 20;
     updateThcValue();
     
-    // Réinitialiser les champs pour les URL Google Drive
-    productVideo.value = 'https://drive.google.com/uc?export=download&id=DEFAULT_FILE_ID';
+    // Réinitialiser les champs pour les liens externes
+    productVideo.value = ''; // Champ vide pour le lien vidéo
     if (productGif) {
-        productGif.value = 'https://drive.google.com/uc?export=download&id=DEFAULT_GIF_ID';
+        productGif.value = ''; // Champ vide pour le lien image
     }
     
     // Changer le titre du modal
@@ -298,10 +298,10 @@ function openEditProductModal(id) {
     productStock.value = product.inStock.toString();
     productDescription.value = product.description;
     
-    // Utiliser videoUrl au lieu de videoPath
+    // Le lien vidéo est maintenant directement le lien externe
     productVideo.value = product.videoUrl || '';
     
-    // Ajout d'un champ pour l'URL du GIF si l'élément existe
+    // Lien vers l'image de vignette
     if (productGif) {
         productGif.value = product.gifUrl || '';
     }
@@ -325,7 +325,6 @@ function openEditProductModal(id) {
     // Ouvrir le modal
     productModal.classList.add('active');
 }
-
 // Mise à jour de la fonction saveProduct pour prendre en compte les nouveaux champs
 function saveProduct(e) {
     e.preventDefault();
@@ -356,22 +355,22 @@ function saveProduct(e) {
         return;
     }
     
-    // Vérifier si l'URL de la vidéo est une URL Google Drive valide
+    // Le champ videoUrl contient maintenant directement le lien vers la vidéo externe
     const videoUrlValue = productVideo.value;
-    if (!videoUrlValue.includes('drive.google.com')) {
-        showNotification('Veuillez entrer une URL Google Drive valide pour la vidéo', 'error');
+    if (!videoUrlValue) {
+        showNotification('Veuillez entrer un lien vers la vidéo', 'error');
         return;
     }
     
-    // Construire l'objet produit avec les URL au lieu des chemins
+    // Construire l'objet produit
     const productData = {
         name: productName.value,
         description: productDescription.value,
         category: productCategory.value,
         priceOptions: priceOptions,
         thcContent: parseFloat(productThc.value),
-        videoUrl: videoUrlValue,
-        gifUrl: productGif ? productGif.value : 'https://drive.google.com/uc?export=download&id=DEFAULT_GIF_ID',
+        videoUrl: videoUrlValue, // Lien direct vers la vidéo
+        gifUrl: productGif ? productGif.value : '',
         inStock: productStock.value === 'true'
     };
     
@@ -425,7 +424,6 @@ function saveProduct(e) {
         saveProductBtn.textContent = 'Enregistrer';
     });
 }
-
 // Ouverture du dialog de confirmation de suppression
 function openConfirmDialog(id) {
     currentProductId = id;
