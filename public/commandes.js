@@ -2933,7 +2933,50 @@ document.addEventListener('DOMContentLoaded', function() {
     // Ajouter le sélecteur de tri
     addSortingSelector();
 });
-
+document.addEventListener('DOMContentLoaded', function() {
+    // Détecter la page actuelle
+    const currentPath = window.location.pathname;
+    
+    // Récupérer tous les éléments de la sidebar
+    const sidebarItems = document.querySelectorAll('.sidebar-item');
+    
+    // Retirer la classe active de tous les éléments
+    sidebarItems.forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Ajouter la classe active à l'élément correspondant à la page courante
+    if (currentPath.includes('/commandes')) {
+        document.querySelector('.sidebar-item:nth-child(3)').classList.add('active');
+    } else if (currentPath.includes('/dashboard')) {
+        document.querySelector('.sidebar-item:nth-child(1)').classList.add('active');
+    } else if (currentPath.includes('/profil')) {
+        document.querySelector('.sidebar-item:nth-child(2)').classList.add('active');
+    }
+    
+    // Gestion des clics sur les éléments de la sidebar
+    sidebarItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Pour les liens externes comme Telegram, ne pas changer la classe active
+            if (!this.getAttribute('onclick').includes('window.open')) {
+                sidebarItems.forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            }
+        });
+    });
+    
+    // Animation de fermeture de la sidebar après clic sur mobile
+    sidebarItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
+                setTimeout(() => {
+                    sidebar.classList.remove('open');
+                }, 300); // Délai pour permettre l'animation de clic
+            }
+        });
+    });
+});
 // Ajouter un bouton pour développer/réduire toutes les commandes
 function addExpandAllButton() {
     const filtersContainer = document.querySelector('.orders-filter');
