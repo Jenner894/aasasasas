@@ -234,6 +234,50 @@ function initSocketConnection() {
         socket.on('reconnect_attempt', (attemptNumber) => {
             console.log(`Tentative de reconnexion #${attemptNumber}...`);
         });
+        socket.on('order_status_updated', (data) => {
+    console.log('Mise à jour du statut de commande reçue:', data);
+    
+    // Mettre à jour le statut dans l'interface
+    updateOrderStatus(data.orderId, data.status);
+    
+    // Si le statut est "Livré", mettre à jour la section de file d'attente
+    if (data.status === 'Livré') {
+        // Vérifier si cette commande est celle actuellement affichée dans la file d'attente
+        const queueOrderId = document.getElementById('queue-active-order-id');
+        if (queueOrderId && (queueOrderId.textContent === data.orderId || queueOrderId.dataset.mongoId === data.orderId)) {
+            // Masquer les détails et afficher le message "aucune commande active"
+            showNoQueueMessage();
+            
+            // Trouver une autre commande active à afficher
+            findAndDisplayActiveOrder();
+        }
+    }
+});
+
+// Ajouter aussi ce gestionnaire pour les suppressions de conversations
+socket.on('chat_deleted', (data) => {
+    console.log('Notification de suppression de chat reçue:', data);
+    
+    // Si le chat de cette commande est actuellement ouvert
+    const chatOrderId = document.getElementById('chat-order-id');
+    if (chatOrderId && (chatOrderId.textContent === data.orderId || chatOrderId.dataset.mongoId === data.orderId)) {
+        // Ajouter un message système pour informer l'utilisateur
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) {
+            const systemMessage = document.createElement('div');
+            systemMessage.className = 'system-message';
+            systemMessage.textContent = data.message || 'Cette conversation n\'est plus disponible.';
+            chatMessages.appendChild(systemMessage);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Désactiver l'envoi de nouveaux messages
+        const chatInputText = document.getElementById('chat-input-text');
+        const sendMessageBtn = document.getElementById('send-message');
+        if (chatInputText) chatInputText.disabled = true;
+        if (sendMessageBtn) sendMessageBtn.disabled = true;
+    }
+});
         
         // Gestion des erreurs de connexion
         socket.on('connect_error', (error) => {
@@ -1188,11 +1232,14 @@ function findAndDisplayActiveOrder() {
         
         // Mettre aussi à jour immédiatement les aperçus de file d'attente dans les cartes
         initQueuePreview();
+        return true;
     } else {
         // Afficher le message "aucune commande"
         showNoQueueMessage();
+        return false;
     }
 }
+
 function initInlineQueueSection() {
     console.log("Initialisation de la section file d'attente");
     
@@ -1287,6 +1334,11 @@ function showNoQueueMessage() {
     const queueDetails = document.getElementById('queue-details');
     
     if (noQueueMessage) {
+        noQueueMessage.innerHTML = `
+            <div class="no-queue-icon">🎉</div>
+            <p>Aucune commande active dans la file d'attente.</p>
+            <p>Sélectionnez une commande en cours pour voir son statut de livraison.</p>
+        `;
         noQueueMessage.style.display = 'flex';
     } else {
         console.error("Élément no-queue-message introuvable");
