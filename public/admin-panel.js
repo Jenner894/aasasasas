@@ -592,41 +592,45 @@ function loadDeliveries() {
     noDeliveriesMessage.style.display = 'none';
     loadingIndicator.style.display = 'block';
     
-    // Récupérer les commandes depuis l'API
-    fetch('/api/admin/orders')
-        .then(response => response.json())
-        .then(async data => {
-            loadingIndicator.style.display = 'none';
+    // Faire une requête pour mettre à jour les positions d'abord
+    fetch('/api/admin/update-queue', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+    })
+    .then(() => {
+        // Ensuite récupérer les commandes
+        return fetch('/api/admin/orders');
+    })
+    .then(response => response.json())
+    .then(async data => {
+        loadingIndicator.style.display = 'none';
+        
+        if (!data.success) {
+            console.error('Erreur lors du chargement des commandes:', data.message);
+            noDeliveriesMessage.style.display = 'block';
+            return;
+        }
+        
+        deliveries = data.orders;
+        
+        if (deliveries.length === 0) {
+            noDeliveriesMessage.style.display = 'block';
+            return;
+        }
+        
+        // Récupérer les informations détaillées de la file d'attente
+        try {
+            const queueResponse = await fetch('/api/admin/delivery-queue', {
+                credentials: 'include'
+            });
             
-            if (!data.success) {
-                console.error('Erreur lors du chargement des commandes:', data.message);
-                noDeliveriesMessage.style.display = 'block';
-                return;
-            }
-            
-            deliveries = data.orders;
-            
-            if (deliveries.length === 0) {
-                noDeliveriesMessage.style.display = 'block';
-                return;
-            }
-            
-            // S'assurer que toutes les commandes ont des positions à jour
-            // Appeler updateDeliveryQueue via l'API
-            try {
-                await fetch('/api/admin/update-queue', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include'
-                });
+            if (queueResponse.ok) {
+                const queueData = await queueResponse.json();
                 
-                // Recharger les commandes avec les informations de file d'attente à jour
-                const updatedResponse = await fetch('/api/admin/delivery-queue');
-                const queueData = await updatedResponse.json();
-                
-                if (queueData.success) {
+                if (queueData.success && queueData.queue) {
                     // Fusionner les informations de file d'attente avec les commandes
                     deliveries.forEach(order => {
                         const queueInfo = queueData.queue.find(item => item.orderId === order._id.toString());
@@ -638,22 +642,22 @@ function loadDeliveries() {
                         }
                     });
                 }
-            } catch (error) {
-                console.warn('Erreur lors de la mise à jour de la file d\'attente:', error);
-                // Continuer même en cas d'erreur
             }
-            
-            // Mettre à jour les compteurs statistiques
-            updateStatistics();
-            
-            // Appliquer les filtres actuels
-            applyFilters();
-        })
-        .catch(error => {
-            console.error('Erreur lors du chargement des commandes:', error);
-            loadingIndicator.style.display = 'none';
-            noDeliveriesMessage.style.display = 'block';
-        });
+        } catch (error) {
+            console.warn('Erreur lors de la récupération des informations de file d\'attente:', error);
+        }
+        
+        // Mettre à jour les compteurs statistiques
+        updateStatistics();
+        
+        // Appliquer les filtres actuels et trier correctement
+        applyFilters();
+    })
+    .catch(error => {
+        console.error('Erreur lors du chargement des commandes:', error);
+        loadingIndicator.style.display = 'none';
+        noDeliveriesMessage.style.display = 'block';
+    });
 }
 
 // Mise à jour des statistiques
