@@ -398,9 +398,9 @@ function initEventListeners() {
             console.log("Sidebar item clicked:", text);
             
             if (text.includes('Produits')) {
-                window.location.href = '/dashboard.html';
+                window.location.href = '/dashboard';
             } else if (text.includes('Commandes')) {
-                window.location.href = '/commandes.html';
+                window.location.href = '/commandes';
             } else if (text.includes('Déconnexion')) {
                 logout();
             }
