@@ -860,13 +860,23 @@ function goBackToPreviousStep() {
 }
 
 // Traiter la commande avec la livraison
-function processOrderWithDelivery() {
+async function processOrderWithDelivery() {
     if (!currentUser) {
         alert('Veuillez vous connecter pour passer commande.');
         return;
     }
     
     try {
+        // Vérifier si l'utilisateur a des commandes en attente
+        const pendingOrder = await checkPendingOrders();
+        
+        if (pendingOrder) {
+            // Créer et afficher la popup d'avertissement
+            showPendingOrderWarning(pendingOrder);
+            return;
+        }
+        
+        // Si pas de commande en attente, continuer normalement
         // Préparer les données de commande
         const orderItems = cart.map(item => ({
             productId: item.productId,
@@ -938,7 +948,109 @@ function processOrderWithDelivery() {
         alert(`Erreur lors du traitement de la commande: ${error.message}`);
     }
 }
+
+    function showPendingOrderWarning(pendingOrder) {
+    // Créer la popup si elle n'existe pas déjà
+    let warningPopup = document.getElementById('pending-order-warning');
     
+    if (!warningPopup) {
+        warningPopup = document.createElement('div');
+        warningPopup.id = 'pending-order-warning';
+        warningPopup.className = 'warning-popup';
+        
+        document.body.appendChild(warningPopup);
+    }
+    
+    // Formater la date de création de la commande
+    const orderDate = new Date(pendingOrder.createdAt);
+    const formattedDate = orderDate.toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    // Construire le contenu de la popup
+    warningPopup.innerHTML = `
+        <div class="warning-popup-content">
+            <div class="warning-popup-header">
+                <h3>Commande en attente détectée</h3>
+                <button class="close-warning-popup">×</button>
+            </div>
+            <div class="warning-popup-body">
+                <div class="warning-icon">⚠️</div>
+                <p>Vous avez déjà une commande en cours :</p>
+                <div class="pending-order-details">
+                    <div class="detail-row">
+                        <span>Produit :</span>
+                        <span>${pendingOrder.productName}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Quantité :</span>
+                        <span>${pendingOrder.quantity}g</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Prix :</span>
+                        <span>${pendingOrder.totalPrice.toFixed(2)}€</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Statut :</span>
+                        <span>${pendingOrder.status}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Date :</span>
+                        <span>${formattedDate}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="warning-popup-footer">
+                <button class="cancel-order-btn" data-order-id="${pendingOrder._id}">Annuler cette commande</button>
+                <button class="view-order-btn">Voir ma commande</button>
+            </div>
+        </div>
+    `;
+    
+    // Afficher la popup
+    warningPopup.classList.add('active');
+    
+    // Ajouter les gestionnaires d'événements
+    document.querySelector('.close-warning-popup').addEventListener('click', function() {
+        warningPopup.classList.remove('active');
+    });
+    
+    document.querySelector('.view-order-btn').addEventListener('click', function() {
+        window.location.href = '/commandes';
+    });
+    
+    document.querySelector('.cancel-order-btn').addEventListener('click', async function() {
+        const orderId = this.getAttribute('data-order-id');
+        
+        try {
+            // Appeler l'API pour annuler la commande
+            const response = await fetch(`/api/orders/${orderId}/cancel`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Commande annulée avec succès. Vous pouvez maintenant passer une nouvelle commande.');
+                warningPopup.classList.remove('active');
+                
+                // Relancer le processus de commande
+                processOrderWithDelivery();
+            } else {
+                alert(`Erreur lors de l'annulation: ${data.message}`);
+            }
+        } catch (error) {
+            alert(`Une erreur est survenue: ${error.message}`);
+        }
+    });
+}
 // Afficher le modal de livraison
 function showDeliveryModal() {
     // Créer ou récupérer le modal
@@ -1279,23 +1391,25 @@ function displayProducts() {
 
 
     // Filtrage des produits par catégorie
-    function filterProductsByCategory(category) {
-        if (category === 'all') {
-            // Afficher tous les produits
-            document.querySelectorAll('.product-card').forEach(card => {
-                card.style.display = 'block';
-            });
-        } else {
-            // Filtrer les produits par catégorie exacte (Fleurs, Résines)
-            document.querySelectorAll('.product-card').forEach(card => {
-                const cardCategory = (card.dataset.category || '').toLowerCase();
-                const selectedCategory = category.toLowerCase();
-                
-                // Vérifier si la catégorie correspond exactement
-                card.style.display = cardCategory === selectedCategory ? 'block' : 'none';
-            });
-        }
+function filterProductsByCategory(category) {
+    if (category === 'all') {
+        // Afficher tous les produits
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.style.display = 'block';
+        });
+    } else {
+        // Normaliser la recherche pour être insensible à la casse et aux accents
+        const selectedCategory = category.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        
+        // Filtrer les produits
+        document.querySelectorAll('.product-card').forEach(card => {
+            const cardCategory = (card.dataset.category || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            
+            // Vérifier si la catégorie correspond
+            card.style.display = cardCategory === selectedCategory ? 'block' : 'none';
+        });
     }
+}
 
     // Configuration des filtres par catégorie
     function setupCategoryFilters() {
@@ -1427,63 +1541,70 @@ async function processOrder() {
 
 
     // Fonctionnalité de la barre latérale
-    function setupSidebar() {
-        const sidebarToggle = document.getElementById('sidebar-toggle');
-        const closeSidebar = document.getElementById('close-sidebar');
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
+   function setupSidebar() {
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const closeSidebar = document.getElementById('close-sidebar');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.add('open');
+            // Cacher le bouton toggle quand la sidebar est ouverte
+            sidebarToggle.style.display = 'none';
+            if (overlay) overlay.classList.add('active');
+        });
         
-        if (sidebarToggle && sidebar) {
-            sidebarToggle.addEventListener('click', function() {
-                sidebar.classList.add('open');
-                if (overlay) overlay.classList.add('active');
-            });
-            
-            if (closeSidebar) {
-                closeSidebar.addEventListener('click', function() {
-                    sidebar.classList.remove('open');
-                    if (overlay) overlay.classList.remove('active');
-                });
-            }
-            
-            if (overlay) {
-                overlay.addEventListener('click', function() {
-                    sidebar.classList.remove('open');
-                    this.classList.remove('active');
-                });
-            }
-            
-            // Configuration des éléments de la barre latérale
-            const sidebarItems = document.querySelectorAll('.sidebar-item');
-            sidebarItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    // Retirer la classe active de tous les éléments
-                    sidebarItems.forEach(i => i.classList.remove('active'));
-                    // Ajouter la classe active à l'élément cliqué
-                    this.classList.add('active');
-                    
-                    // Gérer la navigation
-                    const text = this.textContent.trim();
-                    
-                    if (text.includes('Produits')) {
-                        window.location.href = '/dashboard.html';
-                    } else if (text.includes('Profil')) {
-                        window.location.href = '/profil.html';
-                    } else if (text.includes('Commandes')) {
-                        window.location.href = '/commandes.html';
-                    } else if (text.includes('Déconnexion')) {
-                        logout();
-                    }
-                    
-                    // Fermer la barre latérale sur mobile
-                    if (window.innerWidth < 768) {
-                        sidebar.classList.remove('open');
-                        if (overlay) overlay.classList.remove('active');
-                    }
-                });
+        if (closeSidebar) {
+            closeSidebar.addEventListener('click', function() {
+                sidebar.classList.remove('open');
+                // Réafficher le bouton toggle quand la sidebar est fermée
+                sidebarToggle.style.display = 'block';
+                if (overlay) overlay.classList.remove('active');
             });
         }
+        
+        if (overlay) {
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('open');
+                // Réafficher le bouton toggle quand la sidebar est fermée via overlay
+                sidebarToggle.style.display = 'block';
+                this.classList.remove('active');
+            });
+        }
+        
+        // Configuration des éléments de la barre latérale
+        const sidebarItems = document.querySelectorAll('.sidebar-item');
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // Retirer la classe active de tous les éléments
+                sidebarItems.forEach(i => i.classList.remove('active'));
+                // Ajouter la classe active à l'élément cliqué
+                this.classList.add('active');
+                
+                // Gérer la navigation
+                const text = this.textContent.trim();
+                
+                if (text.includes('Produits')) {
+                    window.location.href = '/dashboard.html';
+                } else if (text.includes('Profil')) {
+                    window.location.href = '/profil.html';
+                } else if (text.includes('Commandes')) {
+                    window.location.href = '/commandes.html';
+                } else if (text.includes('Déconnexion')) {
+                    logout();
+                }
+                
+                // Fermer la barre latérale sur mobile
+                if (window.innerWidth < 768) {
+                    sidebar.classList.remove('open');
+                    sidebarToggle.style.display = 'block';
+                    if (overlay) overlay.classList.remove('active');
+                }
+            });
+        });
     }
+}
 
     // Fonction de déconnexion
     async function logout() {
@@ -1497,6 +1618,34 @@ async function processOrder() {
             console.error('Erreur lors de la déconnexion:', error);
         }
     }
+    async function checkPendingOrders() {
+    try {
+        const response = await fetch('/api/orders/user', {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erreur lors de la récupération des commandes');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.orders && data.orders.length > 0) {
+            // Filtrer les commandes en attente ou en préparation
+            const pendingOrders = data.orders.filter(order => 
+                order.status === 'En attente' || order.status === 'En préparation');
+            
+            if (pendingOrders.length > 0) {
+                return pendingOrders[0]; // Retourner la première commande en attente
+            }
+        }
+        
+        return null; // Pas de commande en attente
+    } catch (error) {
+        console.error('Erreur lors de la vérification des commandes en attente:', error);
+        return null;
+    }
+}
 
     // Configuration des événements
 function setupEventListeners() {
