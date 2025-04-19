@@ -595,7 +595,7 @@ function loadDeliveries() {
     // Récupérer les commandes depuis l'API
     fetch('/api/admin/orders')
         .then(response => response.json())
-        .then(data => {
+        .then(async data => {
             loadingIndicator.style.display = 'none';
             
             if (!data.success) {
@@ -609,6 +609,38 @@ function loadDeliveries() {
             if (deliveries.length === 0) {
                 noDeliveriesMessage.style.display = 'block';
                 return;
+            }
+            
+            // S'assurer que toutes les commandes ont des positions à jour
+            // Appeler updateDeliveryQueue via l'API
+            try {
+                await fetch('/api/admin/update-queue', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+                
+                // Recharger les commandes avec les informations de file d'attente à jour
+                const updatedResponse = await fetch('/api/admin/delivery-queue');
+                const queueData = await updatedResponse.json();
+                
+                if (queueData.success) {
+                    // Fusionner les informations de file d'attente avec les commandes
+                    deliveries.forEach(order => {
+                        const queueInfo = queueData.queue.find(item => item.orderId === order._id.toString());
+                        if (queueInfo) {
+                            order.queueInfo = {
+                                position: queueInfo.position,
+                                estimatedTime: queueInfo.estimatedTime
+                            };
+                        }
+                    });
+                }
+            } catch (error) {
+                console.warn('Erreur lors de la mise à jour de la file d\'attente:', error);
+                // Continuer même en cas d'erreur
             }
             
             // Mettre à jour les compteurs statistiques
@@ -719,8 +751,21 @@ function displayDeliveries(filteredDeliveries) {
         const row = document.createElement('tr');
         row.classList.add('fade-in');
         
-        // ID court
-        const shortId = order._id.substring(order._id.length - 6);
+        // Déterminer la position à afficher
+        let positionDisplay = '';
+        
+        // Si la commande est annulée ou livrée, elle n'est plus dans la file d'attente
+        if (order.status === 'Livré' || order.status === 'Annulé') {
+            positionDisplay = order.status === 'Livré' ? '✓' : '✗';
+        } 
+        // Si la commande a des informations de file d'attente, afficher sa position
+        else if (order.queueInfo && order.queueInfo.position) {
+            positionDisplay = `#${order.queueInfo.position}`;
+        } 
+        // Sinon, afficher un tiret ou un indicateur que la position n'est pas disponible
+        else {
+            positionDisplay = '-';
+        }
         
         // Type de livraison
         const deliveryType = order.delivery && order.delivery.type ? order.delivery.type : 'instant';
@@ -745,8 +790,11 @@ function displayDeliveries(filteredDeliveries) {
         // Nom d'utilisateur
         const username = order.user && order.user.username ? order.user.username : 'Utilisateur inconnu';
         
+        // Affichage de l'ID court en tant qu'attribut data pour conserver l'accès aux fonctionnalités
+        const shortId = order._id.substring(order._id.length - 6);
+        
         row.innerHTML = `
-            <td>${shortId}</td>
+            <td class="position-column">${positionDisplay}</td>
             <td>${username}</td>
             <td>${order.productName}</td>
             <td><span class="type-badge type-${deliveryType}">${deliveryTypeText}</span></td>
