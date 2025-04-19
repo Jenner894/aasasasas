@@ -225,7 +225,90 @@ function initializeSocketIO() {
         socket.on('connect_error', (error) => {
             console.error('Erreur de connexion Socket.io:', error);
         });
+        socket.on('order_status_updated', (data) => {
+    console.log('Mise à jour du statut reçue:', data);
+    
+    // Mettre à jour le statut dans l'interface
+    const orderIndex = deliveries.findIndex(o => o._id === data.orderId);
+    if (orderIndex !== -1) {
+        // Mettre à jour le statut dans notre tableau local
+        deliveries[orderIndex].status = data.status;
         
+        // Mettre à jour l'affichage si les détails de cette commande sont ouverts
+        if (currentDeliveryId === data.orderId) {
+            detailStatus.textContent = data.status;
+            detailStatus.className = 'status-badge status-' + data.status.replace(/ /g, '-');
+            newStatus.value = data.status;
+        }
+        
+        // Mettre à jour le tableau
+        applyFilters();
+        
+        // Mettre à jour les statistiques
+        updateStatistics();
+        
+        // Si le statut est "Livré", fermer le chat s'il est ouvert
+        if (data.status === 'Livré' && currentDeliveryId === data.orderId && chatModal.classList.contains('active')) {
+            // Ajouter un message système
+            const systemMessage = document.createElement('div');
+            systemMessage.className = 'system-message';
+            systemMessage.textContent = 'La commande a été marquée comme livrée. Cette conversation sera supprimée.';
+            chatMessages.appendChild(systemMessage);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Désactiver l'envoi de nouveaux messages
+            chatInputField.disabled = true;
+            sendChatMessageBtn.disabled = true;
+            
+            // Après un court délai, fermer le chat
+            setTimeout(() => {
+                chatModal.classList.remove('active');
+                overlay.classList.remove('active');
+                
+                // Notification pour l'admin
+                const notification = document.createElement('div');
+                notification.className = 'notification success fade-in';
+                notification.innerHTML = `
+                    <div class="notification-icon">✓</div>
+                    <div class="notification-content">
+                        <div class="notification-title">Commande livrée</div>
+                        <div class="notification-message">La conversation a été supprimée</div>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+                
+                // Supprimer la notification après 4 secondes
+                setTimeout(() => {
+                    notification.classList.add('fade-out');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }, 4000);
+            }, 3000);
+        }
+    }
+});
+
+// Ajouter aussi cet écouteur d'événement pour les suppressions de conversations
+socket.on('chat_deleted', (data) => {
+    console.log('Notification de suppression de chat reçue:', data);
+    
+    // Si le chat de cette commande est actuellement ouvert
+    if (currentDeliveryId === data.orderId && chatModal.classList.contains('active')) {
+        // Ajouter un message système
+        const systemMessage = document.createElement('div');
+        systemMessage.className = 'system-message';
+        systemMessage.textContent = data.message || 'Cette conversation a été supprimée.';
+        chatMessages.appendChild(systemMessage);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Désactiver l'interface de chat
+        chatInputField.disabled = true;
+        chatInputField.placeholder = 'Conversation terminée';
+        sendChatMessageBtn.disabled = true;
+    }
+});
+
         // Réception d'un nouveau message
         socket.on('new_message', (message) => {
             console.log('Nouveau message reçu:', message);
@@ -920,10 +1003,37 @@ function updateDeliveryStatus() {
     if (!currentDeliveryId) return;
     
     const status = newStatus.value;
+    const previousStatus = deliveries.find(o => o._id === currentDeliveryId)?.status;
+    
+    // Si aucun changement, ne rien faire
+    if (status === previousStatus) {
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'system-message fade-in';
+        infoDiv.textContent = 'Le statut est déjà ' + status;
+        
+        const modalBody = document.querySelector('.modal-body');
+        modalBody.insertBefore(infoDiv, modalBody.firstChild);
+        
+        setTimeout(() => {
+            infoDiv.remove();
+        }, 3000);
+        
+        return;
+    }
     
     // Animation du bouton
     updateStatusBtn.textContent = 'Mise à jour...';
     updateStatusBtn.disabled = true;
+    
+    // Vérifier si l'utilisateur passe au statut "Livré"
+    if (status === 'Livré' && previousStatus !== 'Livré') {
+        // Demander confirmation avant de supprimer les conversations
+        if (!confirm('Passer cette commande à "Livré" supprimera définitivement la conversation de chat.\n\nContinuer ?')) {
+            updateStatusBtn.textContent = 'Mettre à jour';
+            updateStatusBtn.disabled = false;
+            return;
+        }
+    }
     
     // Appel à l'API pour mettre à jour le statut
     fetch(`/api/orders/${currentDeliveryId}/status`, {
@@ -931,7 +1041,8 @@ function updateDeliveryStatus() {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status }),
+        credentials: 'include' // Important pour maintenir la session
     })
     .then(response => response.json())
     .then(data => {
@@ -963,6 +1074,31 @@ function updateDeliveryStatus() {
             setTimeout(() => {
                 successDiv.remove();
             }, 3000);
+            
+            // Si le statut est passé à "Livré", fermer le modal après un délai
+            if (status === 'Livré') {
+                setTimeout(() => {
+                    deliveryDetailsModal.classList.remove('active');
+                    overlay.classList.remove('active');
+                    
+                    // Afficher une notification
+                    const notification = document.createElement('div');
+                    notification.className = 'notification success';
+                    notification.innerHTML = `
+                        <div class="notification-icon">✓</div>
+                        <div class="notification-content">
+                            <div class="notification-title">Commande livrée</div>
+                            <div class="notification-message">La commande a été marquée comme livrée</div>
+                        </div>
+                    `;
+                    document.body.appendChild(notification);
+                    
+                    // Supprimer la notification après quelques secondes
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 4000);
+                }, 2000);
+            }
         } else {
             console.error('Erreur lors de la mise à jour du statut:', data.message);
             alert('Erreur lors de la mise à jour du statut: ' + data.message);
@@ -977,6 +1113,7 @@ function updateDeliveryStatus() {
         updateStatusBtn.disabled = false;
     });
 }
+
 
 // Ouverture du chat avec un client
 function openChat(deliveryId, username) {
