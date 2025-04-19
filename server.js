@@ -11,6 +11,7 @@ const mongoose = require('mongoose');
 
 // Configuration pour servir les fichiers statiques depuis le dossier 'public'
 app.use(express.static(path.join(__dirname, 'public')));
+
 app.use('/video', express.static(path.join(__dirname, 'public/video'), {
     setHeaders: (res, filePath) => {
         if (filePath.toLowerCase().endsWith('.mp4')) {
@@ -40,6 +41,12 @@ app.use(
         scriptSrc: ["'self'", "'unsafe-inline'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "*"],
+        // Ajouter cette directive pour autoriser les médias depuis Google Drive
+        mediaSrc: ["'self'", "drive.google.com", "*.googleapis.com", "*"],
+        // Ajouter également cette directive pour les sources des éléments comme video, audio
+        connectSrc: ["'self'", "drive.google.com", "*.googleapis.com", "*"],
+        // Permettre les frames (pour les embed Google Drive)
+        frameSrc: ["'self'", "drive.google.com", "*.googleapis.com", "*"]
       },
     },
     crossOriginEmbedderPolicy: false,
