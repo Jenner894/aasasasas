@@ -197,26 +197,32 @@
         text-transform: uppercase;
     }
     
-    .sidebar-item {
-        padding: 12px 20px 12px 30px;
-        display: flex;
-        align-items: center;
-        color: var(--text-dark);
-        text-decoration: none;
-        transition: all 0.2s;
-        cursor: pointer;
-    }
+.sidebar-item {
+    padding: 12px 20px 12px 30px;
+    display: flex;
+    align-items: center;
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+}
     
-    .sidebar-item:hover {
-        background-color: #f0f0f0;
-        border-left: 3px solid var(--primary-blue);
-    }
-    
-    .sidebar-item.active {
-        background-color: rgba(69, 211, 255, 0.1);
-        border-left: 3px solid var(--primary-blue);
-        font-weight: bold;
-    }
+.sidebar-item:hover {
+    background-color: #f0f0f0;
+    border-left: 3px solid var(--primary-blue);
+}
+
+.sidebar-item.active {
+    background-color: rgba(69, 211, 255, 0.1);
+    border-left: 3px solid var(--primary-blue);
+    font-weight: bold;
+}
+
+/* Animation pour l'effet de clic */
+.sidebar-item:active {
+    transform: scale(0.98);
+    background-color: rgba(69, 211, 255, 0.2);
+}
     
     .sidebar-item-icon {
         margin-right: 10px;
@@ -1676,18 +1682,18 @@
             <div class="logo">Allo<span>80</span>Bedo</div>
             <button class="close-sidebar" id="close-sidebar">×</button>
         </div>
- <div class="sidebar-content">
+<div class="sidebar-content">
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Principal</div>
-                <div class="sidebar-item">
+                <div class="sidebar-item" onclick="window.location.href='/dashboard'">
                     <span class="sidebar-item-icon">🛒</span>
                     Produits
                 </div>
-                <div class="sidebar-item">
+                <div class="sidebar-item" onclick="window.location.href='/profil'">
                     <span class="sidebar-item-icon">👤</span>
                     Mon Profil
                 </div>
-                <div class="sidebar-item active">
+                <div class="sidebar-item active" onclick="window.location.href='/commandes'">
                     <span class="sidebar-item-icon">📦</span>
                     Mes Commandes
                 </div>
@@ -1707,7 +1713,7 @@
             
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Aide</div>
-                <div class="sidebar-item">
+                <div class="sidebar-item" onclick="window.open('https://t.me/+AOT4OZGzD3liODE8', '_blank')">
                     <span class="sidebar-item-icon">💬</span>
                     Support Client
                 </div>
@@ -1729,7 +1735,6 @@
                 </div>
             </div>
         </div>
-    </div>
     
     <!-- Main Content -->
     <div class="main-content" id="main-content">
