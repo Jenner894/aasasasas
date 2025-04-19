@@ -234,30 +234,21 @@ function initSocketConnection() {
         socket.on('reconnect_attempt', (attemptNumber) => {
             console.log(`Tentative de reconnexion #${attemptNumber}...`);
         });
-       socket.on('order_status_updated', (data) => {
+socket.on('order_status_updated', (data) => {
     console.log('Mise à jour du statut de commande reçue:', data);
     
     // Mettre à jour le statut dans l'interface
     updateOrderStatus(data.orderId, data.status);
     
-    // Si le statut est "Livré", mettre à jour la section de file d'attente et les positions
+    // Si le statut est "Livré" ou "Annulé"
     if (data.status === 'Livré' || data.status === 'Annulé') {
         // Vérifier si cette commande est celle actuellement affichée dans la file d'attente
         const queueOrderId = document.getElementById('queue-active-order-id');
         if (queueOrderId && (queueOrderId.textContent === data.orderId || queueOrderId.dataset.mongoId === data.orderId)) {
             // Masquer les détails et afficher le message "aucune commande active"
             showNoQueueMessage();
-            
-            // Trouver une autre commande active à afficher
-            setTimeout(() => {
-                findAndDisplayActiveOrder();
-            }, 500);
+            // Ne pas chercher une autre commande active à afficher
         }
-        
-        // Mettre à jour les positions de file d'attente pour toutes les commandes
-        setTimeout(() => {
-            initQueuePreview();
-        }, 1000);
     }
 });
 // Ajouter aussi ce gestionnaire pour les suppressions de conversations
@@ -873,12 +864,9 @@ function updateOrderStatus(orderId, newStatus) {
         if (queueOrderId && (queueOrderId.textContent === orderId || queueOrderId.dataset.mongoId === orderId)) {
             if (newStatus === 'Livré' || newStatus === 'Annulé') {
                 // Si la commande active est livrée ou annulée, afficher le message "aucune commande active"
+                // SANS chercher une autre commande à afficher
                 showNoQueueMessage();
-                
-                // Chercher une autre commande active à afficher
-                setTimeout(() => {
-                    findAndDisplayActiveOrder();
-                }, 500);
+                // On ne cherche plus d'autres commandes à afficher
             } else {
                 // Sinon, mettre à jour le statut affiché
                 queueStatusElement.textContent = newStatus;
@@ -1652,11 +1640,7 @@ function fetchQueueInfo(orderId, orderCard) {
                 if (queueOrderId && (queueOrderId.textContent === orderId || queueOrderId.dataset.mongoId === orderId)) {
                     // Masquer les détails et afficher le message "aucune commande active"
                     showNoQueueMessage();
-                    
-                    // Trouver une autre commande active à afficher
-                    setTimeout(() => {
-                        findAndDisplayActiveOrder();
-                    }, 500);
+                    // Ne pas chercher une autre commande active à afficher
                 }
             }
         })
@@ -1673,7 +1657,6 @@ function fetchQueueInfo(orderId, orderCard) {
             }
         });
 }
-
 // Initialiser les boutons de filtre
 function initFilterButtons() {
     const filterButtons = document.querySelectorAll('.filter-btn');
@@ -2878,20 +2861,16 @@ function checkForNewMessages() {
 
 // Mise à jour périodique des données de la file d'attente (toutes les 2 minutes)
 setInterval(function() {
-    // Vérifier si la section est actuellement visible
+    // Vérifier si la section est actuellement visible et affiche déjà une commande
     const queueDetails = document.getElementById('queue-details');
     if (queueDetails && queueDetails.style.display !== 'none') {
+        // Si une commande est déjà affichée, mettre à jour ses informations
         const orderId = document.getElementById('queue-active-order-id')?.textContent;
         if (orderId) {
             updateInlineQueueData(orderId);
         }
-    } else {
-        // S'il n'y a pas de commande active, vérifier si de nouvelles commandes sont entrées en file d'attente
-        const activeOrders = findActiveOrdersInQueue();
-        if (activeOrders.length > 0) {
-            updateAndShowInlineQueueSection(activeOrders[0].orderId);
-        }
     }
+    // On ne cherche plus automatiquement de nouvelles commandes à afficher
     
     // Mettre à jour toutes les preview de file d'attente dans les cartes
     const orderCards = document.querySelectorAll('.order-card:not([data-status="delivered"]):not([data-status="cancelled"])');
@@ -2910,7 +2889,6 @@ setInterval(function() {
         fetchQueueInfo(orderId, card);
     });
 }, 120000); // 2 minutes
-
 // Gestion de la sidebar
 document.addEventListener('DOMContentLoaded', function() {
     const sidebarToggle = document.getElementById('sidebar-toggle');
