@@ -257,10 +257,10 @@ function openAddProductModal() {
     productThc.value = 20;
     updateThcValue();
     
-    // Réinitialiser les champs de vidéo et GIF
-    productVideo.value = 'video/default.mp4';
+    // Réinitialiser les champs pour les URL Google Drive
+    productVideo.value = 'https://drive.google.com/uc?export=download&id=DEFAULT_FILE_ID';
     if (productGif) {
-        productGif.value = 'images/default-product.gif';
+        productGif.value = 'https://drive.google.com/uc?export=download&id=DEFAULT_GIF_ID';
     }
     
     // Changer le titre du modal
@@ -298,12 +298,12 @@ function openEditProductModal(id) {
     productStock.value = product.inStock.toString();
     productDescription.value = product.description;
     
-    // Utiliser videoPath au lieu de videoUrl
-    productVideo.value = product.videoPath || product.videoUrl || '';
+    // Utiliser videoUrl au lieu de videoPath
+    productVideo.value = product.videoUrl || '';
     
-    // Ajout d'un champ pour le chemin du GIF si l'élément existe
+    // Ajout d'un champ pour l'URL du GIF si l'élément existe
     if (productGif) {
-        productGif.value = product.gifPath || '';
+        productGif.value = product.gifUrl || '';
     }
     
     productThc.value = product.thcContent;
@@ -356,15 +356,22 @@ function saveProduct(e) {
         return;
     }
     
-    // Construire l'objet produit avec les nouveaux champs
+    // Vérifier si l'URL de la vidéo est une URL Google Drive valide
+    const videoUrlValue = productVideo.value;
+    if (!videoUrlValue.includes('drive.google.com')) {
+        showNotification('Veuillez entrer une URL Google Drive valide pour la vidéo', 'error');
+        return;
+    }
+    
+    // Construire l'objet produit avec les URL au lieu des chemins
     const productData = {
         name: productName.value,
         description: productDescription.value,
         category: productCategory.value,
         priceOptions: priceOptions,
         thcContent: parseFloat(productThc.value),
-        videoPath: productVideo.value || 'video/default.mp4', // Utiliser videoPath par défaut si vide
-        gifPath: productGif ? productGif.value || 'images/default-product.gif' : 'images/default-product.gif',
+        videoUrl: videoUrlValue,
+        gifUrl: productGif ? productGif.value : 'https://drive.google.com/uc?export=download&id=DEFAULT_GIF_ID',
         inStock: productStock.value === 'true'
     };
     
