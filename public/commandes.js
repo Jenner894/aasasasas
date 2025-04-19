@@ -234,14 +234,14 @@ function initSocketConnection() {
         socket.on('reconnect_attempt', (attemptNumber) => {
             console.log(`Tentative de reconnexion #${attemptNumber}...`);
         });
-        socket.on('order_status_updated', (data) => {
+       socket.on('order_status_updated', (data) => {
     console.log('Mise à jour du statut de commande reçue:', data);
     
     // Mettre à jour le statut dans l'interface
     updateOrderStatus(data.orderId, data.status);
     
-    // Si le statut est "Livré", mettre à jour la section de file d'attente
-    if (data.status === 'Livré') {
+    // Si le statut est "Livré", mettre à jour la section de file d'attente et les positions
+    if (data.status === 'Livré' || data.status === 'Annulé') {
         // Vérifier si cette commande est celle actuellement affichée dans la file d'attente
         const queueOrderId = document.getElementById('queue-active-order-id');
         if (queueOrderId && (queueOrderId.textContent === data.orderId || queueOrderId.dataset.mongoId === data.orderId)) {
@@ -249,11 +249,17 @@ function initSocketConnection() {
             showNoQueueMessage();
             
             // Trouver une autre commande active à afficher
-            findAndDisplayActiveOrder();
+            setTimeout(() => {
+                findAndDisplayActiveOrder();
+            }, 500);
         }
+        
+        // Mettre à jour les positions de file d'attente pour toutes les commandes
+        setTimeout(() => {
+            initQueuePreview();
+        }, 1000);
     }
 });
-
 // Ajouter aussi ce gestionnaire pour les suppressions de conversations
 socket.on('chat_deleted', (data) => {
     console.log('Notification de suppression de chat reçue:', data);
@@ -820,6 +826,8 @@ function updateUnreadBadge(orderId) {
 }
 // Fonction pour mettre à jour le statut d'une commande en temps réel
 function updateOrderStatus(orderId, newStatus) {
+    console.log(`Mise à jour du statut pour la commande: ${orderId} vers ${newStatus}`);
+    
     document.querySelectorAll('.order-card').forEach(card => {
         const cardOrderId = card.getAttribute('data-order-id');
         const displayOrderId = card.querySelector('.order-id')?.textContent.match(/Commande #([A-Z0-9]+)/)?.at(1);
@@ -842,6 +850,14 @@ function updateOrderStatus(orderId, newStatus) {
             // Afficher une notification de changement de statut
             showStatusChangeNotification(displayOrderId || orderId, oldStatus, newStatus);
             
+            // Si la commande est livrée, masquer l'indicateur de position de file d'attente
+            if (newStatus === 'Livré') {
+                const queueIndicator = card.querySelector('.queue-position-indicator');
+                if (queueIndicator) {
+                    queueIndicator.style.display = 'none';
+                }
+            }
+            
             // Mettre à jour la section tracking si elle est visible
             const trackingSteps = card.querySelector('.tracking-steps');
             if (trackingSteps) {
@@ -855,12 +871,23 @@ function updateOrderStatus(orderId, newStatus) {
     if (queueStatusElement) {
         const queueOrderId = document.getElementById('queue-active-order-id');
         if (queueOrderId && (queueOrderId.textContent === orderId || queueOrderId.dataset.mongoId === orderId)) {
-            queueStatusElement.textContent = newStatus;
-            queueStatusElement.className = 'queue-status';
-            queueStatusElement.classList.add(`status-${getStatusClass(newStatus)}`);
-            
-            // Mettre à jour les marqueurs et la barre de progression
-            updateInlineQueueStepMarkers(newStatus);
+            if (newStatus === 'Livré' || newStatus === 'Annulé') {
+                // Si la commande active est livrée ou annulée, afficher le message "aucune commande active"
+                showNoQueueMessage();
+                
+                // Chercher une autre commande active à afficher
+                setTimeout(() => {
+                    findAndDisplayActiveOrder();
+                }, 500);
+            } else {
+                // Sinon, mettre à jour le statut affiché
+                queueStatusElement.textContent = newStatus;
+                queueStatusElement.className = 'queue-status';
+                queueStatusElement.classList.add(`status-${getStatusClass(newStatus)}`);
+                
+                // Mettre à jour les marqueurs et la barre de progression
+                updateInlineQueueStepMarkers(newStatus);
+            }
         }
     }
 }
@@ -1340,16 +1367,13 @@ function showNoQueueMessage() {
             <p>Sélectionnez une commande en cours pour voir son statut de livraison.</p>
         `;
         noQueueMessage.style.display = 'flex';
-    } else {
-        console.error("Élément no-queue-message introuvable");
     }
     
     if (queueDetails) {
         queueDetails.style.display = 'none';
-    } else {
-        console.error("Élément queue-details introuvable");
     }
 }
+
 
 
 // Mettre à jour les données de la file d'attente
@@ -1611,32 +1635,28 @@ function fetchQueueInfo(orderId, orderCard) {
                     
                     // Mettre à jour la classe de statut
                     statusElement.className = 'order-status';
-                    switch(data.status) {
-                        case 'En attente':
-                            statusElement.classList.add('status-pending');
-                            break;
-                        case 'En préparation':
-                            statusElement.classList.add('status-processing');
-                            break;
-                        case 'Expédié':
-                            statusElement.classList.add('status-shipped');
-                            break;
-                        case 'Livré':
-                            statusElement.classList.add('status-delivered');
-                            break;
-                        case 'Annulé':
-                            statusElement.classList.add('status-cancelled');
-                            break;
-                    }
+                    statusElement.classList.add(`status-${getStatusClass(data.status)}`);
                     
                     // Mettre à jour l'attribut data-status de la carte
                     orderCard.setAttribute('data-status', getStatusClass(data.status));
                 }
             } else if (!data.inQueue) {
-                // La commande n'est plus dans la file d'attente, masquer l'indicateur
+                // La commande n'est plus dans la file d'attente (livrée ou annulée)
                 const queueIndicator = orderCard.querySelector('.queue-position-indicator');
                 if (queueIndicator) {
                     queueIndicator.style.display = 'none';
+                }
+                
+                // Si la commande est affichée comme active dans la file d'attente
+                const queueOrderId = document.getElementById('queue-active-order-id');
+                if (queueOrderId && (queueOrderId.textContent === orderId || queueOrderId.dataset.mongoId === orderId)) {
+                    // Masquer les détails et afficher le message "aucune commande active"
+                    showNoQueueMessage();
+                    
+                    // Trouver une autre commande active à afficher
+                    setTimeout(() => {
+                        findAndDisplayActiveOrder();
+                    }, 500);
                 }
             }
         })
