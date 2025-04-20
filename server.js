@@ -597,6 +597,10 @@ const Order = mongoose.model('Order', OrderSchema);
 const UserSchema = new mongoose.Schema({
     username: { type: String, unique: true, required: true },
     keys: { type: String, required: true },
+    // Ajout du champ numéro de téléphone (obligatoire)
+    phone: { type: String, required: true },
+    // Ajout du champ Snapchat (facultatif)
+    snapchat: { type: String, default: '' },
     role: { type: String, enum: ['client', 'admin'], default: 'client' },
     createdAt: { type: Date, default: Date.now },
     orders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }],
@@ -2820,17 +2824,34 @@ app.get('/register.html', (req, res) => {
 // Route pour l'inscription d'un nouvel utilisateur
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { username, telegramId, referralCode } = req.body;
+        const { username, phone, snapchat, telegramId, referralCode } = req.body;
         
         // Validation du nom d'utilisateur
         if (!username || username.length < 3) {
             return res.status(400).json({ success: false, message: 'Le nom d\'utilisateur doit contenir au moins 3 caractères' });
         }
         
+        // Validation du numéro de téléphone
+        if (!phone) {
+            return res.status(400).json({ success: false, message: 'Le numéro de téléphone est obligatoire' });
+        }
+        
+        // Format simple pour valider un numéro de téléphone
+        const phoneRegex = /^[0-9+]{10,15}$/;
+        if (!phoneRegex.test(phone)) {
+            return res.status(400).json({ success: false, message: 'Format de numéro de téléphone invalide' });
+        }
+        
         // Vérifier si le nom d'utilisateur existe déjà
         const existingUser = await User.findOne({ username });
         if (existingUser) {
             return res.status(400).json({ success: false, message: 'Ce nom d\'utilisateur est déjà utilisé' });
+        }
+        
+        // Vérifier si le numéro de téléphone est déjà utilisé
+        const existingPhone = await User.findOne({ phone });
+        if (existingPhone) {
+            return res.status(400).json({ success: false, message: 'Ce numéro de téléphone est déjà utilisé' });
         }
         
         // Vérifier le code de parrainage si fourni
@@ -2873,10 +2894,12 @@ app.post('/api/auth/register', async (req, res) => {
             codeExists = await User.findOne({ referralCode: newReferralCode });
         }
         
-        // Créer le nouvel utilisateur
+        // Créer le nouvel utilisateur avec les nouveaux champs
         const newUser = new User({
             username,
             keys: telegramKey,
+            phone, // Nouveau champ obligatoire
+            snapchat: snapchat || '', // Nouveau champ facultatif
             telegramId: telegramId || '',
             referralCode: newReferralCode,
             role: 'client',  // Par défaut, tous les nouveaux utilisateurs sont des clients
