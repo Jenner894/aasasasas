@@ -2933,6 +2933,9 @@ app.get('/', (req, res) => {
 app.get('/dashboard', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
+app.get('/contact', isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'contact.html'));
+});
 app.get('/admin-panel', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin-panel.html'));
 });
