@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Éléments de la popup
     const keyModalOverlay = document.getElementById('key-modal-overlay');
     const telegramKeyDisplay = document.getElementById('telegram-key-display');
+    const copyKeyButton = document.getElementById('copy-key-button');
     const closeModalButton = document.getElementById('close-modal-button');
     const goLoginButton = document.getElementById('go-login-button');
     
@@ -27,6 +28,36 @@ document.addEventListener('DOMContentLoaded', function() {
     
     goLoginButton.addEventListener('click', function() {
         window.location.href = '/login.html';
+    });
+    
+    // Fonctionnalité de copie de la clé
+    copyKeyButton.addEventListener('click', function() {
+        // Créer un élément temporaire pour la copie
+        const tempInput = document.createElement('textarea');
+        tempInput.value = telegramKeyDisplay.textContent;
+        document.body.appendChild(tempInput);
+        
+        // Sélectionner et copier le texte
+        tempInput.select();
+        document.execCommand('copy');
+        
+        // Supprimer l'élément temporaire
+        document.body.removeChild(tempInput);
+        
+        // Indiquer visuellement que la copie a réussi
+        const originalInnerHTML = copyKeyButton.innerHTML;
+        copyKeyButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="copy-icon">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        `;
+        copyKeyButton.style.background = '#4caf50'; // Vert pour indiquer le succès
+        
+        // Rétablir l'icône originale après un court délai
+        setTimeout(() => {
+            copyKeyButton.innerHTML = originalInnerHTML;
+            copyKeyButton.style.background = '';
+        }, 2000);
     });
     
     // Valider le formulaire avant soumission
