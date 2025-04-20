@@ -237,14 +237,48 @@
             color: var(--dark-blue);
         }
         
-        .key-display {
+        .key-display-container {
+            position: relative;
             margin: 20px 0;
+        }
+        
+        .key-display {
             padding: 15px;
+            padding-right: 50px; /* Espace pour le bouton de copie */
             background-color: #f5f5f5;
             border-radius: 10px;
             font-size: 1.2rem;
             font-family: monospace;
             word-break: break-all;
+            text-align: left;
+        }
+        
+        .copy-button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .copy-button:hover {
+            background: var(--dark-blue);
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .copy-icon {
+            width: 20px;
+            height: 20px;
         }
         
         .modal-buttons {
@@ -306,10 +340,10 @@
     
     <div class="register-container">
         <div class="logo">Allo<span>80</span>Bedo</div>
-        <p class="subtitle">Créez votre compte pour profiter de nos produits </p>
+        <p class="subtitle">Créez votre compte pour profiter de nos produits CBD</p>
         
         <div class="logo-container">
-            <img src="logo.png" alt="Allo Bedo Logo" class="logo-image">
+            <img src="/images/logo.png" alt="Allo Bedo Logo" class="logo-image">
         </div>
         
         <form id="register-form">
@@ -353,7 +387,15 @@
         <div class="modal">
             <h2 class="modal-title">Inscription réussie!</h2>
             <p>Voici votre clé Telegram. Conservez-la précieusement pour vous connecter:</p>
-            <div class="key-display" id="telegram-key-display"></div>
+            <div class="key-display-container">
+                <div class="key-display" id="telegram-key-display"></div>
+                <button class="copy-button" id="copy-key-button" title="Copier la clé">
+                    <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+            </div>
             <div class="modal-buttons">
                 <button class="modal-button close-button" id="close-modal-button">Fermer</button>
                 <button class="modal-button login-button" id="go-login-button">Se connecter</button>
