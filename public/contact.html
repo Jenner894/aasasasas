@@ -34,13 +34,16 @@
         header {
             background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
             color: white;
-            padding: 20px;
+            padding: 1.25rem;
             position: relative;
             overflow: hidden;
         }
         
-        .light-beam {
+        .light-beam, .cloud, .leaf {
             position: absolute;
+        }
+        
+        .light-beam {
             top: 0;
             left: 0;
             width: 100%;
@@ -51,7 +54,6 @@
         }
         
         .cloud {
-            position: absolute;
             background: rgba(255,255,255,0.3);
             border-radius: 50px;
         }
@@ -76,20 +78,12 @@
             align-items: center;
             position: relative;
             z-index: 2;
-            padding-left: 0;
-        }
-        
-        .logo-container {
-            display: flex;
-            align-items: center;
         }
         
         .logo {
             font-size: 2rem;
             font-weight: bold;
             color: white;
-            margin-right: 10px;
-            font-family: 'Arial', cursive;
         }
         
         .logo span {
@@ -100,15 +94,15 @@
         .user-actions {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 1rem;
         }
         
-        .user-button, .cart-button {
+        .user-button {
             background-color: white;
             color: var(--dark-blue);
             border: none;
             border-radius: 10px;
-            padding: 10px 20px;
+            padding: 0.5rem 1rem;
             font-weight: bold;
             cursor: pointer;
             display: flex;
@@ -119,37 +113,78 @@
             white-space: nowrap;
         }
         
-        .user-button:hover, .cart-button:hover {
+        .user-button:hover {
             transform: translateY(-2px);
         }
         
         .profile-icon {
             font-size: 1.2rem;
-            margin-right: 8px;
+            margin-right: 0.5rem;
         }
         
         /* Sidebar */
         .sidebar {
             position: fixed;
-            left: -var(--sidebar-width);
             top: 0;
             width: var(--sidebar-width);
             height: 100vh;
             background-color: white;
             box-shadow: var(--card-shadow);
-            transition: left 0.3s ease-in-out;
             z-index: 1001;
             overflow-y: auto;
+            transition: transform 0.3s ease-in-out;
         }
         
-        .sidebar.open {
-            left: 0;
+        /* PC: Sidebar toujours visible */
+        @media (min-width: 769px) {
+            .sidebar {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: var(--sidebar-width);
+            }
+            
+            .sidebar-toggle {
+                display: none !important;
+            }
+            
+            .close-sidebar {
+                display: none !important;
+            }
+            
+            .sidebar-header {
+                justify-content: center;
+            }
+        }
+        
+        /* Mobile: Sidebar cachée par défaut */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .sidebar-toggle {
+                display: flex !important;
+            }
+            
+            .close-sidebar {
+                display: block !important;
+            }
         }
         
         .sidebar-header {
             background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
             color: white;
-            padding: 20px;
+            padding: 1.25rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -161,40 +196,18 @@
             color: white;
             font-size: 1.5rem;
             cursor: pointer;
-            display: none;
-        }
-        
-        /* Desktop specific styles */
-        @media (min-width: 769px) {
-            .sidebar {
-                left: 0;
-                position: fixed;
-                top: 0;
-            }
-            
-            .main-content {
-                margin-left: var(--sidebar-width);
-            }
-            
-            .sidebar-toggle {
-                display: none;
-            }
-            
-            .sidebar-header {
-                justify-content: center;
-            }
         }
         
         .sidebar-content {
-            padding: 20px 0;
+            padding: 1.25rem 0;
         }
         
         .sidebar-section {
-            margin-bottom: 15px;
+            margin-bottom: 1rem;
         }
         
         .sidebar-section-title {
-            padding: 10px 20px;
+            padding: 0.625rem 1.25rem;
             font-weight: bold;
             color: var(--dark-blue);
             font-size: 0.9rem;
@@ -202,7 +215,7 @@
         }
         
         .sidebar-item {
-            padding: 12px 20px 12px 30px;
+            padding: 0.75rem 1.25rem 0.75rem 1.875rem;
             display: flex;
             align-items: center;
             color: var(--text-dark);
@@ -223,23 +236,23 @@
         }
         
         .sidebar-item-icon {
-            margin-right: 10px;
+            margin-right: 0.625rem;
         }
         
         .sidebar-toggle {
             position: fixed;
-            left: 10px;
-            top: 20px;
+            left: 1rem;
+            top: 1rem;
             background-color: var(--primary-blue);
             color: white;
             border: none;
             border-radius: 5px;
-            width: 40px;
-            height: 40px;
+            width: 2.5rem;
+            height: 2.5rem;
             font-size: 1.2rem;
             cursor: pointer;
             z-index: 1000;
-            display: flex;
+            display: none;
             justify-content: center;
             align-items: center;
             box-shadow: var(--card-shadow);
@@ -247,20 +260,19 @@
         
         /* Main content */
         .main-content {
+            min-height: 100vh;
             transition: margin-left 0.3s ease-in-out;
-            min-height: calc(100vh - 165px);
-            margin-left: var(--sidebar-width);
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 2rem 1rem;
         }
         
         .page-title {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 2.5rem;
             color: var(--dark-blue);
             font-size: 2.2rem;
             position: relative;
@@ -272,7 +284,7 @@
             width: 80px;
             height: 4px;
             background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-green) 100%);
-            margin: 15px auto 0;
+            margin: 1rem auto 0;
             border-radius: 2px;
         }
         
@@ -280,7 +292,7 @@
         .contact-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
+            gap: 2rem;
             max-width: 1000px;
             margin: 0 auto;
         }
@@ -301,17 +313,17 @@
         .contact-card-header {
             background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
             color: white;
-            padding: 20px;
+            padding: 1.25rem;
             display: flex;
             align-items: center;
         }
         
         .contact-icon {
             font-size: 2rem;
-            margin-right: 15px;
+            margin-right: 1rem;
             background-color: rgba(255, 255, 255, 0.2);
-            width: 50px;
-            height: 50px;
+            width: 3rem;
+            height: 3rem;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -329,13 +341,13 @@
         }
         
         .contact-card-body {
-            padding: 20px;
+            padding: 1.25rem;
         }
         
         .contact-info {
             display: flex;
             align-items: flex-start;
-            margin-bottom: 15px;
+            margin-bottom: 1rem;
         }
         
         .contact-info:last-child {
@@ -360,8 +372,8 @@
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 30px;
+            gap: 1rem;
+            margin-top: 2rem;
         }
         
         .social-link {
@@ -380,7 +392,7 @@
         
         .social-icon {
             font-size: 2rem;
-            margin-bottom: 8px;
+            margin-bottom: 0.5rem;
             background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
             color: white;
             width: 60px;
@@ -402,9 +414,9 @@
         .footer {
             background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
             color: white;
-            padding: 20px;
+            padding: 1.25rem;
             text-align: center;
-            margin-top: 50px;
+            margin-top: 3rem;
             position: relative;
             overflow: hidden;
         }
@@ -417,7 +429,7 @@
         .footer-logo {
             font-size: 1.5rem;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 0.625rem;
         }
         
         .footer-text {
@@ -427,7 +439,6 @@
         
         /* Leaf decorations */
         .leaf {
-            position: absolute;
             background-color: var(--accent-green);
             border-radius: 50% 50% 0 50%;
             opacity: 0.2;
@@ -469,110 +480,40 @@
             visibility: visible;
         }
         
-        /* Responsive styles */
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            :root {
-                --sidebar-width: 280px;
-            }
-            
-            .sidebar {
-                width: var(--sidebar-width);
-                left: -var(--sidebar-width);
-                position: fixed;
-            }
-            
-            .main-content {
-                margin-left: 0 !important;
-            }
-            
             .header-content {
-                padding-left: 50px;
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+                padding: 1rem 0;
+            }
+            
+            .user-actions {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .user-button {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+            }
+            
+            .profile-icon {
+                font-size: 1rem;
             }
             
             .page-title {
                 font-size: 1.8rem;
             }
             
-            .contact-card-header {
-                padding: 15px;
-            }
-            
-            .contact-icon {
-                width: 40px;
-                height: 40px;
-                font-size: 1.5rem;
-            }
-            
-            .contact-title {
-                font-size: 1.2rem;
-            }
-            
             .contact-info {
                 flex-direction: column;
-                gap: 5px;
+                gap: 0.5rem;
             }
             
             .contact-label {
                 min-width: auto;
-            }
-            
-            .sidebar-toggle {
-                display: flex;
-            }
-            
-            .close-sidebar {
-                display: block;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .header-content {
-                flex-direction: column;
-                gap: 15px;
-                padding-left: 0;
-                align-items: center;
-                text-align: center;
-            }
-            
-            .logo-container {
-                margin-top: 10px;
-            }
-            
-            .user-actions {
-                width: 100%;
-                justify-content: center;
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-            
-            .user-button, .cart-button {
-                padding: 8px 12px;
-                font-size: 0.8rem;
-                flex: 0 1 calc(33.333% - 8px);
-                min-width: 100px;
-                justify-content: center;
-            }
-            
-            .profile-icon {
-                font-size: 0.9rem;
-                margin-right: 5px;
-            }
-            
-            .sidebar-toggle {
-                top: 15px;
-                left: 10px;
-                width: 35px;
-                height: 35px;
-                font-size: 1.1rem;
-            }
-            
-            .logo {
-                font-size: 1.6rem;
-                margin: 0;
-            }
-            
-            .social-links {
-                gap: 10px;
             }
             
             .social-link {
@@ -584,31 +525,38 @@
                 height: 50px;
                 font-size: 1.5rem;
             }
-            
-            .container {
-                padding: 20px 10px;
+        }
+        
+        @media (max-width: 480px) {
+            .user-button {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.8rem;
             }
             
-            .contact-container {
-                gap: 20px;
-                padding: 0 10px;
+            .profile-icon {
+                font-size: 0.9rem;
             }
             
-            .contact-card {
-                margin: 0 -10px;
+            .logo {
+                font-size: 1.5rem;
             }
             
             .page-title {
                 font-size: 1.5rem;
-                padding: 0 10px;
             }
             
-            .footer {
-                padding: 15px;
+            .contact-card-header {
+                padding: 1rem;
             }
             
-            .footer-text {
-                font-size: 0.8rem;
+            .contact-icon {
+                width: 2.5rem;
+                height: 2.5rem;
+                font-size: 1.5rem;
+            }
+            
+            .contact-title {
+                font-size: 1.2rem;
             }
         }
     </style>
@@ -748,7 +696,6 @@
             </div>
         </footer>
     </div>
-    
     <!-- Overlay -->
     <div class="overlay" id="overlay"></div>
     
