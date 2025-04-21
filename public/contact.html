@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -75,7 +76,7 @@
             align-items: center;
             position: relative;
             z-index: 2;
-            padding-left: 50px; /* Espace pour le bouton sidebar */
+            padding-left: 0; /* Pas besoin d'espace pour le bouton sur desktop */
         }
         
         .logo-container {
@@ -159,6 +160,28 @@
             color: white;
             font-size: 1.5rem;
             cursor: pointer;
+            display: none; /* Masqué par défaut */
+        }
+        
+        /* Desktop specific styles */
+        @media (min-width: 769px) {
+            .sidebar {
+                left: 0; /* Toujours visible sur desktop */
+                position: fixed;
+                top: 0;
+            }
+            
+            .main-content {
+                margin-left: var(--sidebar-width);
+            }
+            
+            .sidebar-toggle {
+                display: none; /* Masquer le bouton toggle sur desktop */
+            }
+            
+            .sidebar-header {
+                justify-content: center; /* Centrer le logo quand il n'y a pas de bouton close */
+            }
         }
         
         .sidebar-content {
@@ -225,6 +248,7 @@
         .main-content {
             transition: margin-left 0.3s ease-in-out;
             min-height: calc(100vh - 165px);
+            margin-left: var(--sidebar-width); /* Par défaut sur desktop */
         }
         
         .main-content.sidebar-open {
@@ -471,6 +495,7 @@
             .sidebar {
                 width: 280px;
                 left: -280px;
+                position: fixed;
             }
             
             :root {
@@ -510,6 +535,14 @@
             
             .contact-label {
                 min-width: auto;
+            }
+            
+            .sidebar-toggle {
+                display: flex; /* Afficher le bouton toggle sur mobile */
+            }
+            
+            .close-sidebar {
+                display: block; /* Afficher le bouton close sur mobile */
             }
         }
         
