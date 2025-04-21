@@ -1,4 +1,4 @@
-        // Sidebar functionality
+  // Sidebar functionality
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebar-toggle');
         const closeSidebar = document.getElementById('close-sidebar');
@@ -17,18 +17,16 @@
         }
         
         // Event listeners for mobile
-        if (window.innerWidth <= 768) {
-            sidebarToggle.addEventListener('click', openSidebar);
-            closeSidebar.addEventListener('click', closeSidebarFunc);
-            overlay.addEventListener('click', closeSidebarFunc);
-            
-            // Close on Escape key
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && sidebar.classList.contains('open')) {
-                    closeSidebarFunc();
-                }
-            });
-        }
+        sidebarToggle.addEventListener('click', openSidebar);
+        closeSidebar.addEventListener('click', closeSidebarFunc);
+        overlay.addEventListener('click', closeSidebarFunc);
+        
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+                closeSidebarFunc();
+            }
+        });
         
         // Handle window resize
         window.addEventListener('resize', () => {
