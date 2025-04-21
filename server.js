@@ -2618,20 +2618,7 @@ mongoose.connection.on('disconnected', () => {
     setTimeout(connectWithRetry, 5000);
 });
 
-// Gestion propre de la fermeture du processus
-process.on('SIGINT', async () => {
-    try {
-        await mongoose.connection.close();
-        console.log('Connexion MongoDB fermée suite à l\'arrêt de l\'application');
-        process.exit(0);
-    } catch (err) {
-        console.error('Erreur lors de la fermeture de la connexion MongoDB:', err);
-        process.exit(1);
-    }
-});
 
-// Initialiser la connexion
-connectWithRetry();
 
 // Route d'authentification pour vérifier la clé Telegram
 app.post('/api/auth/login', async (req, res) => {
@@ -2997,7 +2984,20 @@ app.get('/register', (req, res) => {
 });
 
 
-// Démarrage du serveur
+//// Gestion propre de la fermeture du processus
+process.on('SIGINT', async () => {
+    try {
+        await mongoose.connection.close();
+        console.log('Connexion MongoDB fermée suite à l\'arrêt de l\'application');
+        process.exit(0);
+    } catch (err) {
+        console.error('Erreur lors de la fermeture de la connexion MongoDB:', err);
+        process.exit(1);
+    }
+});
+
+// Initialiser la connexion
+connectWithRetry(); Démarrage du serveur
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Serveur démarré sur le port ${PORT}`);
     console.log(`http://localhost:${PORT}`);
