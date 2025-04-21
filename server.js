@@ -2581,42 +2581,13 @@ axios.get('https://api.ipify.org?format=json')
     console.error('Erreur lors de la récupération de l\'IP:', error);
   });
 
-const connectWithRetry = async () => {
-    try {
-        await mongoose.connect(process.env.MONGO_URL, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 5000, // Timeout de 5 secondes
-            heartbeatFrequencyMS: 2000, // Vérification de la connexion toutes les 2 secondes
-            reconnectTries: Number.MAX_VALUE, // Nombre infini de tentatives de reconnexion
-            reconnectInterval: 1000 // Intervalle d'une seconde entre les tentatives
-        });
-        console.log('Connecté à MongoDB avec succès');
-    } catch (err) {
-        console.error('Erreur de connexion à MongoDB:', err.message);
-        console.log('Tentative de reconnexion dans 5 secondes...');
-        setTimeout(connectWithRetry, 5000); // Réessayer après 5 secondes
-    }
-};
-
-// Gérer les événements de connexion
-mongoose.connection.on('connected', () => {
-    console.log('Mongoose connecté à MongoDB');
-});
-
-mongoose.connection.on('error', (err) => {
-    console.error('Erreur Mongoose:', err);
-    if (err.name === 'MongoNetworkError') {
-        console.log('Problème de réseau détecté, tentative de reconnexion...');
-        setTimeout(connectWithRetry, 5000);
-    }
-});
-
-mongoose.connection.on('disconnected', () => {
-    console.log('Mongoose déconnecté de MongoDB');
-    console.log('Tentative de reconnexion automatique...');
-    setTimeout(connectWithRetry, 5000);
-});
+// Connexion à MongoDB
+mongoose.connect(process.env.MONGO_URL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log('Connecté à MongoDB'))
+.catch(err => console.error('Erreur de connexion à MongoDB:', err));
 
 
 
@@ -2984,20 +2955,6 @@ app.get('/register', (req, res) => {
 });
 
 
-//// Gestion propre de la fermeture du processus
-process.on('SIGINT', async () => {
-    try {
-        await mongoose.connection.close();
-        console.log('Connexion MongoDB fermée suite à l\'arrêt de l\'application');
-        process.exit(0);
-    } catch (err) {
-        console.error('Erreur lors de la fermeture de la connexion MongoDB:', err);
-        process.exit(1);
-    }
-});
-
-// Initialiser la connexion
-connectWithRetry(); Démarrage du serveur
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Serveur démarré sur le port ${PORT}`);
     console.log(`http://localhost:${PORT}`);
