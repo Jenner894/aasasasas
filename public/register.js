@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const phoneInput = document.getElementById('phone');
     const snapchatInput = document.getElementById('snapchat');
     const telegramIdInput = document.getElementById('telegram-id');
+    // Suppression complète de la référence au code de parrainage
     const registerButton = document.getElementById('register-button');
     const notification = document.getElementById('notification');
     
@@ -94,6 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     phone: phoneInput.value,
                     snapchat: snapchatInput.value,
                     telegramId: telegramIdInput.value
+                    // Suppression complète du champ referralCode
                 })
             });
             
