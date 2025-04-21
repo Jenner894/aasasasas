@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const phoneInput = document.getElementById('phone');
     const snapchatInput = document.getElementById('snapchat');
     const telegramIdInput = document.getElementById('telegram-id');
-    const referralCodeInput = document.getElementById('referral-code');
     const registerButton = document.getElementById('register-button');
     const notification = document.getElementById('notification');
     
@@ -94,8 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     username: usernameInput.value,
                     phone: phoneInput.value,
                     snapchat: snapchatInput.value,
-                    telegramId: telegramIdInput.value,
-                    referralCode: referralCodeInput.value
+                    telegramId: telegramIdInput.value
                 })
             });
             
