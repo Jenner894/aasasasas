@@ -75,6 +75,7 @@
             align-items: center;
             position: relative;
             z-index: 2;
+            padding-left: 50px; /* Espace pour le bouton sidebar */
         }
         
         .logo-container {
@@ -204,7 +205,7 @@
         .sidebar-toggle {
             position: fixed;
             left: 10px;
-            top: 10px;
+            top: 20px;
             background-color: var(--primary-blue);
             color: white;
             border: none;
@@ -312,7 +313,7 @@
         
         .contact-info {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 15px;
         }
         
@@ -322,14 +323,16 @@
         
         .contact-label {
             font-weight: bold;
-            min-width: 120px;
+            min-width: 100px;
             color: var(--text-dark);
+            flex-shrink: 0;
         }
         
         .contact-value {
             flex: 1;
             color: #666;
             word-break: break-word;
+            overflow-wrap: anywhere;
         }
         
         .social-links {
@@ -466,21 +469,20 @@
         /* Responsive styles */
         @media (max-width: 768px) {
             .sidebar {
-                width: 85%;
-                max-width: 300px;
-                left: -100%;
+                width: 280px;
+                left: -280px;
             }
             
-            .main-content {
-                margin-left: 0;
+            :root {
+                --sidebar-width: 280px;
             }
             
             .main-content.sidebar-open {
                 margin-left: 0;
             }
             
-            .sidebar-toggle {
-                z-index: 1002;
+            .header-content {
+                padding-left: 60px;
             }
             
             .page-title {
@@ -500,48 +502,81 @@
             .contact-title {
                 font-size: 1.2rem;
             }
+            
+            .contact-info {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .contact-label {
+                min-width: auto;
+            }
         }
         
         @media (max-width: 576px) {
             .header-content {
                 flex-direction: column;
-                gap: 10px;
+                gap: 15px;
+                padding-left: 0;
+                align-items: flex-start;
             }
             
             .user-actions {
                 width: 100%;
-                justify-content: space-between;
+                justify-content: flex-start;
                 flex-wrap: wrap;
                 gap: 8px;
             }
             
             .user-button, .cart-button {
-                padding: 8px 10px;
-                font-size: 0.8rem;
-                flex: 1;
-                min-width: 100px;
-                justify-content: center;
+                padding: 8px 15px;
+                font-size: 0.9rem;
+                flex: 0 1 auto;
+            }
+            
+            .profile-icon {
+                font-size: 1rem;
+                margin-right: 5px;
             }
             
             .sidebar-toggle {
-                top: 10px;
+                top: 15px;
                 left: 10px;
                 width: 35px;
                 height: 35px;
+                font-size: 1.1rem;
             }
             
             .logo {
                 font-size: 1.6rem;
+                margin-left: 50px; /* Espace pour le bouton sidebar */
             }
             
             .social-links {
                 gap: 10px;
             }
             
+            .social-link {
+                width: 70px;
+            }
+            
             .social-icon {
                 width: 50px;
                 height: 50px;
                 font-size: 1.5rem;
+            }
+            
+            .container {
+                padding: 20px 15px;
+            }
+            
+            .contact-container {
+                gap: 20px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 10px;
             }
         }
     </style>
@@ -625,28 +660,7 @@
         <!-- Main Content -->
         <div class="container">
             <h1 class="page-title">Contactez-nous</h1>
-            
             <div class="contact-container">
-                <div class="contact-card">
-                    <div class="contact-card-header">
-                        <div class="contact-icon">📱</div>
-                        <div>
-                            <div class="contact-title">Téléphone</div>
-                            <div class="contact-subtitle">Appelez-nous directement</div>
-                        </div>
-                    </div>
-                    <div class="contact-card-body">
-                        <div class="contact-info">
-                            <div class="contact-label">Numéro:</div>
-                            <div class="contact-value">+33 6 XX XX XX XX</div>
-                        </div>
-                        <div class="contact-info">
-                            <div class="contact-label">Disponibilité:</div>
-                            <div class="contact-value">Lun-Dim: 10h - 22h</div>
-                        </div>
-                    </div>
-                </div>
-                
                 <div class="contact-card">
                     <div class="contact-card-header">
                         <div class="contact-icon">💬</div>
@@ -658,7 +672,7 @@
                     <div class="contact-card-body">
                         <div class="contact-info">
                             <div class="contact-label">Snapchat:</div>
-                            <div class="contact-value">allobedo80</div>
+                            <div class="contact-value">Allobedoo8.0</div>
                         </div>
                         <div class="contact-info">
                             <div class="contact-label">Telegram:</div>
@@ -666,7 +680,7 @@
                         </div>
                         <div class="contact-info">
                             <div class="contact-label">Potato:</div>
-                            <div class="contact-value">@allobedo80</div>
+                            <div class="contact-value">https://ptdl159.org/joinchat/KctbaMwcVJSWV3zUARaAqg</div>
                         </div>
                     </div>
                 </div>
@@ -677,17 +691,13 @@
                     <div class="social-icon">📱</div>
                     <div class="social-name">Telegram</div>
                 </a>
-                <a href="https://www.snapchat.com/add/allobedo80" class="social-link" target="_blank">
+                <a href="https://www.snapchat.com/add/Allobedoo8.0" class="social-link" target="_blank">
                     <div class="social-icon">👻</div>
                     <div class="social-name">Snapchat</div>
                 </a>
-                <a href="#" class="social-link">
+                <a href="https://ptdl159.org/joinchat/KctbaMwcVJSWV3zUARaAqg" class="social-link">
                     <div class="social-icon">🥔</div>
                     <div class="social-name">Potato</div>
-                </a>
-                <a href="tel:+33600000000" class="social-link">
-                    <div class="social-icon">📞</div>
-                    <div class="social-name">Téléphone</div>
                 </a>
             </div>
         </div>
