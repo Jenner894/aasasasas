@@ -3,17 +3,6 @@
         const sidebarToggle = document.getElementById('sidebar-toggle');
         const closeSidebar = document.getElementById('close-sidebar');
         const overlay = document.getElementById('overlay');
-        const mainContent = document.getElementById('main-content');
-        
-        function checkScreenSize() {
-            if (window.innerWidth > 768) {
-                sidebar.classList.add('open');
-                document.body.style.overflow = '';
-                overlay.classList.remove('active');
-            } else {
-                sidebar.classList.remove('open');
-            }
-        }
         
         function openSidebar() {
             sidebar.classList.add('open');
@@ -27,15 +16,25 @@
             document.body.style.overflow = '';
         }
         
-        sidebarToggle.addEventListener('click', openSidebar);
-        closeSidebar.addEventListener('click', closeSidebarFunc);
-        overlay.addEventListener('click', closeSidebarFunc);
+        // Event listeners for mobile
+        if (window.innerWidth <= 768) {
+            sidebarToggle.addEventListener('click', openSidebar);
+            closeSidebar.addEventListener('click', closeSidebarFunc);
+            overlay.addEventListener('click', closeSidebarFunc);
+            
+            // Close on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+                    closeSidebarFunc();
+                }
+            });
+        }
         
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && sidebar.classList.contains('open') && window.innerWidth <= 768) {
-                closeSidebarFunc();
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
             }
         });
-        
-        window.addEventListener('load', checkScreenSize);
-        window.addEventListener('resize', checkScreenSize);
