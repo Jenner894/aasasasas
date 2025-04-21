@@ -5,6 +5,16 @@
         const overlay = document.getElementById('overlay');
         const mainContent = document.getElementById('main-content');
         
+        function checkScreenSize() {
+            if (window.innerWidth > 768) {
+                sidebar.classList.add('open');
+                document.body.style.overflow = '';
+                overlay.classList.remove('active');
+            } else {
+                sidebar.classList.remove('open');
+            }
+        }
+        
         function openSidebar() {
             sidebar.classList.add('open');
             overlay.classList.add('active');
@@ -21,9 +31,11 @@
         closeSidebar.addEventListener('click', closeSidebarFunc);
         overlay.addEventListener('click', closeSidebarFunc);
         
-        // Close sidebar on escape key
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+            if (e.key === 'Escape' && sidebar.classList.contains('open') && window.innerWidth <= 768) {
                 closeSidebarFunc();
             }
         });
+        
+        window.addEventListener('load', checkScreenSize);
+        window.addEventListener('resize', checkScreenSize);
