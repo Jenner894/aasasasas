@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LandingIA - Générateur de Landing Pages par IA</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <rect width="32" height="32" rx="8" fill="url(#gradient)"/>
+                        <path d="M10 12h12M10 16h12M10 20h8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="32" y2="32">
+                                <stop offset="0%" style="stop-color:#4a5568"/>
+                                <stop offset="100%" style="stop-color:#1a202c"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <span>LandingIA</span>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#features">Fonctionnalités</a></li>
+                    <li><a href="#generator">Générateur</a></li>
+                    <li><a href="#portfolio">Portfolio</a></li>
+                    <li><a href="#pricing">Tarifs</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Créez des Landing Pages 
+                    <span class="gradient-text">Époustouflantes</span> 
+                    en Quelques Clics
+                </h1>
+                <div class="hero-title-bg"></div>
+                <p class="hero-subtitle">
+                    Testez notre démo IA pour visualiser le potentiel. Chaque projet est ensuite 100% personnalisé par nos développeurs experts pour des résultats professionnels qui convertissent.
+                </p>
+                <div class="hero-cta">
+                    <a href="#generator" class="btn btn-primary">Essayer la Démo IA</a>
+                    <a href="#booking" class="btn btn-secondary">Réserver un Appel</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-number">500+</div>
+                        <div class="stat-label">Pages Créées</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">98%</div>
+                        <div class="stat-label">Satisfaction Client</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">24h</div>
+                        <div class="stat-label">Livraison Moyenne</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-background"></div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Pourquoi Choisir LandingIA ?</h2>
+            <p class="section-subtitle">Une solution complète pour vos besoins en landing pages</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 17L12 22L22 17" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 12L12 17L22 12" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>Développement Sur-Mesure</h3>
+                    <p>Chaque projet est codé à la main par nos développeurs experts pour un résultat 100% personnalisé.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>Ultra Rapide</h3>
+                    <p>Visualisez rapidement avec notre démo IA, puis recevez votre projet final sous 24-48h.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>Design Premium</h3>
+                    <p>Designs responsive et modernes qui captent l'attention et convertissent vos visiteurs.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 6V12L16 14" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>Prix Transparent</h3>
+                    <p>Des tarifs clairs sans surprises. Payez uniquement pour ce dont vous avez besoin.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>Optimisation Avancée</h3>
+                    <p>SEO, performances, analytics et intégrations CRM pour maximiser vos conversions.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <line x1="12" y1="18" x2="12.01" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>Mobile-First</h3>
+                    <p>Toutes nos pages sont optimisées pour mobile, tablette et desktop dès la conception.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Generator Section -->
+    <section id="generator" class="generator">
+        <div class="container">
+            <h2 class="section-title">Testez le Générateur IA</h2>
+            <p class="section-subtitle">Visualisez le potentiel en 3 clics. Cette démo utilise l'IA comme exemple. Chaque projet réel est ensuite 100% personnalisé par nos développeurs.</p>
+            
+            <div class="generator-wrapper">
+                <div class="generator-form">
+                    <form id="landingForm">
+                        <div class="form-group">
+                            <label for="sector">Secteur d'Activité</label>
+                            <select id="sector" required>
+                                <option value="">Choisissez votre secteur</option>
+                                <option value="restaurant">Restaurant / Café</option>
+                                <option value="tech">Tech / SaaS</option>
+                                <option value="ecommerce">E-commerce</option>
+                                <option value="immobilier">Immobilier</option>
+                                <option value="sante">Santé / Bien-être</option>
+                                <option value="coaching">Coaching / Formation</option>
+                                <option value="event">Événementiel</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="objective">Objectif Principal</label>
+                            <select id="objective" required>
+                                <option value="">Choisissez un objectif</option>
+                                <option value="leads">Capturer des leads</option>
+                                <option value="vente">Vendre un produit/service</option>
+                                <option value="inscription">Inscription événement</option>
+                                <option value="info">Présentation entreprise</option>
+                                <option value="portfolio">Portfolio / CV</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="style">Style Visuel</label>
+                            <select id="style" required>
+                                <option value="">Choisissez un style</option>
+                                <option value="minimaliste">Minimaliste</option>
+                                <option value="bold">Bold / Audacieux</option>
+                                <option value="elegant">Élégant / Luxe</option>
+                                <option value="moderne">Moderne / Tech</option>
+                                <option value="fun">Fun / Créatif</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="companyName">Nom de l'Entreprise (optionnel)</label>
+                            <input type="text" id="companyName" placeholder="Ex: Ma Super Entreprise">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tagline">Slogan / Message Clé (optionnel)</label>
+                            <input type="text" id="tagline" placeholder="Ex: L'innovation au service de votre réussite">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-full" id="generateBtn">
+                            <span class="btn-text">Tester la Démo IA</span>
+                            <span class="loader" style="display: none;"></span>
+                        </button>
+
+                        <p class="form-note">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor">
+                                <circle cx="8" cy="8" r="7" stroke-width="1.5"/>
+                                <path d="M8 4V8M8 10.5V11" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                            Démo gratuite. Le projet final sera personnalisé à 100% par nos développeurs.
+                        </p>
+                    </form>
+                </div>
+
+                <div class="generator-preview">
+                    <div class="preview-header">
+                        <div class="preview-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span class="preview-url">preview.landingia.com</span>
+                    </div>
+                    <div class="preview-content" id="previewContent">
+                        <div class="preview-placeholder">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <rect width="64" height="64" rx="12" fill="#2d3748"/>
+                                <path d="M20 24h24M20 32h24M20 40h16" stroke="#718096" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            <p>Votre maquette apparaîtra ici</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+  <!-- Portfolio Section -->
+    <section id="portfolio" class="portfolio">
+        <div class="container">
+            <h2 class="section-title">Ils Nous Ont Fait Confiance</h2>
+            <p class="section-subtitle">Découvrez les landing pages professionnelles que nous avons créées pour nos clients</p>
+            
+            <div class="portfolio-vertical-wrapper">
+                <!-- Preview Container -->
+                <div class="portfolio-preview-container">
+                    <div class="portfolio-screen-mockup" id="portfolioPreview">
+                        <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80" alt="Project Preview" id="portfolioImage">
+                    </div>
+                </div>
+                
+                <!-- Navigation Buttons -->
+                <div class="portfolio-navigation-buttons">
+                    <button class="portfolio-nav-btn" id="portfolioPrevBtn" aria-label="Projet précédent">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M18 15l-6-6-6 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <button class="portfolio-nav-btn" id="portfolioNextBtn" aria-label="Projet suivant">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Portfolio Details -->
+                <div class="portfolio-details">
+                    <div class="portfolio-details-content" id="portfolioDetails">
+                        <div class="portfolio-logo">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                                <rect width="24" height="24" rx="4" fill="currentColor" opacity="0.1"/>
+                                <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            <span id="portfolioTitle">Box Club</span>
+                        </div>
+                        
+                        <p class="portfolio-description" id="portfolioDescription">
+                            Landing page premium pour lancement de business de box par abonnement avec animations et copywriting optimisé pour maximiser les conversions.
+                        </p>
+                        
+                        <a href="#" class="portfolio-live-link" id="portfolioLink">
+                            Voir le site en ligne →
+                        </a>
+                        
+                        <div class="portfolio-tags-list" id="portfolioTags">
+                            <span class="portfolio-badge">E-commerce</span>
+                            <span class="portfolio-badge">Box par abonnement</span>
+                            <span class="portfolio-badge">Animations</span>
+                            <span class="portfolio-badge">Copywriting</span>
+                        </div>
+                        
+                        <div class="portfolio-testimonial" id="portfolioTestimonial">
+                            <div class="testimonial-stars">★★★★★</div>
+                            <p class="testimonial-text">
+                                "LandingIA a créé une page qui a transformé notre business. Les conversions ont explosé dès le premier jour de lancement."
+                            </p>
+                            <div class="testimonial-author">
+                                <strong>Marie Dubois</strong> - Fondatrice, Box Club
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="portfolio-cta">
+                <p>Prêt à rejoindre nos clients satisfaits ?</p>
+                <a href="#booking" class="btn btn-primary">Réserver un Appel Gratuit</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Booking Section -->
+    <section id="booking" class="booking">
+        <div class="container">
+            <h2 class="section-title">Réservez Votre Consultation Gratuite</h2>
+            <p class="section-subtitle">Discutons de votre projet pendant 30 minutes. Sans engagement.</p>
+            
+            <div class="booking-wrapper">
+                <div class="booking-info">
+                    <div class="booking-benefit">
+                        <div class="benefit-icon">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4>Analyse Gratuite de Vos Besoins</h4>
+                            <p>Nous étudions votre projet et vous proposons la meilleure stratégie</p>
+                        </div>
+                    </div>
+
+                    <div class="booking-benefit">
+                        <div class="benefit-icon">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                                <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4>30 Minutes de Conseil Expert</h4>
+                            <p>Profitez de l'expertise de nos développeurs seniors</p>
+                        </div>
+                    </div>
+
+                    <div class="booking-benefit">
+                        <div class="benefit-icon">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4>Devis Personnalisé Immédiat</h4>
+                            <p>Recevez une proposition tarifaire adaptée à votre budget</p>
+                        </div>
+                    </div>
+
+                    <div class="booking-benefit">
+                        <div class="benefit-icon">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4>Sans Engagement</h4>
+                            <p>Aucune obligation d'achat, juste un échange constructif</p>
+                        </div>
+                    </div>
+
+                    <div class="booking-testimonial">
+                        <div class="testimonial-stars">★★★★★</div>
+                        <p>"L'appel de consultation m'a permis de clarifier exactement ce dont j'avais besoin. L'équipe est professionnelle et à l'écoute."</p>
+                        <div class="testimonial-author">
+                            <strong>Sophie Martinez</strong> - Fondatrice, BeautyBox
+                        </div>
+                    </div>
+                </div>
+
+                <div class="booking-calendar">
+                    <div class="calendar-header">
+                        <h3>Choisissez votre créneau</h3>
+                        <p>Disponibilités en temps réel</p>
+                    </div>
+                    <div id="calendarContainer" class="calendar-container">
+                        <!-- L'API de calendrier sera intégrée ici -->
+                        <div class="calendar-placeholder">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+                                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                                <line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="2"/>
+                                <line x1="9" y1="2" x2="9" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <line x1="15" y1="2" x2="15" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            <p>Calendrier de réservation</p>
+                            <small>Intégration API : Calendly, Cal.com ou votre solution préférée</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <h2 class="section-title">Tarifs Simples & Transparents</h2>
+            <p class="section-subtitle">Choisissez la formule adaptée à vos besoins</p>
+            
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Starter</h3>
+                    <div class="price">
+                        <span class="price-amount">399€</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>✓ 1 Landing Page</li>
+                        <li>✓ Design Responsive</li>
+                        <li>✓ Formulaire de Contact</li>
+                        <li>✓ Optimisation Mobile</li>
+                        <li>✓ 2 Révisions</li>
+                        <li>✓ Livraison 48h</li>
+                    </ul>
+                    <a href="#booking" class="btn btn-secondary btn-full">Choisir Starter</a>
+                </div>
+
+                <div class="pricing-card pricing-featured">
+                    <div class="featured-badge">Populaire</div>
+                    <h3>Pro</h3>
+                    <div class="price">
+                        <span class="price-amount">999€</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>✓ Tout du Starter, plus :</li>
+                        <li>✓ Design 100% Personnalisé</li>
+                        <li>✓ Animations Avancées</li>
+                        <li>✓ Intégration Analytics</li>
+                        <li>✓ SEO Optimisé</li>
+                        <li>✓ 5 Révisions</li>
+                        <li>✓ Support Prioritaire</li>
+                        <li>✓ Livraison 24h</li>
+                    </ul>
+                    <a href="#booking" class="btn btn-primary btn-full">Choisir Pro</a>
+                </div>
+
+                <div class="pricing-card">
+                    <h3>Premium</h3>
+                    <div class="price">
+                        <span class="price-amount">1999€</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>✓ Tout du Pro, plus :</li>
+                        <li>✓ Stratégie de Conversion</li>
+                        <li>✓ A/B Testing Setup</li>
+                        <li>✓ Intégrations CRM</li>
+                        <li>✓ Copywriting Inclus</li>
+                        <li>✓ Révisions Illimitées</li>
+                        <li>✓ 1 Mois de Maintenance</li>
+                        <li>✓ Livraison Express</li>
+                    </ul>
+                    <a href="#booking" class="btn btn-secondary btn-full">Choisir Premium</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <div class="contact-content">
+                <div class="contact-info">
+                    <h2>Prêt à Transformer Votre Présence en Ligne ?</h2>
+                    <p>Discutons de votre projet et créons ensemble la landing page parfaite pour votre business.</p>
+                    
+                    <div class="contact-methods">
+                        <div class="contact-method">
+                            <div class="method-icon">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <polyline points="22,6 12,13 2,6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>Email</h4>
+                                <p>contact@landingia.com</p>
+                            </div>
+                        </div>
+                        <div class="contact-method">
+                            <div class="method-icon">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>Téléphone</h4>
+                                <p>+33 6 12 34 56 78</p>
+                            </div>
+                        </div>
+                        <div class="contact-method">
+                            <div class="method-icon">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <polyline points="12 6 12 12 16 14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>Réponse</h4>
+                                <p>Sous 24h maximum</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form class="contact-form" id="contactForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <input type="text" placeholder="Nom" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" placeholder="Email" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" placeholder="Entreprise (optionnel)">
+                    </div>
+                    <div class="form-group">
+                        <textarea placeholder="Parlez-nous de votre projet..." rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Envoyer le Message</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                            <rect width="32" height="32" rx="8" fill="url(#gradient2)"/>
+                            <path d="M10 12h12M10 16h12M10 20h8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                            <defs>
+                                <linearGradient id="gradient2" x1="0" y1="0" x2="32" y2="32">
+                                    <stop offset="0%" style="stop-color:#4a5568"/>
+                                    <stop offset="100%" style="stop-color:#1a202c"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <span>LandingIA</span>
+                    </div>
+                    <p>Créez des landing pages qui convertissent avec nos développeurs experts.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Produit</h4>
+                        <a href="#features">Fonctionnalités</a>
+                        <a href="#generator">Générateur</a>
+                        <a href="#portfolio">Portfolio</a>
+                        <a href="#pricing">Tarifs</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Entreprise</h4>
+                        <a href="#">À Propos</a>
+                        <a href="#contact">Contact</a>
+                        <a href="#">Blog</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Légal</h4>
+                        <a href="#">CGV</a>
+                        <a href="#">Confidentialité</a>
+                        <a href="#">Mentions Légales</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LandingIA. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
