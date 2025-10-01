@@ -21,15 +21,15 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
-// Cal.com Integration
-document.addEventListener('DOMContentLoaded', function() {
+// Cal.com Integration - Attendre que tout soit chargé
+function initCalendar() {
     const calendarContainer = document.getElementById('calendarContainer');
     
-    if (calendarContainer) {
-        const calLink = calendarContainer.getAttribute('data-cal-link');
+    if (calendarContainer && typeof Cal !== 'undefined') {
+        // Remplacez "VOTRE_USERNAME/30min" par votre vrai lien Cal.com
+        const calLink = "https://cal.com/landingai/15min"; // Ex: "jean-dupont/consultation"
         
-        if (calLink) {
-            // Initialiser Cal.com
+        try {
             Cal("inline", {
                 elementOrSelector: "#calendarContainer",
                 calLink: calLink,
@@ -38,8 +38,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     theme: "dark"
                 }
             });
+            
+            console.log('✅ Cal.com chargé avec succès');
+        } catch (error) {
+            console.error('❌ Erreur Cal.com:', error);
         }
+    } else if (!calendarContainer) {
+        console.warn('⚠️ Container #calendarContainer non trouvé');
+    } else {
+        console.warn('⚠️ Cal.com pas encore chargé, nouvelle tentative...');
+        setTimeout(initCalendar, 500);
     }
+}
+
+// Attendre que la page ET Cal.com soient chargés
+window.addEventListener('load', function() {
+    setTimeout(initCalendar, 1000);
 });
 
 // Portfolio Navigation
