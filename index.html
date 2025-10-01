@@ -517,22 +517,6 @@
             </div>
         </div>
     </footer>
-    <script>
-        (function (C, A, L) { 
-            let d = C.document; 
-            C.Cal = C.Cal || function () { 
-                let cal = C.Cal; 
-                let ar = arguments; 
-                if (!cal.q) { cal.q = []; } 
-                cal.q.push(ar); 
-                return cal; 
-            }; 
-            let t = d.createElement('script'); 
-            t.src = A;
-            // RETIRER async pour chargement synchrone
-            d.head.appendChild(t);
-        })(window, 'https://app.cal.com/embed/embed.js', 'Cal');
-    </script>
     <script src="script.js"></script>
 </body>
 </html>
