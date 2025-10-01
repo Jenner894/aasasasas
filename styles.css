@@ -1182,7 +1182,7 @@ body {
     /* Features Grid */
     .features-grid {
         grid-template-columns: repeat(2, 1fr);
-        padding: 2.5rem;
+        padding: 1rem;
     }
     
     /* Generator */
