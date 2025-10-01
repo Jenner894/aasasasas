@@ -1017,7 +1017,20 @@ h1, h2, h3, h4 {
 .calendar-container {
     min-height: 500px;
 }
+/* Cal.com Custom Styling */
+#calendarContainer {
+    min-height: 500px;
+}
 
+#calendarContainer iframe {
+    border: none !important;
+    width: 100% !important;
+    height: 600px !important;
+}
+
+.cal-embed {
+    background: transparent !important;
+}
 .calendar-placeholder {
     display: flex;
     flex-direction: column;
