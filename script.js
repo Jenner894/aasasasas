@@ -21,6 +21,28 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
+// Tags Carousel Enhancement (optionnel)
+document.addEventListener('DOMContentLoaded', () => {
+    const tagsCarousel = document.querySelector('.tags-carousel');
+    const tagsTrack = document.querySelector('.tags-track');
+    
+    if (tagsCarousel && tagsTrack) {
+        // Clone les tags pour une boucle vraiment infinie
+        const tags = tagsTrack.innerHTML;
+        tagsTrack.innerHTML = tags + tags;
+        
+        // Pause au survol individuel des tags
+        const tagItems = document.querySelectorAll('.tag-item');
+        tagItems.forEach(tag => {
+            tag.addEventListener('mouseenter', () => {
+                tagsTrack.style.animationPlayState = 'paused';
+            });
+            tag.addEventListener('mouseleave', () => {
+                tagsTrack.style.animationPlayState = 'running';
+            });
+        });
+    }
+});
 // ============================================
 // BOOKING BENEFITS SLIDER
 // ============================================
