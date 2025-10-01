@@ -33,7 +33,112 @@ body {
     padding: 0 40px;
     width: 100%;
 }
+/* ============================================
+   TAGS CAROUSEL
+   ============================================ */
 
+.tags-carousel {
+    width: 100%;
+    overflow: hidden;
+    margin: 3rem 0;
+    position: relative;
+    padding: 1rem 0;
+}
+
+.tags-carousel::before,
+.tags-carousel::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 100px;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.tags-carousel::before {
+    left: 0;
+    background: linear-gradient(90deg, var(--color-gray-950) 0%, transparent 100%);
+}
+
+.tags-carousel::after {
+    right: 0;
+    background: linear-gradient(90deg, transparent 0%, var(--color-gray-950) 100%);
+}
+
+.tags-track {
+    display: flex;
+    gap: 1rem;
+    animation: scrollTags 30s linear infinite;
+    width: fit-content;
+}
+
+.tag-item {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background: rgba(91, 91, 214, 0.1);
+    border: 1px solid rgba(91, 91, 214, 0.2);
+    border-radius: 50px;
+    color: var(--color-accent);
+    font-size: 0.95rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+.tag-item:hover {
+    background: rgba(91, 91, 214, 0.2);
+    border-color: rgba(91, 91, 214, 0.4);
+    transform: translateY(-2px);
+}
+
+@keyframes scrollTags {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* Pause au survol */
+.tags-carousel:hover .tags-track {
+    animation-play-state: paused;
+}
+
+/* Responsive */
+@media (max-width: 767px) {
+    .tags-carousel {
+        margin: 2rem 0;
+    }
+    
+    .tags-carousel::before,
+    .tags-carousel::after {
+        width: 50px;
+    }
+    
+    .tag-item {
+        padding: 0.625rem 1.25rem;
+        font-size: 0.875rem;
+    }
+    
+    .tags-track {
+        animation-duration: 25s;
+    }
+}
+
+@media (max-width: 479px) {
+    .tag-item {
+        padding: 0.5rem 1rem;
+        font-size: 0.8125rem;
+    }
+    
+    .tags-track {
+        animation-duration: 20s;
+        gap: 0.75rem;
+    }
+}
 /* ============================================
    NAVIGATION
    ============================================ */
