@@ -21,41 +21,48 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
-// Cal.com Integration - Attendre que tout soit chargé
+// Cal.com Integration - Version corrigée
 function initCalendar() {
+    // Vérifier que Cal est défini
+    if (typeof Cal === 'undefined') {
+        console.warn('⚠️ Cal.com pas encore chargé, nouvelle tentative dans 500ms...');
+        setTimeout(initCalendar, 500);
+        return;
+    }
+    
     const calendarContainer = document.getElementById('calendarContainer');
     
-    if (calendarContainer && typeof Cal !== 'undefined') {
-        // Remplacez "VOTRE_USERNAME/30min" par votre vrai lien Cal.com
-        const calLink = "https://cal.com/landingai/15min"; // Ex: "jean-dupont/consultation"
+    if (!calendarContainer) {
+        console.error('❌ Container #calendarContainer non trouvé');
+        return;
+    }
+    
+    try {
+        Cal("init", { origin: "https://cal.com" });
         
-        try {
-            Cal("inline", {
-                elementOrSelector: "#calendarContainer",
-                calLink: calLink,
-                layout: "month_view",
-                config: {
-                    theme: "dark"
-                }
-            });
-            
-            console.log('✅ Cal.com chargé avec succès');
-        } catch (error) {
-            console.error('❌ Erreur Cal.com:', error);
-        }
-    } else if (!calendarContainer) {
-        console.warn('⚠️ Container #calendarContainer non trouvé');
-    } else {
-        console.warn('⚠️ Cal.com pas encore chargé, nouvelle tentative...');
-        setTimeout(initCalendar, 500);
+        Cal("inline", {
+            elementOrSelector: "#calendarContainer",
+            calLink: "landingai/15min",
+            layout: "month_view",
+            config: {
+                theme: "dark"
+            }
+        });
+        
+        console.log('✅ Cal.com chargé avec succès');
+    } catch (error) {
+        console.error('❌ Erreur Cal.com:', error);
     }
 }
 
-// Attendre que la page ET Cal.com soient chargés
-window.addEventListener('load', function() {
-    setTimeout(initCalendar, 1000);
-});
-
+// Attendre que Cal.com soit complètement chargé
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(initCalendar, 1500);
+    });
+} else {
+    setTimeout(initCalendar, 1500);
+}
 // Portfolio Navigation
 const portfolioProjects = [
     {
