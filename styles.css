@@ -465,6 +465,7 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     position: relative;
+    text-shadow: 0 0 20px rgba(91, 91, 214, 0.3);
 }
 
 /* Glow effect sur les nombres */
