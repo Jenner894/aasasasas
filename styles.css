@@ -889,6 +889,7 @@ h1, h2, h3, h4 {
 }
 
 /* Booking Section */
+/* Booking Section */
 .booking {
     padding: 140px 0;
     background: var(--color-gray-950);
@@ -906,30 +907,60 @@ h1, h2, h3, h4 {
 }
 
 .booking-wrapper {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr;
+    display: flex;
+    flex-direction: column;
     gap: 4rem;
     margin-top: 4rem;
 }
 
-.booking-info {
+/* Benefits Slider Container */
+.booking-benefits-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    padding: 0 0 2rem;
+}
+
+.booking-benefits-slider {
     display: flex;
-    flex-direction: column;
-    gap: 2.5rem;
+    gap: 2rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 1rem 0.5rem 2rem;
+}
+
+.booking-benefits-slider::-webkit-scrollbar {
+    display: none;
 }
 
 .booking-benefit {
+    flex: 0 0 calc(25% - 1.5rem);
+    min-width: 280px;
+    background: var(--color-black);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 2rem;
     display: flex;
-    gap: 1.5rem;
-    align-items: flex-start;
+    flex-direction: column;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.booking-benefit:hover {
+    border-color: rgba(91, 91, 214, 0.3);
+    background: var(--color-gray-900);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(91, 91, 214, 0.15);
 }
 
 .benefit-icon {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
     background: rgba(91, 91, 214, 0.1);
     border: 1px solid rgba(91, 91, 214, 0.2);
-    border-radius: 6px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -937,15 +968,14 @@ h1, h2, h3, h4 {
 }
 
 .benefit-icon svg {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     stroke: var(--color-accent);
 }
 
 .booking-benefit h4 {
     font-size: 1.125rem;
     color: var(--color-white);
-    margin-bottom: 0.5rem;
     font-weight: 600;
 }
 
@@ -955,37 +985,38 @@ h1, h2, h3, h4 {
     font-size: 0.95rem;
 }
 
+/* Slider Navigation Dots */
+.booking-slider-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 1.5rem;
+}
+
+.slider-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.slider-dot:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.slider-dot.active {
+    background: var(--color-accent);
+    width: 24px;
+    border-radius: 4px;
+}
+
+/* Testimonial removed - now integrated in benefits */
 .booking-testimonial {
-    background: var(--color-black);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 2rem;
-    border-radius: 6px;
-    margin-top: 1rem;
-}
-
-.testimonial-stars {
-    color: #fbbf24;
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
-    letter-spacing: 4px;
-}
-
-.booking-testimonial p {
-    color: var(--color-gray-400);
-    font-style: italic;
-    line-height: 1.7;
-    margin-bottom: 1.25rem;
-    font-size: 0.95rem;
-}
-
-.testimonial-author {
-    color: var(--color-gray-600);
-    font-size: 0.9rem;
-}
-
-.testimonial-author strong {
-    color: var(--color-white);
-    font-weight: 600;
+    display: none;
 }
 
 .booking-calendar {
@@ -993,14 +1024,16 @@ h1, h2, h3, h4 {
     border: 1px solid rgba(255, 255, 255, 0.06);
     padding: 2.5rem;
     height: fit-content;
-    position: sticky;
-    top: 120px;
+    border-radius: 12px;
+    max-width: 900px;
+    margin: 0 auto;
 }
 
 .calendar-header {
     margin-bottom: 2rem;
     padding-bottom: 2rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    text-align: center;
 }
 
 .calendar-header h3 {
@@ -1017,7 +1050,7 @@ h1, h2, h3, h4 {
 .calendar-container {
     min-height: 500px;
 }
-/* Cal.com Custom Styling */
+
 #calendarContainer {
     min-height: 500px;
 }
@@ -1026,38 +1059,9 @@ h1, h2, h3, h4 {
     border: none !important;
     width: 100% !important;
     height: 600px !important;
+    border-radius: 8px;
 }
-
-.cal-embed {
-    background: transparent !important;
-}
-.calendar-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 500px;
-    color: var(--color-gray-600);
-    text-align: center;
-}
-
-.calendar-placeholder svg {
-    stroke: var(--color-gray-700);
-    margin-bottom: 1.5rem;
-}
-
-.calendar-placeholder p {
-    font-size: 1rem;
-    color: var(--color-gray-500);
-    margin-bottom: 0.75rem;
-    font-weight: 500;
-}
-
-.calendar-placeholder small {
-    font-size: 0.85rem;
-    color: var(--color-gray-700);
-    max-width: 300px;
-}/* Hero Section */
+/* Hero Section */
 .hero {
     position: relative;
     padding: 200px 0 140px;
@@ -1413,15 +1417,14 @@ h1, h2, h3, h4 {
         padding: 2rem;
     }
     
-    /* Booking */
-    .booking-wrapper {
-        grid-template-columns: 1fr;
-        gap: 3rem;
+/* Booking */
+    .booking-benefit {
+        flex: 0 0 calc(50% - 1rem);
+        min-width: 260px;
     }
     
-    .booking-calendar {
-        position: relative;
-        top: 0;
+    .booking-benefits-slider {
+        gap: 1.5rem;
     }
     
     /* Contact */
@@ -1604,21 +1607,15 @@ h1, h2, h3, h4 {
     }
     
     /* Booking */
-    .booking-info {
-        gap: 2rem;
-    }
-    
+
     .booking-benefit {
-        gap: 1.25rem;
+        flex: 0 0 100%;
+        min-width: 100%;
+        padding: 2rem 1.5rem;
     }
     
-    .benefit-icon {
-        width: 42px;
-        height: 42px;
-    }
-    
-    .booking-benefit h4 {
-        font-size: 1rem;
+    .booking-benefits-slider {
+        gap: 1rem;
     }
     
     .booking-calendar {
@@ -1627,10 +1624,6 @@ h1, h2, h3, h4 {
     
     .calendar-header h3 {
         font-size: 1.25rem;
-    }
-    
-    .calendar-container {
-        min-height: 400px;
     }
     
     #calendarContainer iframe {
@@ -1871,38 +1864,27 @@ h1, h2, h3, h4 {
     }
     
     /* Booking */
-    .booking-info h2 {
-        font-size: 1.75rem;
+   /* Booking */
+    .booking-benefit {
+        padding: 1.5rem;
     }
     
     .benefit-icon {
-        width: 38px;
-        height: 38px;
+        width: 44px;
+        height: 44px;
     }
     
-    .booking-benefit h4 {
-        font-size: 0.9375rem;
-    }
-    
-    .booking-benefit p {
-        font-size: 0.875rem;
+    .benefit-icon svg {
+        width: 22px;
+        height: 22px;
     }
     
     .booking-calendar {
         padding: 1.5rem;
     }
     
-    .calendar-header {
-        margin-bottom: 1.5rem;
-        padding-bottom: 1.5rem;
-    }
-    
     .calendar-header h3 {
         font-size: 1.125rem;
-    }
-    
-    .calendar-container {
-        min-height: 350px;
     }
     
     #calendarContainer iframe {
