@@ -1402,7 +1402,7 @@ body {
     }
     
     .feature-card {
-        padding: 2rem 1.5rem; /* Réduit le padding */
+        padding: 2rem 1.5rem;
         border: 1px solid rgba(255, 255, 255, 0.06);
         background: var(--color-black);
         border-radius: 12px;
@@ -1411,19 +1411,18 @@ body {
     .feature-icon {
         width: 42px;
         height: 42px;
-        margin-bottom: 1.25rem; /* Réduit l'espace */
+        margin-bottom: 1.25rem;
     }
     
     .feature-card h3 {
         font-size: 1.125rem;
-        margin-bottom: 0.625rem; /* Réduit l'espace */
+        margin-bottom: 0.625rem;
     }
     
     .feature-card p {
         font-size: 0.9rem;
-        line-height: 1.5; /* Ajusté pour un meilleur affichage */
+        line-height: 1.5;
     }
-}
     /* Generator */
     .generator-form {
         padding: 2rem;
