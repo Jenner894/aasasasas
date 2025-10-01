@@ -315,14 +315,16 @@
         </div>
     </section>
 
-    <!-- Booking Section -->
-    <section id="booking" class="booking">
-        <div class="container">
-            <h2 class="section-title">Réservez Votre Consultation Gratuite</h2>
-            <p class="section-subtitle">Discutons de votre projet pendant 30 minutes. Sans engagement.</p>
-            
-            <div class="booking-wrapper">
-                <div class="booking-info">
+<!-- Booking Section -->
+<section id="booking" class="booking">
+    <div class="container">
+        <h2 class="section-title">Réservez Votre Consultation Gratuite</h2>
+        <p class="section-subtitle">Discutons de votre projet pendant 30 minutes. Sans engagement.</p>
+        
+        <div class="booking-wrapper">
+            <!-- Benefits Slider -->
+            <div class="booking-benefits-container">
+                <div class="booking-benefits-slider" id="benefitsSlider">
                     <div class="booking-benefit">
                         <div class="benefit-icon">
                             <svg viewBox="0 0 24 24" fill="none">
@@ -372,35 +374,31 @@
                             <p>Aucune obligation d'achat, juste un échange constructif</p>
                         </div>
                     </div>
-
-                        <div class="booking-testimonial">
-                        <div class="testimonial-stars">★★★★★</div>
-                        <p>"L'appel de consultation m'a permis de clarifier exactement ce dont j'avais besoin. L'équipe est professionnelle et à l'écoute."</p>
-                        <div class="testimonial-author">
-                            <strong>Sophie Martinez</strong> - Fondatrice, BeautyBox
-                        </div>
-                    </div>
                 </div>
 
-                <div class="booking-calendar">
-                    <div class="calendar-header">
-                        <h3>Choisissez votre créneau</h3>
-                        <p>Disponibilités en temps réel</p>
-                    </div>
-                    <div class="calendar-container">
-                        <!-- Utiliser l'iframe directement sans le SDK -->
-                        <iframe 
-                            src="https://cal.com/landingai/15min?embed=true&theme=dark"
-                            width="100%"
-                            height="600px"
-                            frameborder="0"
-                            style="border: none; background: transparent;">
-                        </iframe>
-                    </div>
+                <!-- Slider Dots -->
+                <div class="booking-slider-dots" id="sliderDots"></div>
+            </div>
+
+            <!-- Calendar -->
+            <div class="booking-calendar">
+                <div class="calendar-header">
+                    <h3>Choisissez votre créneau</h3>
+                    <p>Disponibilités en temps réel</p>
+                </div>
+                <div class="calendar-container">
+                    <iframe 
+                        src="https://cal.com/landingai/15min?embed=true&theme=dark"
+                        width="100%"
+                        height="600px"
+                        frameborder="0"
+                        style="border: none; background: transparent;">
+                    </iframe>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
     <!-- Contact Section -->
     <section id="contact" class="contact">
