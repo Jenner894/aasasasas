@@ -111,6 +111,7 @@ body {
 
 .btn-primary {
     background: var(--color-accent);
+   
     color: var(--color-white);
 }
 
@@ -1309,7 +1310,7 @@ body {
         grid-template-columns: repeat(3, 1fr);
         gap: 2rem;
     }
-}
+
 
 /* Mobile & Tablets (640px - 767px) */
 /* Mobile & Tablets (640px - 767px) */
@@ -1924,7 +1925,7 @@ body {
         width: 100% !important;
         height: 450px !important;
     }
-}
+
     
     /* Contact */
     .contact {
@@ -1987,7 +1988,7 @@ body {
     .footer-bottom {
         font-size: 0.8125rem;
     }
-}
+
 
 /* Landscape Mobile Devices */
 @media (max-width: 767px) and (orientation: landscape) {
