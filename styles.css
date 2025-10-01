@@ -1312,6 +1312,7 @@ body {
 }
 
 /* Mobile & Tablets (640px - 767px) */
+/* Mobile & Tablets (640px - 767px) */
 @media (max-width: 767px) {
     .container {
         padding: 0 20px;
@@ -1393,7 +1394,7 @@ body {
     }
     
     /* Features */
-   .features-grid {
+    .features-grid {
         display: grid;
         grid-template-columns: 1fr;
         gap: 1.5rem;
@@ -1431,6 +1432,7 @@ body {
         font-size: 0.9rem;
         line-height: 1.5;
     }
+    
     /* Generator */
     .generator-form {
         padding: 2rem;
@@ -1601,9 +1603,6 @@ body {
         max-width: 100%;
         border-radius: 8px;
     }
-}
-
-
     
     /* Pricing */
     .pricing-card {
@@ -1691,7 +1690,7 @@ body {
         padding-top: 2rem;
         font-size: 0.85rem;
     }
-}
+} /* <-- L'ACCOLADE DOIT ÊTRE ICI, PAS AVANT ! */
 /* Small Mobile Devices (480px - 639px) */
 @media (max-width: 639px) {
     .container {
