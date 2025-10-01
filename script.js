@@ -21,6 +21,26 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
+// Cal.com Integration
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarContainer = document.getElementById('calendarContainer');
+    
+    if (calendarContainer) {
+        const calLink = calendarContainer.getAttribute('data-cal-link');
+        
+        if (calLink) {
+            // Initialiser Cal.com
+            Cal("inline", {
+                elementOrSelector: "#calendarContainer",
+                calLink: calLink,
+                layout: "month_view",
+                config: {
+                    theme: "dark"
+                }
+            });
+        }
+    }
+});
 
 // Portfolio Navigation
 const portfolioProjects = [
