@@ -111,7 +111,7 @@ body {
 
 .btn-primary {
     background: var(--color-accent);
-   
+   border-radius: 10rem;
     color: var(--color-white);
 }
 
@@ -125,7 +125,9 @@ body {
     background: transparent;
     color: var(--color-white);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10rem;
 }
+
 
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.05);
