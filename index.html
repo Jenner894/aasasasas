@@ -510,10 +510,8 @@
             </div>
         </div>
     </footer>
-    <!-- Cal.com embed script -->
     <script>
         (function (C, A, L) { 
-            let p = function (a, ar) { a.q.push(ar); }; 
             let d = C.document; 
             C.Cal = C.Cal || function () { 
                 let cal = C.Cal; 
@@ -523,21 +521,11 @@
                 return cal; 
             }; 
             let t = d.createElement('script'); 
-            t.async = 1; 
-            t.src = A; 
-            
-            // IMPORTANT: Attendre que le script soit chargé AVANT de charger script.js
-            t.onload = function() {
-                console.log('✅ Script Cal.com chargé');
-                // Charger script.js seulement après Cal.com
-                let mainScript = d.createElement('script');
-                mainScript.src = 'script.js';
-                d.body.appendChild(mainScript);
-            };
-            
-            let m = d.getElementsByTagName('script')[0]; 
-            m.parentNode.insertBefore(t, m); 
+            t.src = A;
+            // RETIRER async pour chargement synchrone
+            d.head.appendChild(t);
         })(window, 'https://app.cal.com/embed/embed.js', 'Cal');
     </script>
+    <script src="script.js"></script>
 </body>
 </html>
