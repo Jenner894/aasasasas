@@ -21,6 +21,55 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
+// ============================================
+// ANIMATED COUNTERS FOR STATS
+// ============================================
+
+function animateCounter(element, target, suffix = '') {
+    let current = 0;
+    const increment = target / 100;
+    const duration = 2000;
+    const stepTime = duration / 100;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            element.textContent = target + suffix;
+            clearInterval(timer);
+        } else {
+            element.textContent = Math.floor(current) + suffix;
+        }
+    }, stepTime);
+}
+
+const statsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting && !entry.target.classList.contains('counted')) {
+            entry.target.classList.add('counted');
+            
+            const statNumbers = entry.target.querySelectorAll('.stat-number');
+            statNumbers.forEach((stat, index) => {
+                const target = parseInt(stat.getAttribute('data-target'));
+                let suffix = '';
+                
+                if (index === 0) suffix = '+';
+                if (index === 1) suffix = '%';
+                if (index === 2) suffix = 'h';
+                
+                setTimeout(() => {
+                    animateCounter(stat, target, suffix);
+                }, index * 200);
+            });
+        }
+    });
+}, { threshold: 0.5 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const heroStats = document.querySelector('.hero-stats');
+    if (heroStats) {
+        statsObserver.observe(heroStats);
+    }
+});
 // Tags Carousel Enhancement (optionnel)
 document.addEventListener('DOMContentLoaded', () => {
     const tagsCarousel = document.querySelector('.tags-carousel');
