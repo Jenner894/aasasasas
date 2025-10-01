@@ -407,6 +407,7 @@ window.addEventListener('scroll', () => {
 });
 
 // Landing Page Generator Form
+// Landing Page Generator Form
 const landingForm = document.getElementById('landingForm');
 const generateBtn = document.getElementById('generateBtn');
 const btnText = generateBtn.querySelector('.btn-text');
@@ -432,25 +433,65 @@ landingForm.addEventListener('submit', async (e) => {
     loader.style.display = 'block';
     generateBtn.disabled = true;
     
-    // Simulate AI generation (2 seconds)
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Generate preview based on inputs
-    const preview = generatePreview(sector, objective, style, companyName, tagline);
-    
-    // Show preview with animation
-    previewContent.style.opacity = '0';
-    previewContent.innerHTML = preview;
-    
-    setTimeout(() => {
-        previewContent.style.transition = 'opacity 0.6s ease';
-        previewContent.style.opacity = '1';
-    }, 100);
-    
-    // Reset button
-    btnText.style.display = 'block';
-    loader.style.display = 'none';
-    generateBtn.disabled = false;
+    try {
+        // Appel à l'API backend avec Claude
+        const response = await fetch('/api/generate-landing', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                sector,
+                objective,
+                style,
+                companyName,
+                tagline
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Erreur lors de la génération');
+        }
+
+        console.log('Génération réussie:', data.metadata);
+
+        // Afficher le résultat
+        previewContent.style.opacity = '0';
+        previewContent.innerHTML = data.html;
+        
+        setTimeout(() => {
+            previewContent.style.transition = 'opacity 0.6s ease';
+            previewContent.style.opacity = '1';
+        }, 100);
+
+        // Scroller vers la préview
+        document.getElementById('previewContent').scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'nearest' 
+        });
+
+    } catch (error) {
+        console.error('Erreur:', error);
+        
+        // Message d'erreur utilisateur
+        alert(`Erreur: ${error.message}\n\nUtilisation de la génération locale comme alternative.`);
+        
+        // Fallback: utiliser la génération locale
+        const preview = generatePreview(sector, objective, style, companyName, tagline);
+        previewContent.style.opacity = '0';
+        previewContent.innerHTML = preview;
+        setTimeout(() => {
+            previewContent.style.transition = 'opacity 0.6s ease';
+            previewContent.style.opacity = '1';
+        }, 100);
+    } finally {
+        // Reset button
+        btnText.style.display = 'block';
+        loader.style.display = 'none';
+        generateBtn.disabled = false;
+    }
 });
 
 // Generate Preview Function
