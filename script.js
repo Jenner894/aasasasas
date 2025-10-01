@@ -21,48 +21,57 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
-// Cal.com Integration - Version corrigée
+// Cal.com Integration - Solution définitive
 function initCalendar() {
-    // Vérifier que Cal est défini
-    if (typeof Cal === 'undefined') {
-        console.warn('⚠️ Cal.com pas encore chargé, nouvelle tentative dans 500ms...');
-        setTimeout(initCalendar, 500);
-        return;
-    }
-    
     const calendarContainer = document.getElementById('calendarContainer');
     
     if (!calendarContainer) {
-        console.error('❌ Container #calendarContainer non trouvé');
+        console.error('Container #calendarContainer non trouvé');
+        return;
+    }
+    
+    // Attendre que Cal soit complètement défini
+    if (typeof window.Cal === 'undefined') {
+        console.log('Attente de Cal.com...');
+        setTimeout(initCalendar, 300);
+        return;
+    }
+    
+    // Attendre que Cal soit une fonction utilisable
+    if (typeof window.Cal !== 'function') {
+        console.log('Cal existe mais n\'est pas encore prêt...');
+        setTimeout(initCalendar, 300);
         return;
     }
     
     try {
-        Cal("init", { origin: "https://cal.com" });
+        // Initialiser Cal.com
+        window.Cal("init", { origin: "https://cal.com" });
         
-        Cal("inline", {
-            elementOrSelector: "#calendarContainer",
-            calLink: "landingai/15min",
-            layout: "month_view",
-            config: {
-                theme: "dark"
-            }
-        });
+        // Ajouter un petit délai avant d'appeler inline
+        setTimeout(() => {
+            window.Cal("inline", {
+                elementOrSelector: "#calendarContainer",
+                calLink: "landingai/15min",
+                layout: "month_view",
+                config: {
+                    theme: "dark"
+                }
+            });
+            console.log('Cal.com chargé avec succès');
+        }, 100);
         
-        console.log('✅ Cal.com chargé avec succès');
     } catch (error) {
-        console.error('❌ Erreur Cal.com:', error);
+        console.error('Erreur Cal.com:', error);
+        setTimeout(initCalendar, 500);
     }
 }
 
-// Attendre que Cal.com soit complètement chargé
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(initCalendar, 1500);
-    });
-} else {
-    setTimeout(initCalendar, 1500);
-}
+// Démarrer APRÈS le chargement complet de la page
+window.addEventListener('load', () => {
+    setTimeout(initCalendar, 2000); // Attendre 2 secondes après le chargement
+});
+
 // Portfolio Navigation
 const portfolioProjects = [
     {
