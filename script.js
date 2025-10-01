@@ -21,56 +21,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
-// Cal.com Integration - Solution définitive
-function initCalendar() {
-    const calendarContainer = document.getElementById('calendarContainer');
-    
-    if (!calendarContainer) {
-        console.error('Container #calendarContainer non trouvé');
-        return;
-    }
-    
-    // Attendre que Cal soit complètement défini
-    if (typeof window.Cal === 'undefined') {
-        console.log('Attente de Cal.com...');
-        setTimeout(initCalendar, 300);
-        return;
-    }
-    
-    // Attendre que Cal soit une fonction utilisable
-    if (typeof window.Cal !== 'function') {
-        console.log('Cal existe mais n\'est pas encore prêt...');
-        setTimeout(initCalendar, 300);
-        return;
-    }
-    
-    try {
-        // Initialiser Cal.com
-        window.Cal("init", { origin: "https://cal.com" });
-        
-        // Ajouter un petit délai avant d'appeler inline
-        setTimeout(() => {
-            window.Cal("inline", {
-                elementOrSelector: "#calendarContainer",
-                calLink: "landingai/15min",
-                layout: "month_view",
-                config: {
-                    theme: "dark"
-                }
-            });
-            console.log('Cal.com chargé avec succès');
-        }, 100);
-        
-    } catch (error) {
-        console.error('Erreur Cal.com:', error);
-        setTimeout(initCalendar, 500);
-    }
-}
 
-// Démarrer APRÈS le chargement complet de la page
-window.addEventListener('load', () => {
-    setTimeout(initCalendar, 2000); // Attendre 2 secondes après le chargement
-});
 
 // Portfolio Navigation
 const portfolioProjects = [
