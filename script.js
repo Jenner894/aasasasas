@@ -21,7 +21,129 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
+/ ============================================
+// BOOKING BENEFITS SLIDER
+// ============================================
 
+document.addEventListener('DOMContentLoaded', function() {
+    const slider = document.getElementById('benefitsSlider');
+    const dotsContainer = document.getElementById('sliderDots');
+    
+    if (!slider || !dotsContainer) return;
+    
+    const benefits = slider.querySelectorAll('.booking-benefit');
+    
+    // Calculate number of items per page based on screen size
+    function getItemsPerPage() {
+        if (window.innerWidth <= 767) return 1;
+        if (window.innerWidth <= 1023) return 2;
+        return 4;
+    }
+    
+    let itemsPerPage = getItemsPerPage();
+    let totalPages = Math.ceil(benefits.length / itemsPerPage);
+    let currentPage = 0;
+    
+    // Create navigation dots
+    function createDots() {
+        dotsContainer.innerHTML = '';
+        itemsPerPage = getItemsPerPage();
+        totalPages = Math.ceil(benefits.length / itemsPerPage);
+        
+        for (let i = 0; i < totalPages; i++) {
+            const dot = document.createElement('button');
+            dot.className = 'slider-dot';
+            dot.setAttribute('aria-label', `Page ${i + 1}`);
+            if (i === 0) dot.classList.add('active');
+            dot.addEventListener('click', () => goToPage(i));
+            dotsContainer.appendChild(dot);
+        }
+    }
+    
+    // Navigate to specific page
+    function goToPage(page) {
+        currentPage = page;
+        const cardWidth = benefits[0].offsetWidth;
+        const gap = parseFloat(getComputedStyle(slider).gap);
+        const scrollAmount = (cardWidth + gap) * page * itemsPerPage;
+        
+        slider.scrollTo({
+            left: scrollAmount,
+            behavior: 'smooth'
+        });
+        
+        updateDots();
+    }
+    
+    // Update active dot
+    function updateDots() {
+        const dots = dotsContainer.querySelectorAll('.slider-dot');
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentPage);
+        });
+    }
+    
+    // Handle scroll event
+    let scrollTimeout;
+    slider.addEventListener('scroll', () => {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+            const cardWidth = benefits[0].offsetWidth;
+            const gap = parseFloat(getComputedStyle(slider).gap);
+            const scrollLeft = slider.scrollLeft;
+            const pageWidth = (cardWidth + gap) * itemsPerPage;
+            const newPage = Math.round(scrollLeft / pageWidth);
+            
+            if (newPage !== currentPage && newPage >= 0 && newPage < totalPages) {
+                currentPage = newPage;
+                updateDots();
+            }
+        }, 100);
+    });
+    
+    // Initialize
+    createDots();
+    
+    // Handle window resize
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            const oldItemsPerPage = itemsPerPage;
+            itemsPerPage = getItemsPerPage();
+            
+            if (oldItemsPerPage !== itemsPerPage) {
+                createDots();
+                goToPage(0);
+            }
+        }, 250);
+    });
+    
+    // Touch swipe support for mobile
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    slider.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    
+    slider.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, { passive: true });
+    
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        
+        if (touchStartX - touchEndX > swipeThreshold && currentPage < totalPages - 1) {
+            goToPage(currentPage + 1);
+        }
+        
+        if (touchEndX - touchStartX > swipeThreshold && currentPage > 0) {
+            goToPage(currentPage - 1);
+        }
+    }
+});
 
 // Portfolio Navigation
 const portfolioProjects = [
