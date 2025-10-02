@@ -603,6 +603,24 @@ body {
     font-size: 0.95rem;
 }
 /* ============================================
+   HERO CTA WRAPPER
+   ============================================ */
+
+.hero-cta-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 5rem;
+}
+
+.hero-cta {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+}
+
+/* ============================================
    SORTLIST HERO BUTTON
    ============================================ */
 
@@ -618,7 +636,6 @@ body {
     color: var(--color-white);
     text-decoration: none;
     transition: all 0.3s ease;
-    margin: 2rem auto 0;
     font-size: 0.9375rem;
 }
 
@@ -674,31 +691,21 @@ body {
 
 /* Responsive */
 @media (max-width: 767px) {
+    .hero-cta-wrapper {
+        gap: 1.25rem;
+        margin-bottom: 4rem;
+    }
+    
+    .hero-cta {
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+    }
+    
     .sortlist-hero-btn {
         padding: 9px 16px;
         gap: 6px;
         font-size: 14px;
-    }
-    
-    .sortlist-name {
-        font-size: 14px;
-    }
-    
-    .sortlist-rating-badge {
-        padding: 3px 8px;
-        font-size: 12px;
-    }
-    
-    .sortlist-hero-btn .arrow-icon {
-        width: 14px;
-        height: 14px;
-    }
-}
-
-@media (max-width: 479px) {
-    .sortlist-hero-btn {
-        padding: 8px 14px;
-        font-size: 13px;
     }
 }
 /* ============================================
