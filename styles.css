@@ -1404,6 +1404,7 @@ body {
 }
 
 /* Responsive */
+/* Responsive Mobile - Portfolio Horizontal */
 @media (max-width: 1023px) {
     .portfolio-vertical-wrapper {
         grid-template-columns: 1fr;
@@ -1411,17 +1412,50 @@ body {
     }
     
     .portfolio-preview-container {
-        height: 500px;
+        height: 400px;
+        width: 100%;
     }
     
-    .portfolio-screen-mockup {
-        transform: scale(1) translateY(0);
+    /* Images fantômes en horizontal sur mobile */
+    .portfolio-preview-ghost.prev {
+        top: 50%;
+        left: 0;
+        transform: translateX(-20px) translateY(-50%) scale(0.85);
+    }
+    
+    .portfolio-preview-ghost.next {
+        top: 50%;
+        right: 0;
+        left: auto;
+        bottom: auto;
+        transform: translateX(20px) translateY(-50%) scale(0.85);
+    }
+    
+    /* Animation slide horizontal sur mobile */
+    .portfolio-screen-mockup.sliding-up {
+        transform: scale(0.85) translateX(-100px);
+        opacity: 0.3;
+    }
+    
+    .portfolio-screen-mockup.sliding-down {
+        transform: scale(0.85) translateX(100px);
+        opacity: 0.3;
     }
     
     .portfolio-navigation-buttons {
         flex-direction: row;
         justify-content: center;
         margin: 2rem 0;
+        gap: 2rem;
+    }
+    
+    /* Rotation des icônes SVG pour horizontal */
+    .portfolio-nav-btn#portfolioPrevBtn svg {
+        transform: rotate(-90deg);
+    }
+    
+    .portfolio-nav-btn#portfolioNextBtn svg {
+        transform: rotate(-90deg);
     }
     
     .portfolio-details {
@@ -1431,12 +1465,33 @@ body {
 
 @media (max-width: 767px) {
     .portfolio-preview-container {
-        height: 400px;
+        height: 350px;
     }
     
     .portfolio-nav-btn {
         width: 50px;
         height: 50px;
+    }
+    
+    .portfolio-nav-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .portfolio-details {
+        padding: 2rem 1.5rem;
+        min-height: auto;
+    }
+}
+
+@media (max-width: 479px) {
+    .portfolio-preview-container {
+        height: 300px;
+    }
+    
+    .portfolio-nav-btn {
+        width: 46px;
+        height: 46px;
     }
 }
 /* ============================================
