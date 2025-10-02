@@ -414,6 +414,7 @@ const portfolioProjects = [
 ];
 
 let currentPortfolioIndex = 0;
+let isAnimating = false;
 
 const portfolioImage = document.getElementById('portfolioImage');
 const portfolioTitle = document.getElementById('portfolioTitle');
@@ -422,18 +423,50 @@ const portfolioLink = document.getElementById('portfolioLink');
 const portfolioTags = document.getElementById('portfolioTags');
 const portfolioTestimonial = document.getElementById('portfolioTestimonial');
 const portfolioDetails = document.getElementById('portfolioDetails');
+const portfolioMockup = document.querySelector('.portfolio-screen-mockup');
+const portfolioContainer = document.querySelector('.portfolio-preview-container');
 const portfolioPrevBtn = document.getElementById('portfolioPrevBtn');
 const portfolioNextBtn = document.getElementById('portfolioNextBtn');
 
+// Créer les images fantômes
+function createGhostPreviews() {
+    const prevGhost = document.createElement('div');
+    prevGhost.className = 'portfolio-preview-ghost prev';
+    prevGhost.id = 'prevGhost';
+    
+    const nextGhost = document.createElement('div');
+    nextGhost.className = 'portfolio-preview-ghost next';
+    nextGhost.id = 'nextGhost';
+    
+    portfolioContainer.insertBefore(prevGhost, portfolioMockup);
+    portfolioContainer.appendChild(nextGhost);
+    
+    updateGhostPreviews();
+}
+
+function updateGhostPreviews() {
+    const prevIndex = (currentPortfolioIndex - 1 + portfolioProjects.length) % portfolioProjects.length;
+    const nextIndex = (currentPortfolioIndex + 1) % portfolioProjects.length;
+    
+    const prevGhost = document.getElementById('prevGhost');
+    const nextGhost = document.getElementById('nextGhost');
+    
+    if (prevGhost && nextGhost) {
+        prevGhost.innerHTML = `<img src="${portfolioProjects[prevIndex].image}" alt="${portfolioProjects[prevIndex].title}">`;
+        nextGhost.innerHTML = `<img src="${portfolioProjects[nextIndex].image}" alt="${portfolioProjects[nextIndex].title}">`;
+    }
+}
+
 function updatePortfolio(index, direction = 'down') {
+    if (isAnimating) return;
+    isAnimating = true;
+    
     const project = portfolioProjects[index];
     
-    // Add animation class
+    // Animation de sortie
+    portfolioMockup.classList.add(direction === 'down' ? 'sliding-down' : 'sliding-up');
     portfolioDetails.style.opacity = '0';
     portfolioDetails.style.transform = direction === 'down' ? 'translateY(20px)' : 'translateY(-20px)';
-    
-    // Update image with fade
-    portfolioImage.style.opacity = '0.5';
     
     setTimeout(() => {
         // Update content
@@ -458,19 +491,28 @@ function updatePortfolio(index, direction = 'down') {
             </div>
         `;
         
-        // Fade in
-        portfolioImage.style.opacity = '1';
+        // Update ghost previews
+        updateGhostPreviews();
+        
+        // Animation d'entrée
+        portfolioMockup.classList.remove('sliding-down', 'sliding-up');
         portfolioDetails.style.opacity = '1';
         portfolioDetails.style.transform = 'translateY(0)';
-    }, 300);
+        
+        setTimeout(() => {
+            isAnimating = false;
+        }, 100);
+    }, 400);
 }
 
 function nextPortfolio() {
+    if (isAnimating) return;
     currentPortfolioIndex = (currentPortfolioIndex + 1) % portfolioProjects.length;
     updatePortfolio(currentPortfolioIndex, 'down');
 }
 
 function prevPortfolio() {
+    if (isAnimating) return;
     currentPortfolioIndex = (currentPortfolioIndex - 1 + portfolioProjects.length) % portfolioProjects.length;
     updatePortfolio(currentPortfolioIndex, 'up');
 }
@@ -499,10 +541,10 @@ if (portfolioPrevBtn && portfolioNextBtn) {
         }
     });
     
-    // Initialize with first project
+    // Initialize
+    createGhostPreviews();
     updatePortfolio(0);
 }
-
 // Navbar Scroll Effect
 let lastScroll = 0;
 const navbar = document.querySelector('.navbar');
