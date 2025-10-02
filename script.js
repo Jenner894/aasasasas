@@ -456,17 +456,33 @@ function updateGhostPreviews() {
         nextGhost.innerHTML = `<img src="${portfolioProjects[nextIndex].image}" alt="${portfolioProjects[nextIndex].title}">`;
     }
 }
-
 function updatePortfolio(index, direction = 'down') {
     if (isAnimating) return;
     isAnimating = true;
     
     const project = portfolioProjects[index];
     
+    // Déterminer si on est sur mobile
+    const isMobile = window.innerWidth <= 1023;
+    
+    // Adapter la direction pour mobile (horizontal au lieu de vertical)
+    let slideClass = 'sliding-down';
+    let detailsTransform = 'translateY(20px)';
+    
+    if (isMobile) {
+        // Sur mobile : slide horizontal
+        slideClass = direction === 'down' ? 'sliding-down' : 'sliding-up'; // garde les mêmes classes mais CSS les gère différemment
+        detailsTransform = direction === 'down' ? 'translateX(20px)' : 'translateX(-20px)';
+    } else {
+        // Sur desktop : slide vertical
+        slideClass = direction === 'down' ? 'sliding-down' : 'sliding-up';
+        detailsTransform = direction === 'down' ? 'translateY(20px)' : 'translateY(-20px)';
+    }
+    
     // Animation de sortie
-    portfolioMockup.classList.add(direction === 'down' ? 'sliding-down' : 'sliding-up');
+    portfolioMockup.classList.add(slideClass);
     portfolioDetails.style.opacity = '0';
-    portfolioDetails.style.transform = direction === 'down' ? 'translateY(20px)' : 'translateY(-20px)';
+    portfolioDetails.style.transform = detailsTransform;
     
     setTimeout(() => {
         // Update content
@@ -497,7 +513,7 @@ function updatePortfolio(index, direction = 'down') {
         // Animation d'entrée
         portfolioMockup.classList.remove('sliding-down', 'sliding-up');
         portfolioDetails.style.opacity = '1';
-        portfolioDetails.style.transform = 'translateY(0)';
+        portfolioDetails.style.transform = isMobile ? 'translateX(0)' : 'translateY(0)';
         
         setTimeout(() => {
             isAnimating = false;
@@ -505,6 +521,14 @@ function updatePortfolio(index, direction = 'down') {
     }, 400);
 }
 
+// Ajouter un listener pour recréer les ghosts au resize
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        updateGhostPreviews();
+    }, 250);
+});
 function nextPortfolio() {
     if (isAnimating) return;
     currentPortfolioIndex = (currentPortfolioIndex + 1) % portfolioProjects.length;
