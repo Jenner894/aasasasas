@@ -22,6 +22,97 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 // ============================================
+// MOBILE MENU TOGGLE
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    const menuToggle = document.getElementById('menuToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const mobileMenuItems = document.querySelectorAll('.mobile-menu-item a, .mobile-menu-cta a');
+    
+    if (!menuToggle || !mobileMenu) return;
+    
+    // Toggle menu
+    menuToggle.addEventListener('click', () => {
+        const isActive = menuToggle.classList.contains('active');
+        
+        if (isActive) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    });
+    
+    // Fermer le menu au clic sur un lien
+    mobileMenuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            closeMenu();
+        });
+    });
+    
+    // Fermer au clic en dehors
+    mobileMenu.addEventListener('click', (e) => {
+        if (e.target === mobileMenu) {
+            closeMenu();
+        }
+    });
+    
+    // Fermer avec la touche Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && menuToggle.classList.contains('active')) {
+            closeMenu();
+        }
+    });
+    
+    function openMenu() {
+        menuToggle.classList.add('active');
+        mobileMenu.classList.add('active');
+        document.body.classList.add('menu-open');
+    }
+    
+    function closeMenu() {
+        menuToggle.classList.remove('active');
+        mobileMenu.classList.remove('active');
+        document.body.classList.remove('menu-open');
+    }
+});
+
+// ============================================
+// NAVIGATION ACTIVE STATE
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    const navLinks = document.querySelectorAll('.nav-links a');
+    const sections = document.querySelectorAll('section[id]');
+    
+    // Fonction pour mettre à jour l'état actif
+    function updateActiveNav() {
+        let currentSection = '';
+        
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            
+            if (window.pageYOffset >= sectionTop - 150) {
+                currentSection = section.getAttribute('id');
+            }
+        });
+        
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${currentSection}`) {
+                link.classList.add('active');
+            }
+        });
+    }
+    
+    // Mettre à jour au scroll
+    window.addEventListener('scroll', updateActiveNav);
+    
+    // Mettre à jour au chargement
+    updateActiveNav();
+});
+// ============================================
 // REVIEWS CAROUSEL
 // ============================================
 
