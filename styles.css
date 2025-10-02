@@ -1164,6 +1164,7 @@ body {
 .portfolio {
     padding: 140px 0;
     background: var(--color-gray-950);
+    overflow: hidden;
 }
 
 .portfolio-vertical-wrapper {
@@ -1176,20 +1177,75 @@ body {
 
 .portfolio-preview-container {
     position: relative;
+    height: 600px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 1500px;
 }
 
+/* Image actuelle */
 .portfolio-screen-mockup {
+    position: relative;
+    z-index: 3;
     background: var(--color-black);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 16px;
     overflow: hidden;
-    transform: perspective(1500px) rotateY(-5deg) rotateX(2deg);
-    transition: all 0.5s ease;
+    transform: scale(1) translateY(0);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
+.portfolio-screen-mockup.sliding-up {
+    transform: scale(0.85) translateY(-100px);
+    opacity: 0.3;
+}
+
+.portfolio-screen-mockup.sliding-down {
+    transform: scale(0.85) translateY(100px);
+    opacity: 0.3;
+}
+
+/* Images fantômes (previews) */
+.portfolio-preview-ghost {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 85%;
+    background: var(--color-black);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    overflow: hidden;
+    pointer-events: none;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.portfolio-preview-ghost.prev {
+    top: 0;
+    z-index: 1;
+    transform: translateX(-50%) translateY(-20px) scale(0.85);
+    opacity: 0.3;
+    filter: blur(2px);
+}
+
+.portfolio-preview-ghost.next {
+    bottom: 0;
+    z-index: 1;
+    transform: translateX(-50%) translateY(20px) scale(0.85);
+    opacity: 0.3;
+    filter: blur(2px);
+}
+
+.portfolio-preview-ghost img {
+    width: 100%;
+    height: auto;
+    display: block;
+    opacity: 0.6;
+}
+
 .portfolio-screen-mockup:hover {
-    transform: perspective(1500px) rotateY(-2deg) rotateX(1deg) translateY(-10px);
+    transform: scale(1.02) translateY(-5px);
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
 }
 
@@ -1197,8 +1253,10 @@ body {
     width: 100%;
     height: auto;
     display: block;
+    transition: opacity 0.3s ease;
 }
 
+/* Boutons de navigation */
 .portfolio-navigation-buttons {
     display: flex;
     flex-direction: column;
@@ -1225,6 +1283,10 @@ body {
     transform: scale(1.1);
 }
 
+.portfolio-nav-btn:active {
+    transform: scale(0.95);
+}
+
 .portfolio-nav-btn svg {
     width: 24px;
     height: 24px;
@@ -1241,6 +1303,11 @@ body {
     flex-direction: column;
 }
 
+.portfolio-details-content {
+    transition: all 0.4s ease;
+}
+
+/* Reste du CSS portfolio inchangé... */
 .portfolio-logo {
     display: flex;
     align-items: center;
@@ -1336,6 +1403,42 @@ body {
     margin-bottom: 2rem;
 }
 
+/* Responsive */
+@media (max-width: 1023px) {
+    .portfolio-vertical-wrapper {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+    
+    .portfolio-preview-container {
+        height: 500px;
+    }
+    
+    .portfolio-screen-mockup {
+        transform: scale(1) translateY(0);
+    }
+    
+    .portfolio-navigation-buttons {
+        flex-direction: row;
+        justify-content: center;
+        margin: 2rem 0;
+    }
+    
+    .portfolio-details {
+        padding: 2.5rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .portfolio-preview-container {
+        height: 400px;
+    }
+    
+    .portfolio-nav-btn {
+        width: 50px;
+        height: 50px;
+    }
+}
 /* ============================================
    BOOKING SECTION
    ============================================ */
