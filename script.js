@@ -22,6 +22,192 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 // ============================================
+// ANIMATED PERFORMANCE CHARTS CAROUSEL
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    const chartCanvas = document.getElementById('performanceChart');
+    
+    if (!chartCanvas) return;
+    
+    let currentChart = null;
+    let currentChartIndex = 0;
+    
+    const chartsData = [
+        {
+            badge: '+74%',
+            title: 'Augmente ton trafic sans limite',
+            description: 'Une collaboration sur mesure pour t\'accompagner dans l\'atteinte de tes objectifs digitaux.',
+            data: [50, 65, 70, 85, 95, 120, 140, 165, 195, 230, 270, 300],
+            color: '#10b981'
+        },
+        {
+            badge: '+156%',
+            title: 'Multiplie tes conversions',
+            description: 'Transforme tes visiteurs en clients grâce à des landing pages optimisées pour la conversion.',
+            data: [30, 42, 58, 75, 95, 118, 145, 180, 220, 265, 320, 380],
+            color: '#8b5cf6'
+        },
+        {
+            badge: '-89%',
+            title: 'Réduis ton temps de chargement',
+            description: 'Des pages ultra-rapides qui améliorent ton SEO et l\'expérience utilisateur de façon significative.',
+            data: [100, 95, 88, 82, 75, 68, 58, 48, 38, 28, 18, 11],
+            color: '#f59e0b'
+        }
+    ];
+    
+    function createChart(index) {
+        const chartInfo = chartsData[index];
+        const ctx = chartCanvas.getContext('2d');
+        
+        const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+        gradient.addColorStop(0, `${chartInfo.color}4D`);
+        gradient.addColorStop(1, `${chartInfo.color}00`);
+        
+        if (currentChart) {
+            currentChart.destroy();
+        }
+        
+        currentChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
+                datasets: [{
+                    data: chartInfo.data,
+                    borderColor: chartInfo.color,
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 0,
+                    pointHoverRadius: 8,
+                    pointHoverBackgroundColor: chartInfo.color,
+                    pointHoverBorderColor: '#fff',
+                    pointHoverBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 2000,
+                    easing: 'easeInOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(10, 10, 10, 0.95)',
+                        titleColor: chartInfo.color,
+                        bodyColor: '#fff',
+                        borderColor: `${chartInfo.color}4D`,
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return index === 2 ? context.parsed.y + 'ms' : context.parsed.y + 'k€';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        display: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.03)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.4)',
+                            font: { size: 11 },
+                            callback: function(value) {
+                                return index === 2 ? value + 'ms' : value + 'k€';
+                            }
+                        },
+                        border: { display: false }
+                    },
+                    x: {
+                        display: false,
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+    
+    function animateChartTransition(index) {
+        const chartBadge = document.getElementById('chartBadge');
+        const badgeText = document.getElementById('badgeText');
+        const chartTitle = document.getElementById('chartTitle');
+        const chartDesc = document.getElementById('chartDesc');
+        
+        // Fade out
+        chartCanvas.style.opacity = '0';
+        if (chartBadge) chartBadge.style.opacity = '0';
+        if (chartTitle && chartTitle.parentElement) chartTitle.parentElement.style.opacity = '0';
+        if (chartDesc) chartDesc.style.opacity = '0';
+        
+        setTimeout(() => {
+            const chartInfo = chartsData[index];
+            
+            // Update content
+            if (badgeText) badgeText.textContent = chartInfo.badge;
+            if (chartTitle) chartTitle.textContent = chartInfo.title;
+            if (chartDesc) chartDesc.textContent = chartInfo.description;
+            
+            // Update badge color
+            if (chartBadge) {
+                const badgeIcon = chartBadge.querySelector('path');
+                if (badgeIcon) badgeIcon.setAttribute('stroke', chartInfo.color);
+                chartBadge.style.background = `${chartInfo.color}26`;
+                chartBadge.style.borderColor = `${chartInfo.color}4D`;
+                if (badgeText) badgeText.style.color = chartInfo.color;
+            }
+            
+            // Update title icon color
+            if (chartTitle && chartTitle.parentElement) {
+                const titleIcon = chartTitle.parentElement.querySelector('path');
+                if (titleIcon) titleIcon.setAttribute('stroke', chartInfo.color);
+            }
+            
+            // Create new chart
+            createChart(index);
+            
+            // Fade in
+            setTimeout(() => {
+                chartCanvas.style.transition = 'opacity 0.8s ease';
+                if (chartBadge) chartBadge.style.transition = 'opacity 0.8s ease';
+                if (chartTitle && chartTitle.parentElement) chartTitle.parentElement.style.transition = 'opacity 0.8s ease';
+                if (chartDesc) chartDesc.style.transition = 'opacity 0.8s ease';
+                
+                chartCanvas.style.opacity = '1';
+                if (chartBadge) chartBadge.style.opacity = '1';
+                if (chartTitle && chartTitle.parentElement) chartTitle.parentElement.style.opacity = '1';
+                if (chartDesc) chartDesc.style.opacity = '1';
+            }, 100);
+        }, 600);
+    }
+    
+    function startChartCarousel() {
+        setInterval(() => {
+            currentChartIndex = (currentChartIndex + 1) % chartsData.length;
+            animateChartTransition(currentChartIndex);
+        }, 4000);
+    }
+    
+    // Initialize first chart
+    createChart(0);
+    
+    // Start carousel
+    setTimeout(startChartCarousel, 4000);
+});
+
+// ============================================
 // MOBILE MENU TOGGLE
 // ============================================
 
@@ -136,6 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(showNextReview, 4000);
     }
 });
+
 // ============================================
 // ANIMATED COUNTERS FOR STATS
 // ============================================
