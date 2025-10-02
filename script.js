@@ -22,6 +22,30 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 // ============================================
+// REVIEWS CAROUSEL
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    const reviewItems = document.querySelectorAll('.review-item');
+    let currentReviewIndex = 0;
+
+    function showNextReview() {
+        // Retirer la classe active de la review actuelle
+        reviewItems[currentReviewIndex].classList.remove('active');
+        
+        // Passer à la review suivante
+        currentReviewIndex = (currentReviewIndex + 1) % reviewItems.length;
+        
+        // Ajouter la classe active à la nouvelle review
+        reviewItems[currentReviewIndex].classList.add('active');
+    }
+
+    // Changer de review toutes les 4 secondes
+    if (reviewItems.length > 0) {
+        setInterval(showNextReview, 4000);
+    }
+});
+// ============================================
 // ANIMATED COUNTERS FOR STATS
 // ============================================
 
