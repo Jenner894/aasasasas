@@ -430,6 +430,91 @@ body {
         height: 26px;
     }
 }
+/* Menu Mobile Overlay */
+.mobile-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--color-gray-950);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s ease;
+    padding: 100px 20px 40px;
+    overflow-y: auto;
+}
+
+.mobile-menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mobile-menu-content {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Menu Items Mobile */
+.mobile-menu-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 3rem;
+}
+
+.mobile-menu-item {
+    background: var(--color-black);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.mobile-menu-item:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    background: var(--color-gray-900);
+}
+
+.mobile-menu-item a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    color: var(--color-white);
+    text-decoration: none;
+    font-size: 1.125rem;
+    font-weight: 500;
+}
+
+.mobile-menu-item svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--color-gray-500);
+    transition: all 0.3s ease;
+}
+
+.mobile-menu-item:hover svg {
+    stroke: var(--color-accent);
+    transform: translateX(4px);
+}
+
+/* CTA Button dans le menu mobile */
+.mobile-menu-cta {
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mobile-menu-cta .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+/* Empêcher le scroll quand le menu est ouvert */
+body.menu-open {
+    overflow: hidden;
+}
 /* ============================================
    BOUTONS
    ============================================ */
