@@ -329,6 +329,108 @@ body {
     }
 }
 /* ============================================
+   BOUTON WHATSAPP FLOTTANT
+   ============================================ */
+
+.whatsapp-btn {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        0 4px 12px rgba(37, 211, 102, 0.4),
+        0 8px 24px rgba(0, 0, 0, 0.3);
+    z-index: 998;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: white;
+}
+
+.whatsapp-btn::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    border-radius: 50%;
+    z-index: -1;
+    opacity: 0;
+    filter: blur(8px);
+    transition: opacity 0.3s ease;
+}
+
+.whatsapp-btn:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 
+        0 6px 16px rgba(37, 211, 102, 0.5),
+        0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.whatsapp-btn:hover::before {
+    opacity: 0.8;
+    animation: whatsappPulse 1.5s ease-in-out infinite;
+}
+
+.whatsapp-btn svg {
+    width: 32px;
+    height: 32px;
+    fill: white;
+    transition: transform 0.3s ease;
+}
+
+.whatsapp-btn:hover svg {
+    transform: scale(1.1);
+}
+
+.whatsapp-btn:active {
+    transform: translateY(-2px) scale(1.02);
+}
+
+@keyframes whatsappPulse {
+    0%, 100% {
+        opacity: 0.8;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+/* Responsive */
+@media (max-width: 767px) {
+    .whatsapp-btn {
+        width: 54px;
+        height: 54px;
+        bottom: 20px;
+        left: 20px;
+    }
+    
+    .whatsapp-btn svg {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+@media (max-width: 479px) {
+    .whatsapp-btn {
+        width: 50px;
+        height: 50px;
+        bottom: 16px;
+        left: 16px;
+    }
+    
+    .whatsapp-btn svg {
+        width: 26px;
+        height: 26px;
+    }
+}
+/* ============================================
    BOUTONS
    ============================================ */
 
