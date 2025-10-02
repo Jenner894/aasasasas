@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LandingIA - Générateur de Landing Pages par IA</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%235b5bd6'/></svg>">
 </head>
 <body>
@@ -159,6 +161,7 @@
         </div>
     </a>
 </div>
+
 <div class="hero-stats">
     <div class="stat">
         <div class="stat-number" data-target="390">0</div>
@@ -178,6 +181,99 @@
         </div>
         <div class="hero-background"></div>
     </section>
+
+    <!-- Performance Section -->
+<section id="performance" class="performance">
+    <div class="container">
+        <div class="performance-header">
+            <h2 class="section-title">Performance & satisfaction client : notre moteur.</h2>
+        </div>
+
+        <div class="performance-grid">
+            <!-- Left: Graph -->
+            <div class="performance-chart">
+                <div class="chart-badge" id="chartBadge">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 14L8 2L14 14" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span id="badgeText">+74%</span>
+                </div>
+                <canvas id="performanceChart"></canvas>
+                <div class="chart-label">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M2 18L10 2L18 18" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span id="chartTitle">Augmente ton trafic sans limite</span>
+                </div>
+                <p class="chart-description" id="chartDesc">Une collaboration sur mesure pour t'accompagner dans l'atteinte de tes objectifs digitaux.</p>
+            </div>
+
+            <!-- Right: Cards -->
+            <div class="performance-cards">
+                <div class="perf-brand-card">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <rect width="32" height="32" rx="8" fill="url(#perfGradient)"/>
+                        <path d="M10 12h12M10 16h12M10 20h8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        <defs>
+                            <linearGradient id="perfGradient" x1="0" y1="0" x2="32" y2="32">
+                                <stop offset="0%" style="stop-color:#5b5bd6"/>
+                                <stop offset="100%" style="stop-color:#5b5bd6"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <span>LandingIA</span>
+                </div>
+
+                <div class="perf-vision-card">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <div>
+                        <h4>Bénéficie de notre expertise</h4>
+                        <p>Nous connaissons les meilleures pratiques actuelles. Avec nous, tu en profites pour ton business digital.</p>
+                    </div>
+                </div>
+
+                <div class="perf-vision-card">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    </svg>
+                    <div>
+                        <h4>Performance garantie</h4>
+                        <p>Pages optimisées pour un temps de chargement ultra-rapide. Améliore ton SEO et l'expérience utilisateur.</p>
+                    </div>
+                </div>
+
+                <div class="perf-vision-card">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    </svg>
+                    <div>
+                        <h4>Résultats mesurables</h4>
+                        <p>Suivi analytics intégré et tableaux de bord pour mesurer précisément l'impact de ta landing page.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Footer -->
+        <div class="performance-stats">
+            <div class="perf-stat">
+                <h5>Pages créées</h5>
+                <p class="perf-stat-value">+390</p>
+            </div>
+            <div class="perf-stat">
+                <h5>Augmentation conversion moyenne</h5>
+                <p class="perf-stat-value">≈ +25%</p>
+            </div>
+            <div class="perf-stat">
+                <h5>CA total généré pour nos clients</h5>
+                <p class="perf-stat-value">+25,000,000€</p>
+            </div>
+        </div>
+    </div>
+</section>
      <!-- Portfolio Section -->
     <section id="portfolio" class="portfolio">
         <div class="container">
