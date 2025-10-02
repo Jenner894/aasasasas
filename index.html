@@ -8,14 +8,13 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%235b5bd6'/></svg>">
 </head>
 <body>
-<!-- Navigation -->
 <nav class="navbar">
     <div class="container">
         <div class="nav-content">
             <a href="#" class="logo">
                 <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                    <rect width="32" height="32" rx="8" fill="url(#gradient)"/>
-                    <path d="M10 12h12M10 16h12M10 20h8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    <rect width="32" height="32" rx="8" fill="url(#gradient)" class="logo-bg"/>
+                    <path d="M10 12h12M10 16h12M10 20h8" stroke="white" stroke-width="2" stroke-linecap="round" class="logo-lines"/>
                     <defs>
                         <linearGradient id="gradient" x1="0" y1="0" x2="32" y2="32">
                             <stop offset="0%" style="stop-color:#4a5568"/>
@@ -26,7 +25,7 @@
                 <span>LandingIA</span>
             </a>
 
-            <!-- Desktop Navigation -->
+            <!-- Desktop Navigation - maintenant en dehors du nav-content flow -->
             <ul class="nav-links">
                 <li><a href="#portfolio">Portfolio</a></li>
                 <li><a href="#generator">Démo IA</a></li>
@@ -43,53 +42,6 @@
         </div>
     </div>
 </nav>
-
-<!-- Mobile Menu Overlay -->
-<div class="mobile-menu-overlay" id="mobileMenu">
-    <div class="mobile-menu-content">
-        <div class="mobile-menu-items">
-            <div class="mobile-menu-item">
-                <a href="#portfolio">
-                    <span>Portfolio</span>
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </a>
-            </div>
-            
-            <div class="mobile-menu-item">
-                <a href="#generator">
-                    <span>Démo IA</span>
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </a>
-            </div>
-            
-            <div class="mobile-menu-item">
-                <a href="#booking">
-                    <span>Réserver un Appel</span>
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </a>
-            </div>
-            
-            <div class="mobile-menu-item">
-                <a href="#contact">
-                    <span>Contact</span>
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </a>
-            </div>
-        </div>
-
-        <div class="mobile-menu-cta">
-            <a href="#generator" class="btn btn-primary">Essayer la Démo IA</a>
-        </div>
-    </div>
-</div>
     <!-- Hero Section -->
     <section class="hero">
         <div class="container">
