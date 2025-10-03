@@ -22,6 +22,70 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 // ============================================
+// PERFORMANCE STATS ANIMATED COUNTERS
+// ============================================
+
+function animatePerfCounter(element, target, prefix = '', suffix = '') {
+    let current = 0;
+    const increment = target / 100;
+    const duration = 2000;
+    const stepTime = duration / 100;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            element.textContent = prefix + target.toLocaleString('fr-FR') + suffix;
+            clearInterval(timer);
+        } else {
+            element.textContent = prefix + Math.floor(current).toLocaleString('fr-FR') + suffix;
+        }
+    }, stepTime);
+}
+
+const perfStatsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting && !entry.target.classList.contains('perf-counted')) {
+            entry.target.classList.add('perf-counted');
+            
+            const perfStatValues = entry.target.querySelectorAll('.perf-stat-value');
+            perfStatValues.forEach((stat, index) => {
+                setTimeout(() => {
+                    const text = stat.textContent.trim();
+                    let target, prefix = '', suffix = '';
+                    
+                    // Pages créées: +390
+                    if (text.includes('+') && !text.includes('%') && !text.includes('€')) {
+                        prefix = '+';
+                        target = 390;
+                    }
+                    // Augmentation conversion: ≈ +25%
+                    else if (text.includes('%')) {
+                        prefix = '≈ +';
+                        suffix = '%';
+                        target = 25;
+                    }
+                    // CA total: +25,000,000€
+                    else if (text.includes('€')) {
+                        prefix = '+';
+                        suffix = '€';
+                        target = 25000000;
+                    }
+                    
+                    stat.textContent = prefix + '0' + suffix;
+                    animatePerfCounter(stat, target, prefix, suffix);
+                }, index * 200);
+            });
+        }
+    });
+}, { threshold: 0.5 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const perfStats = document.querySelector('.performance-stats');
+    if (perfStats) {
+        perfStatsObserver.observe(perfStats);
+    }
+});
+// ============================================
 // ANIMATED PERFORMANCE CHARTS CAROUSEL
 // ============================================
 
