@@ -236,7 +236,7 @@
             summaryItems.appendChild(item);
         }
 
-      // Gestion de la soumission du formulaire
+       // Gestion de la soumission du formulaire
 document.getElementById('quoteForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
