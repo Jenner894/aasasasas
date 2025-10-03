@@ -820,23 +820,7 @@ if (portfolioPrevBtn && portfolioNextBtn) {
     createGhostPreviews();
     updatePortfolio(0);
 }
-// Navbar Scroll Effect
-let lastScroll = 0;
-const navbar = document.querySelector('.navbar');
 
-window.addEventListener('scroll', () => {
-    const currentScroll = window.pageYOffset;
-    
-    if (currentScroll > 100) {
-        navbar.style.padding = '1rem 0';
-        navbar.style.background = 'rgba(10, 10, 10, 0.95)';
-    } else {
-        navbar.style.padding = '1.5rem 0';
-        navbar.style.background = 'rgba(10, 10, 10, 0.8)';
-    }
-    
-    lastScroll = currentScroll;
-});
 
 // Landing Page Generator Form
 // Landing Page Generator Form
