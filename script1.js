@@ -236,70 +236,91 @@
             summaryItems.appendChild(item);
         }
 
-        // Gestion de la soumission du formulaire
-        document.getElementById('quoteForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const submitBtn = document.getElementById('submitBtn');
-            const submitText = document.getElementById('submitText');
-            const submitLoader = document.getElementById('submitLoader');
-            
-            // Désactiver le bouton et afficher le loader
-            submitBtn.disabled = true;
-            submitText.style.display = 'none';
-            submitLoader.style.display = 'inline-block';
-            
-            const formData = new FormData(this);
-            const requestData = {
-                clientInfo: {
-                    name: formData.get('name'),
-                    email: formData.get('email'),
-                    phone: formData.get('phone') || '',
-                    company: formData.get('company') || ''
-                },
-                projectDetails: {
-                    pageType: quoteData.pageType,
-                    designLevel: quoteData.designLevel,
-                    options: quoteData.options,
-                    deadline: formData.get('deadline'),
-                    details: formData.get('details') || ''
-                },
-                pricing: quoteData.pricing
-            };
+      // Gestion de la soumission du formulaire
+document.getElementById('quoteForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    const submitLoader = document.getElementById('submitLoader');
+    
+    // Désactiver le bouton et afficher le loader
+    submitBtn.disabled = true;
+    submitText.style.display = 'none';
+    submitLoader.style.display = 'inline-block';
+    
+    const formData = new FormData(this);
+    const requestData = {
+        clientInfo: {
+            name: formData.get('name'),
+            email: formData.get('email'),
+            phone: formData.get('phone') || '',
+            company: formData.get('company') || ''
+        },
+        projectDetails: {
+            pageType: quoteData.pageType,
+            designLevel: quoteData.designLevel,
+            options: quoteData.options,
+            deadline: formData.get('deadline'),
+            details: formData.get('details') || ''
+        },
+        pricing: quoteData.pricing
+    };
 
-            try {
-                const response = await fetch('/api/submit-quote', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'},
-                    body: JSON.stringify(requestData)
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    // Masquer le formulaire et afficher le message de succès
-                    document.getElementById('quoteForm').style.display = 'none';
-                    document.querySelector('.step-indicator').style.display = 'none';
-                    document.getElementById('successMessage').classList.add('show');
-                    
-                    // Masquer le CTA du résumé
-                    document.querySelector('.summary-cta').style.display = 'none';
-                    
-                    console.log('Devis envoyé avec succès:', result.quoteId);
-                } else {
-                    throw new Error(result.error || 'Erreur lors de l\'envoi');
-                }
-            } catch (error) {
-                console.error('Erreur:', error);
-                alert('❌ Erreur lors de l\'envoi de votre demande. Veuillez réessayer ou nous contacter directement.');
-                
-                // Réactiver le bouton
-                submitBtn.disabled = false;
-                submitText.style.display = 'inline-block';
-                submitLoader.style.display = 'none';
-            }
+    try {
+        const response = await fetch('/api/submit-quote', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
         });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Afficher la popup de succès
+            showSuccessPopup();
+            
+            console.log('Devis envoyé avec succès:', result.quoteId);
+        } else {
+            throw new Error(result.error || 'Erreur lors de l\'envoi');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('❌ Erreur lors de l\'envoi de votre demande. Veuillez réessayer ou nous contacter directement.');
+        
+        // Réactiver le bouton
+        submitBtn.disabled = false;
+        submitText.style.display = 'inline-block';
+        submitLoader.style.display = 'none';
+    }
+});
+
+// Fonction pour afficher la popup de succès
+function showSuccessPopup() {
+    const popup = document.getElementById('successPopup');
+    popup.classList.add('show');
+}
+
+// Fonction pour fermer la popup
+function closeSuccessPopup() {
+    const popup = document.getElementById('successPopup');
+    popup.classList.remove('show');
+    
+    // Optionnel : rediriger vers la page d'accueil après fermeture
+    setTimeout(() => {
+        window.location.href = '/';
+    }, 500);
+}
+
+// Fermer la popup en cliquant sur l'overlay
+document.addEventListener('click', function(e) {
+    const popup = document.getElementById('successPopup');
+    if (e.target === popup) {
+        closeSuccessPopup();
+    }
+});
 
         // Mise à jour du délai (pour le supplément urgent)
         document.querySelector('select[name="deadline"]').addEventListener('change', updateSummary);
