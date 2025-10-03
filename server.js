@@ -3,10 +3,109 @@ const path = require('path');
 const compression = require('compression');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Configuration MongoDB
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/landingia';
+
+mongoose.connect(MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+.then(() => console.log('✅ MongoDB connecté'))
+.catch(err => console.error('❌ Erreur MongoDB:', err));
+
+// Schémas MongoDB
+const quoteSchema = new mongoose.Schema({
+    // Informations client
+    clientInfo: {
+        name: { type: String, required: true },
+        email: { type: String, required: true },
+        phone: String,
+        company: String
+    },
+    
+    // Détails du projet
+    projectDetails: {
+        pageType: { 
+            type: String, 
+            required: true,
+            enum: ['simple', 'standard', 'complete', 'multipage']
+        },
+        designLevel: { 
+            type: String, 
+            required: true,
+            enum: ['template', 'custom', 'premium', 'luxury']
+        },
+        options: [{
+            name: String,
+            price: Number
+        }],
+        deadline: String,
+        details: String
+    },
+    
+    // Calcul du prix
+    pricing: {
+        basePrice: { type: Number, required: true },
+        designPrice: { type: Number, default: 0 },
+        optionsPrice: { type: Number, default: 0 },
+        urgentFee: { type: Number, default: 0 },
+        totalPrice: { type: Number, required: true },
+        priceRange: {
+            min: Number,
+            max: Number
+        }
+    },
+    
+    // Statut
+    status: {
+        type: String,
+        enum: ['pending', 'reviewed', 'accepted', 'rejected', 'completed'],
+        default: 'pending'
+    },
+    
+    // Métadonnées
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
+    ipAddress: String,
+    userAgent: String
+});
+
+const Quote = mongoose.model('Quote', quoteSchema);
+
+// Schéma pour les paramètres de prix (modifiable via admin)
+const pricingConfigSchema = new mongoose.Schema({
+    pageTypes: {
+        simple: { type: Number, default: 497 },
+        standard: { type: Number, default: 897 },
+        complete: { type: Number, default: 1497 },
+        multipage: { type: Number, default: 2497 }
+    },
+    designLevels: {
+        template: { type: Number, default: 0 },
+        custom: { type: Number, default: 397 },
+        premium: { type: Number, default: 797 },
+        luxury: { type: Number, default: 1497 }
+    },
+    options: {
+        animations: { type: Number, default: 197 },
+        seo: { type: Number, default: 297 },
+        analytics: { type: Number, default: 147 },
+        crm: { type: Number, default: 347 },
+        copywriting: { type: Number, default: 397 },
+        multilingual: { type: Number, default: 297 },
+        maintenance: { type: Number, default: 147 }
+    },
+    urgentMultiplier: { type: Number, default: 0.3 },
+    updatedAt: { type: Date, default: Date.now }
+});
+
+const PricingConfig = mongoose.model('PricingConfig', pricingConfigSchema);
 
 // Configuration Anthropic Claude
 const Anthropic = require('@anthropic-ai/sdk');
@@ -26,12 +125,136 @@ app.use(express.static(path.join(__dirname), {
     etag: true
 }));
 
+// Route pour récupérer la configuration des prix
+app.get('/api/pricing-config', async (req, res) => {
+    try {
+        let config = await PricingConfig.findOne();
+        
+        // Si aucune config n'existe, en créer une par défaut
+        if (!config) {
+            config = await PricingConfig.create({});
+        }
+        
+        res.json({ success: true, config });
+    } catch (error) {
+        console.error('Erreur récupération config:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Route pour soumettre un devis
+app.post('/api/submit-quote', async (req, res) => {
+    try {
+        const { clientInfo, projectDetails, pricing } = req.body;
+        
+        // Validation
+        if (!clientInfo.name || !clientInfo.email || !projectDetails.pageType || !projectDetails.designLevel) {
+            return res.status(400).json({ 
+                error: 'Informations obligatoires manquantes' 
+            });
+        }
+        
+        // Récupérer l'IP et User Agent
+        const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const userAgent = req.headers['user-agent'];
+        
+        // Créer le devis
+        const quote = await Quote.create({
+            clientInfo,
+            projectDetails,
+            pricing,
+            ipAddress,
+            userAgent
+        });
+        
+        console.log('✅ Devis créé:', quote._id);
+        
+        // Envoyer email de confirmation (à implémenter)
+        // await sendQuoteEmail(quote);
+        
+        res.json({ 
+            success: true, 
+            quoteId: quote._id,
+            message: 'Devis enregistré avec succès'
+        });
+        
+    } catch (error) {
+        console.error('Erreur création devis:', error);
+        res.status(500).json({ 
+            error: 'Erreur lors de la création du devis',
+            details: error.message 
+        });
+    }
+});
+
+// Route pour récupérer tous les devis (admin)
+app.get('/api/quotes', async (req, res) => {
+    try {
+        const { status, page = 1, limit = 20 } = req.query;
+        
+        const query = status ? { status } : {};
+        const quotes = await Quote.find(query)
+            .sort({ createdAt: -1 })
+            .limit(limit * 1)
+            .skip((page - 1) * limit);
+        
+        const count = await Quote.countDocuments(query);
+        
+        res.json({
+            success: true,
+            quotes,
+            totalPages: Math.ceil(count / limit),
+            currentPage: page
+        });
+    } catch (error) {
+        console.error('Erreur récupération devis:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Route pour récupérer un devis spécifique
+app.get('/api/quotes/:id', async (req, res) => {
+    try {
+        const quote = await Quote.findById(req.params.id);
+        
+        if (!quote) {
+            return res.status(404).json({ error: 'Devis non trouvé' });
+        }
+        
+        res.json({ success: true, quote });
+    } catch (error) {
+        console.error('Erreur récupération devis:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Route pour mettre à jour le statut d'un devis
+app.patch('/api/quotes/:id/status', async (req, res) => {
+    try {
+        const { status } = req.body;
+        
+        const quote = await Quote.findByIdAndUpdate(
+            req.params.id,
+            { status, updatedAt: Date.now() },
+            { new: true }
+        );
+        
+        if (!quote) {
+            return res.status(404).json({ error: 'Devis non trouvé' });
+        }
+        
+        res.json({ success: true, quote });
+    } catch (error) {
+        console.error('Erreur mise à jour devis:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
 // Route API pour générer la landing page avec Claude
 app.post('/api/generate-landing', async (req, res) => {
     try {
         const { sector, objective, style, companyName, tagline } = req.body;
 
-        // Validation des données
         if (!sector || !objective || !style) {
             return res.status(400).json({ 
                 error: 'Tous les champs obligatoires doivent être remplis' 
@@ -40,7 +263,6 @@ app.post('/api/generate-landing', async (req, res) => {
 
         console.log('Génération en cours pour:', { sector, objective, style, companyName });
 
-        // Mapping des secteurs en français pour le prompt
         const sectorNames = {
             restaurant: 'Restaurant / Café',
             tech: 'Tech / SaaS',
@@ -68,7 +290,6 @@ app.post('/api/generate-landing', async (req, res) => {
             fun: 'Fun / Créatif'
         };
 
-        // Créer le prompt pour Claude
         const prompt = `Tu es un expert en design web et copywriting professionnel. Génère une landing page HTML complète et professionnelle avec ces caractéristiques:
 
 **Secteur d'activité**: ${sectorNames[sector] || sector}
@@ -102,7 +323,6 @@ app.post('/api/generate-landing', async (req, res) => {
 
 Retourne UNIQUEMENT le code HTML complet prêt à être affiché, sans balises markdown, sans explications avant ou après.`;
 
-        // Appel à l'API Claude
         const message = await anthropic.messages.create({
             model: "claude-3-5-sonnet-20241022",
             max_tokens: 4096,
@@ -113,10 +333,7 @@ Retourne UNIQUEMENT le code HTML complet prêt à être affiché, sans balises m
             }]
         });
 
-        // Extraire le contenu HTML
         let generatedHTML = message.content[0].text;
-
-        // Nettoyer le code si Claude a ajouté des balises markdown
         generatedHTML = generatedHTML.replace(/```html\n?/g, '').replace(/```\n?/g, '');
 
         console.log('Génération réussie');
@@ -136,8 +353,6 @@ Retourne UNIQUEMENT le code HTML complet prêt à être affiché, sans balises m
 
     } catch (error) {
         console.error('Erreur lors de la génération:', error);
-        
-        // Retourner une erreur détaillée
         res.status(500).json({
             error: 'Erreur lors de la génération de la landing page',
             details: error.message,
@@ -149,10 +364,13 @@ Retourne UNIQUEMENT le code HTML complet prêt à être affiché, sans balises m
 // Route de test pour vérifier l'API
 app.get('/api/health', (req, res) => {
     const apiConfigured = !!process.env.ANTHROPIC_API_KEY;
+    const dbConnected = mongoose.connection.readyState === 1;
+    
     res.json({ 
         status: 'OK', 
         message: 'API fonctionnelle',
-        claude_api: apiConfigured ? 'Configurée' : 'Non configurée'
+        claude_api: apiConfigured ? 'Configurée' : 'Non configurée',
+        database: dbConnected ? 'Connectée' : 'Déconnectée'
     });
 });
 
@@ -166,6 +384,8 @@ app.listen(PORT, () => {
     console.log(`🚀 Serveur LandingIA démarré sur le port ${PORT}`);
     console.log(`📍 URL: http://localhost:${PORT}`);
     console.log(`🤖 Claude API: ${process.env.ANTHROPIC_API_KEY ? '✅ Configurée' : '❌ Non configurée'}`);
+    console.log(`🗄️  MongoDB: ${mongoose.connection.readyState === 1 ? '✅ Connectée' : '⏳ Connexion...'}`);
+    
     if (!process.env.ANTHROPIC_API_KEY) {
         console.log('⚠️  Ajoutez ANTHROPIC_API_KEY dans votre fichier .env');
     }
@@ -174,10 +394,12 @@ app.listen(PORT, () => {
 // Gestion propre de l'arrêt
 process.on('SIGTERM', () => {
     console.log('👋 Arrêt du serveur...');
+    mongoose.connection.close();
     process.exit(0);
 });
 
 process.on('SIGINT', () => {
     console.log('\n👋 Arrêt du serveur...');
+    mongoose.connection.close();
     process.exit(0);
 });
