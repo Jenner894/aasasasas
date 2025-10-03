@@ -27,7 +27,6 @@
                 <span>LandingIA</span>
             </a>
 
-            <!-- Desktop Navigation - maintenant en dehors du nav-content flow -->
             <ul class="nav-links">
                 <li><a href="#portfolio">Portfolio</a></li>
                 <li><a href="#generator">Démo IA</a></li>
@@ -35,7 +34,9 @@
                 <li><a href="#contact">Contact</a></li>
             </ul>
 
-            <!-- Mobile Menu Toggle -->
+            <!-- NOUVEAU BOUTON DEVIS -->
+            <a href="#generator" class="btn-devis-nav">Simuler un devis</a>
+
             <button class="menu-toggle" id="menuToggle" aria-label="Menu">
                 <span></span>
                 <span></span>
@@ -184,6 +185,7 @@
 
     <!-- Performance Section -->
 <section id="performance" class="performance">
+    <div class="section-bar-top"></div>
     <div class="container">
         <div class="performance-header">
             <h2 class="section-title">Performance & satisfaction client : notre moteur.</h2>
@@ -273,9 +275,11 @@
             </div>
         </div>
     </div>
+        <div class="section-bar-bottom"></div>
 </section>
      <!-- Portfolio Section -->
     <section id="portfolio" class="portfolio">
+
         <div class="container">
             <h2 class="section-title">Ils Nous Ont Fait Confiance</h2>
             <p class="section-subtitle">Découvrez les landing pages professionnelles que nous avons créées pour nos clients</p>
@@ -341,15 +345,22 @@
                 </div>
             </div>
 
-            <div class="portfolio-cta">
-                <p>Prêt à rejoindre nos clients satisfaits ?</p>
-                <a href="#booking" class="btn btn-primary">Réserver un Appel Gratuit</a>
-            </div>
+<div class="portfolio-cta">
+    <div class="section-bar-top"></div>
+    <p>Prêt à rejoindre nos clients satisfaits ?</p>
+    <a href="#booking" class="btn btn-primary">
+        Réserver un Appel Gratuit
+        <span class="btn-icon">→</span>
+    </a>
+    
+</div>
         </div>
+            <div class="section-bar-bottom"></div>
     </section>
 
     <!-- Generator Section -->
     <section id="generator" class="generator">
+                  
         <div class="container">
             <h2 class="section-title">Testez le Générateur IA</h2>
             <p class="section-subtitle">Visualisez le potentiel en 3 clics. Cette démo utilise l'IA comme exemple. Chaque projet réel est ensuite 100% personnalisé par nos développeurs.</p>
@@ -442,6 +453,7 @@
                 </div>
             </div>
         </div>
+            <div class="section-bar-bottom"></div>
     </section>
 
 <!-- Booking Section -->
@@ -527,7 +539,9 @@
             </div>
         </div>
     </div>
+     <div class="section-bar-bottom"></div>
 </section>
+
 <!-- Bouton WhatsApp fixe -->
 <a href="https://wa.me/33123456789" 
    target="_blank" 
