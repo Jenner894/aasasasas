@@ -125,6 +125,8 @@ app.use(express.static(path.join(__dirname), {
     etag: true
 }));
 
+
+
 // Route pour récupérer la configuration des prix
 app.get('/api/pricing-config', async (req, res) => {
     try {
@@ -372,6 +374,11 @@ app.get('/api/health', (req, res) => {
         claude_api: apiConfigured ? 'Configurée' : 'Non configurée',
         database: dbConnected ? 'Connectée' : 'Déconnectée'
     });
+});
+
+// Route pour la page de devis
+app.get('/devis', (req, res) => {
+    res.sendFile(path.join(__dirname, 'devis.html'));
 });
 
 // Gestion des erreurs 404
