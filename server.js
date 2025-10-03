@@ -9,11 +9,6 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Afficher les informations IP avant la connexion MongoDB
-console.log('🔍 Détection de l\'environnement...');
-console.log('📍 PORT:', PORT);
-console.log('🌐 NODE_ENV:', process.env.NODE_ENV || 'development');
-
 // Fonction pour obtenir l'IP publique
 async function getPublicIP() {
     try {
@@ -25,34 +20,80 @@ async function getPublicIP() {
     }
 }
 
-// Afficher l'IP avant la connexion
-(async () => {
+// Fonction de diagnostic et connexion MongoDB
+async function connectDatabase() {
+    console.log('\n🔍 === DIAGNOSTIC DE CONNEXION ===');
+    
+    // 1. Afficher l'IP publique
     const publicIP = await getPublicIP();
-    console.log('🌍 IP Publique du serveur:', publicIP);
-    console.log('-----------------------------------');
-})();
+    console.log('🌍 IP Publique du serveur Render:', publicIP);
+    console.log('💡 Ajoutez cette IP dans MongoDB Atlas Network Access\n');
+    
+    // 2. Vérifier les variables d'environnement
+    console.log('📋 Variables d\'environnement:');
+    console.log('   - PORT:', process.env.PORT || '3000');
+    console.log('   - NODE_ENV:', process.env.NODE_ENV || 'development');
+    console.log('   - MONGO_URL:', process.env.MONGO_URL ? '✅ Défini' : '❌ NON DÉFINI');
+    console.log('   - TELEGRAM_BOT_TOKEN:', process.env.TELEGRAM_BOT_TOKEN ? '✅ Défini' : '⚠️  Non défini');
+    console.log('   - ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY ? '✅ Défini' : '⚠️  Non défini');
+    
+    console.log('\n=====================================');
+    
+    // 3. Connexion à MongoDB
+    if (!process.env.MONGO_URL) {
+        console.error('\n❌ ERREUR: MONGO_URL n\'est pas défini dans les variables d\'environnement');
+        console.error('💡 Ajoutez MONGO_URL dans votre fichier .env ou dans Render Dashboard');
+        return;
+    }
+    
+    console.log('\n📡 Tentative de connexion à MongoDB...');
+    
+    try {
+        await mongoose.connect(process.env.MONGO_URL, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 10000, // Timeout de 10 secondes
+            socketTimeoutMS: 45000,
+        });
+        
+        console.log('✅ MongoDB connecté avec succès !');
+        console.log('📊 État:', mongoose.connection.readyState === 1 ? 'Connecté' : 'Déconnecté');
+        
+    } catch (err) {
+        console.error('\n❌ ERREUR DE CONNEXION MONGODB:');
+        console.error('Message:', err.message);
+        
+        // Diagnostics selon le type d'erreur
+        if (err.message.includes('authentication failed')) {
+            console.error('\n💡 SOLUTION: Vérifiez vos identifiants MongoDB');
+            console.error('   - Username et password corrects dans MONGO_URL');
+        } else if (err.message.includes('ENOTFOUND') || err.message.includes('connect')) {
+            console.error('\n💡 SOLUTION: Problème de réseau ou URL incorrecte');
+            console.error('   - Vérifiez que MONGO_URL est correct');
+            console.error('   - Format: mongodb+srv://username:password@cluster.mongodb.net/database');
+        } else if (err.message.includes('IP') || err.message.includes('not allowed')) {
+            console.error('\n💡 SOLUTION: IP non autorisée dans MongoDB Atlas');
+            console.error('   1. Connectez-vous à MongoDB Atlas');
+            console.error('   2. Network Access → Add IP Address');
+            console.error('   3. Ajoutez:', publicIP);
+            console.error('   4. OU autorisez toutes les IPs: 0.0.0.0/0');
+        }
+        
+        console.error('\n⚠️  Le serveur démarre sans connexion à la base de données');
+    }
+}
 
-// Configuration MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/landingia';
-
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-.then(() => console.log('✅ MongoDB connecté'))
-.catch(err => console.error('❌ Erreur MongoDB:', err));
+// Exécuter la connexion
+connectDatabase();
 
 // Schémas MongoDB
 const quoteSchema = new mongoose.Schema({
-    // Informations client
     clientInfo: {
         name: { type: String, required: true },
         email: { type: String, required: true },
         phone: String,
         company: String
     },
-    
-    // Détails du projet
     projectDetails: {
         pageType: { 
             type: String, 
@@ -71,8 +112,6 @@ const quoteSchema = new mongoose.Schema({
         deadline: String,
         details: String
     },
-    
-    // Calcul du prix
     pricing: {
         basePrice: { type: Number, required: true },
         designPrice: { type: Number, default: 0 },
@@ -84,15 +123,11 @@ const quoteSchema = new mongoose.Schema({
             max: Number
         }
     },
-    
-    // Statut
     status: {
         type: String,
         enum: ['pending', 'reviewed', 'accepted', 'rejected', 'completed'],
         default: 'pending'
     },
-    
-    // Métadonnées
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
     ipAddress: String,
@@ -101,7 +136,6 @@ const quoteSchema = new mongoose.Schema({
 
 const Quote = mongoose.model('Quote', quoteSchema);
 
-// Schéma pour les paramètres de prix (modifiable via admin)
 const pricingConfigSchema = new mongoose.Schema({
     pageTypes: {
         simple: { type: Number, default: 497 },
@@ -148,7 +182,6 @@ app.use(express.static(path.join(__dirname), {
     etag: true
 }));
 
-
 // Configuration Telegram
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -162,7 +195,6 @@ async function sendTelegramNotification(quoteData) {
 
     const { clientInfo, projectDetails, pricing } = quoteData;
     
-    // Mapping des labels
     const pageTypeLabels = {
         simple: 'Page Simple',
         standard: 'Page Standard',
@@ -195,7 +227,6 @@ async function sendTelegramNotification(quoteData) {
         flexible: 'Flexible'
     };
 
-    // Construction du message
     let message = `🎯 <b>NOUVEAU DEVIS REÇU</b>\n\n`;
     message += `👤 <b>CLIENT</b>\n`;
     message += `• Nom: ${clientInfo.name}\n`;
@@ -262,12 +293,27 @@ async function sendTelegramNotification(quoteData) {
         return false;
     }
 }
+
+// Route debug IP
+app.get('/debug-ip', async (req, res) => {
+    try {
+        const publicIP = await getPublicIP();
+        res.json({
+            serverPublicIP: publicIP,
+            clientIP: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+            headers: req.headers,
+            mongoStatus: mongoose.connection.readyState === 1 ? 'Connecté' : 'Déconnecté'
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Route pour récupérer la configuration des prix
 app.get('/api/pricing-config', async (req, res) => {
     try {
         let config = await PricingConfig.findOne();
         
-        // Si aucune config n'existe, en créer une par défaut
         if (!config) {
             config = await PricingConfig.create({});
         }
@@ -278,23 +324,21 @@ app.get('/api/pricing-config', async (req, res) => {
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
+
 // Route pour soumettre un devis
 app.post('/api/submit-quote', async (req, res) => {
     try {
         const { clientInfo, projectDetails, pricing } = req.body;
         
-        // Validation
         if (!clientInfo.name || !clientInfo.email || !projectDetails.pageType || !projectDetails.designLevel) {
             return res.status(400).json({ 
                 error: 'Informations obligatoires manquantes' 
             });
         }
         
-        // Récupérer l'IP et User Agent
         const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         const userAgent = req.headers['user-agent'];
         
-        // Créer le devis
         const quote = await Quote.create({
             clientInfo,
             projectDetails,
@@ -305,7 +349,6 @@ app.post('/api/submit-quote', async (req, res) => {
         
         console.log('✅ Devis créé:', quote._id);
         
-        // Envoyer notification Telegram
         await sendTelegramNotification(quote);
         
         res.json({ 
@@ -497,7 +540,6 @@ Retourne UNIQUEMENT le code HTML complet prêt à être affiché, sans balises m
     }
 });
 
-// Route de test pour vérifier l'API
 app.get('/api/health', (req, res) => {
     const apiConfigured = !!process.env.ANTHROPIC_API_KEY;
     const dbConnected = mongoose.connection.readyState === 1;
@@ -510,26 +552,20 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Route pour la page de devis
 app.get('/devis', (req, res) => {
     res.sendFile(path.join(__dirname, 'devis.html'));
 });
 
-// Gestion des erreurs 404
 app.use((req, res) => {
     res.status(404).sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Démarrage du serveur
 app.listen(PORT, () => {
-    console.log(`🚀 Serveur LandingIA démarré sur le port ${PORT}`);
+    console.log(`\n🚀 Serveur LandingIA démarré sur le port ${PORT}`);
     console.log(`📍 URL: http://localhost:${PORT}`);
     console.log(`🤖 Claude API: ${process.env.ANTHROPIC_API_KEY ? '✅ Configurée' : '❌ Non configurée'}`);
-    console.log(`🗄️  MongoDB: ${mongoose.connection.readyState === 1 ? '✅ Connectée' : '⏳ Connexion...'}`);
-    
-    if (!process.env.ANTHROPIC_API_KEY) {
-        console.log('⚠️  Ajoutez ANTHROPIC_API_KEY dans votre fichier .env');
-    }
+    console.log(`🗄️  MongoDB: ${mongoose.connection.readyState === 1 ? '✅ Connectée' : '⏳ En cours...'}`);
 });
 
 // Gestion propre de l'arrêt
