@@ -126,7 +126,119 @@ app.use(express.static(path.join(__dirname), {
 }));
 
 
+// Configuration Telegram
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
+// Fonction pour envoyer un message sur Telegram
+async function sendTelegramNotification(quoteData) {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+        console.warn('⚠️ Configuration Telegram manquante');
+        return false;
+    }
+
+    const { clientInfo, projectDetails, pricing } = quoteData;
+    
+    // Mapping des labels
+    const pageTypeLabels = {
+        simple: 'Page Simple',
+        standard: 'Page Standard',
+        complete: 'Page Complète',
+        multipage: 'Site Multi-pages'
+    };
+    
+    const designLevelLabels = {
+        template: 'Template Adapté',
+        custom: 'Design Sur-Mesure',
+        premium: 'Design Premium',
+        luxury: 'Design Luxe'
+    };
+    
+    const optionsLabels = {
+        animations: 'Animations Avancées',
+        seo: 'Optimisation SEO',
+        analytics: 'Analytics & Tracking',
+        crm: 'Intégration CRM',
+        copywriting: 'Copywriting Pro',
+        multilingual: 'Version Multilingue',
+        maintenance: 'Maintenance Mensuelle'
+    };
+
+    const deadlineLabels = {
+        urgent: '🔥 Urgent (72h)',
+        week: 'Sous 1 semaine',
+        twoweeks: 'Sous 2 semaines',
+        month: 'Sous 1 mois',
+        flexible: 'Flexible'
+    };
+
+    // Construction du message
+    let message = `🎯 <b>NOUVEAU DEVIS REÇU</b>\n\n`;
+    message += `👤 <b>CLIENT</b>\n`;
+    message += `• Nom: ${clientInfo.name}\n`;
+    message += `• Email: ${clientInfo.email}\n`;
+    if (clientInfo.phone) message += `• Tél: ${clientInfo.phone}\n`;
+    if (clientInfo.company) message += `• Entreprise: ${clientInfo.company}\n`;
+    
+    message += `\n📋 <b>PROJET</b>\n`;
+    message += `• Type: ${pageTypeLabels[projectDetails.pageType]}\n`;
+    message += `• Design: ${designLevelLabels[projectDetails.designLevel]}\n`;
+    
+    if (projectDetails.options && projectDetails.options.length > 0) {
+        message += `• Options:\n`;
+        projectDetails.options.forEach(opt => {
+            message += `  - ${optionsLabels[opt.name]} (+${opt.price}€)\n`;
+        });
+    }
+    
+    if (projectDetails.deadline) {
+        message += `• Délai: ${deadlineLabels[projectDetails.deadline] || projectDetails.deadline}\n`;
+    }
+    
+    if (projectDetails.details) {
+        message += `• Détails: ${projectDetails.details.substring(0, 200)}${projectDetails.details.length > 200 ? '...' : ''}\n`;
+    }
+    
+    message += `\n💰 <b>ESTIMATION</b>\n`;
+    message += `• Base: ${pricing.basePrice}€\n`;
+    if (pricing.designPrice > 0) message += `• Design: +${pricing.designPrice}€\n`;
+    if (pricing.optionsPrice > 0) message += `• Options: +${pricing.optionsPrice}€\n`;
+    if (pricing.urgentFee > 0) message += `• Express: +${pricing.urgentFee}€\n`;
+    message += `\n<b>TOTAL: ${pricing.totalPrice}€</b>`;
+    
+    if (pricing.priceRange) {
+        message += `\nFourchette: ${pricing.priceRange.min}-${pricing.priceRange.max}€`;
+    }
+    
+    message += `\n\n🔗 ID: ${quoteData._id}`;
+
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: message,
+                parse_mode: 'HTML'
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.ok) {
+            console.log('✅ Notification Telegram envoyée');
+            return true;
+        } else {
+            console.error('❌ Erreur Telegram:', result.description);
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Erreur envoi Telegram:', error);
+        return false;
+    }
+}
 // Route pour récupérer la configuration des prix
 app.get('/api/pricing-config', async (req, res) => {
     try {
@@ -143,7 +255,6 @@ app.get('/api/pricing-config', async (req, res) => {
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
-
 // Route pour soumettre un devis
 app.post('/api/submit-quote', async (req, res) => {
     try {
@@ -171,8 +282,8 @@ app.post('/api/submit-quote', async (req, res) => {
         
         console.log('✅ Devis créé:', quote._id);
         
-        // Envoyer email de confirmation (à implémenter)
-        // await sendQuoteEmail(quote);
+        // Envoyer notification Telegram
+        await sendTelegramNotification(quote);
         
         res.json({ 
             success: true, 
