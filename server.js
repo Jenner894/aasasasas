@@ -397,7 +397,13 @@ app.listen(PORT, () => {
         console.log('⚠️  Ajoutez ANTHROPIC_API_KEY dans votre fichier .env');
     }
 });
-
+app.get('/api/ip', (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    res.json({ 
+        ip: ip,
+        headers: req.headers 
+    });
+});
 // Gestion propre de l'arrêt
 process.on('SIGTERM', () => {
     console.log('👋 Arrêt du serveur...');
