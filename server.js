@@ -9,6 +9,29 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Afficher les informations IP avant la connexion MongoDB
+console.log('🔍 Détection de l\'environnement...');
+console.log('📍 PORT:', PORT);
+console.log('🌐 NODE_ENV:', process.env.NODE_ENV || 'development');
+
+// Fonction pour obtenir l'IP publique
+async function getPublicIP() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+    } catch (error) {
+        return 'Non disponible';
+    }
+}
+
+// Afficher l'IP avant la connexion
+(async () => {
+    const publicIP = await getPublicIP();
+    console.log('🌍 IP Publique du serveur:', publicIP);
+    console.log('-----------------------------------');
+})();
+
 // Configuration MongoDB
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/landingia';
 
@@ -508,13 +531,7 @@ app.listen(PORT, () => {
         console.log('⚠️  Ajoutez ANTHROPIC_API_KEY dans votre fichier .env');
     }
 });
-app.get('/api/ip', (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    res.json({ 
-        ip: ip,
-        headers: req.headers 
-    });
-});
+
 // Gestion propre de l'arrêt
 process.on('SIGTERM', () => {
     console.log('👋 Arrêt du serveur...');
