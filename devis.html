@@ -928,7 +928,30 @@
             </div>
         </div>
     </section>
-
+<!-- Popup de succès -->
+<div class="success-popup-overlay" id="successPopup">
+    <div class="success-popup">
+        <div class="success-popup-icon">
+            <span class="success-popup-checkmark">✓</span>
+        </div>
+        <h2>Devis Envoyé !</h2>
+        <p class="success-popup-text">
+            Merci ! Votre demande de devis a bien été envoyée à notre équipe. 
+            Nous vous recontacterons sous 24h avec une proposition détaillée.
+        </p>
+        <div class="success-popup-cta">
+            <a href="https://cal.com/landingai/15min" target="_blank" class="btn-cal">
+                📅 Réserver un Appel Gratuit
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M4 10h12m0 0l-4-4m4 4l-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </a>
+            <button class="btn-close-popup" onclick="closeSuccessPopup()">
+                Fermer
+            </button>
+        </div>
+    </div>
+</div>
     <script src="script1.js"></script>
 </body>
 </html>
