@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 500 + (index * 150));
     });
 
-    const parallaxElements = document.querySelectorAll('.hero-background, .performance-chart');
+    const parallaxElements = document.querySelectorAll('.hero-background');
 
     window.addEventListener('scroll', () => {
         const scrolled = window.pageYOffset;
@@ -217,4 +217,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         card.style.transition = 'transform 0.3s ease';
     });
+
+    const perfChart = document.querySelector('.performance-chart');
+    if (perfChart) {
+        perfChart.style.transition = 'none';
+        perfChart.addEventListener('mouseenter', function(e) {
+            e.stopPropagation();
+        });
+    }
 });
