@@ -9,6 +9,27 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(compression({
+    level: 6,
+    threshold: 1024,
+    filter: (req, res) => {
+        if (req.headers['x-no-compression']) {
+            return false;
+        }
+        return compression.filter(req, res);
+    }
+}));
+
+app.use((req, res, next) => {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    if (req.url.match(/\.(css|js|jpg|jpeg|png|gif|svg|woff|woff2|ttf|eot)$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    } else if (req.url.match(/\.html$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+    }
+    next();
+});
+
 // Fonction pour obtenir l'IP publique
 async function getPublicIP() {
     try {

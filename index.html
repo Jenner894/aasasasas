@@ -10,12 +10,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- End Google Tag Manager -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://www.googletagmanager.com">
     <title>LandingIA - Création de Landing Pages sur Mesure | Agence Digitale 2025</title>
     <meta name="description" content="Créez votre landing page professionnelle avec LandingIA. Design sur-mesure, optimisé SEO, développement rapide. Testez notre démo IA gratuite. Devis en 24h.">
     <meta name="keywords" content="landing page, création site web, agence digitale, design web, développement web, conversion, SEO">
     <meta name="author" content="LandingIA">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://landingia.com">
+    <meta name="theme-color" content="#5b5bd6">
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="script.js" as="script">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -54,9 +60,30 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
     </script>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%235b5bd6'/></svg>">
+    <link rel="manifest" href="/manifest.json">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ProfessionalService",
+      "name": "LandingIA",
+      "image": "https://landingia.com/logo.png",
+      "@id": "https://landingia.com",
+      "url": "https://landingia.com",
+      "telephone": "+33123456789",
+      "priceRange": "€€",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "FR"
+      },
+      "sameAs": [
+        "https://www.sortlist.com/fr/agency/pxp"
+      ]
+    }
+    </script>
 </head>
 <body>
     <!-- Google Tag Manager (noscript) -->
@@ -81,9 +108,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </a>
 
             <ul class="nav-links">
-                <li><a href="#portfolio">Portfolio</a></li>
+                <li><a href="#portfolio">Nos Partenaires</a></li>
                 <li><a href="#generator">Démo IA</a></li>
-                <li><a href="#booking">Réserver</a></li>
+                <li><a href="#booking">Réserver un Appel</a></li>
                 <li><a href="#contact">Contact</a></li>
             </ul>
 
@@ -105,13 +132,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="mobile-menu-items">
             <div class="mobile-menu-item">
                 <a href="#portfolio">
-                    <span>Portfolio</span>
+                    <span>Nos Partenaires</span>
                     <svg viewBox="0 0 24 24" fill="none">
                         <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </a>
             </div>
-            
+
             <div class="mobile-menu-item">
                 <a href="#generator">
                     <span>Démo IA</span>
@@ -120,16 +147,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     </svg>
                 </a>
             </div>
-            
+
             <div class="mobile-menu-item">
                 <a href="#booking">
-                    <span>Réserver</span>
+                    <span>Réserver un Appel</span>
                     <svg viewBox="0 0 24 24" fill="none">
                         <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </a>
             </div>
-            
+
             <div class="mobile-menu-item">
                 <a href="#contact">
                     <span>Contact</span>
@@ -141,7 +168,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
 
         <div class="mobile-menu-cta">
-            <a href="#generator" class="btn btn-primary">Essayer la Démo IA</a>
+            <a href="/devis" class="btn btn-primary mobile-devis-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                </svg>
+                Simuler un Devis
+            </a>
+            <a href="#generator" class="btn btn-secondary">Essayer la Démo IA</a>
         </div>
     </div>
 </div>
@@ -682,7 +715,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <footer class="footer">
                 <p>&copy; 2025 LandingIA. Tous droits réservés.</p>
     </footer>
-    <script src="script.js"></script>
-    <script src="animations.js"></script>
+    <script src="performance-optimizer.js" defer></script>
+    <script src="script.js" defer></script>
+    <script src="animations.js" defer></script>
 </body>
 </html>
