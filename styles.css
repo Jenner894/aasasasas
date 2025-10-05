@@ -3387,7 +3387,9 @@ body.menu-open {
 }
 
 .performance-chart canvas {
+    width: 100% !important;
     height: 280px !important;
+    max-width: 100%;
     margin: 2rem 0;
 }
 
@@ -3416,8 +3418,10 @@ body.menu-open {
     font-size: 0.95rem;
 }
 
-/* Right Cards */
+/* Right Cards - Carousel */
 .performance-cards {
+    position: relative;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -3597,7 +3601,53 @@ body.menu-open {
     }
     
     .performance-chart canvas {
+        width: 100% !important;
         height: 220px !important;
+        max-width: 100%;
+    }
+
+    /* Carousel mobile pour perfcards */
+    .performance-cards {
+        display: block;
+        overflow-x: auto;
+        overflow-y: visible;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 1rem;
+    }
+
+    .performance-cards::-webkit-scrollbar {
+        display: none;
+    }
+
+    .performance-cards-wrapper {
+        display: flex;
+        gap: 1rem;
+        animation: perfCardsSlide 16s linear infinite;
+        width: max-content;
+    }
+
+    .performance-cards-wrapper.paused {
+        animation-play-state: paused;
+    }
+
+    @keyframes perfCardsSlide {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(calc(-100% / 2));
+        }
+    }
+
+    .perf-brand-card,
+    .perf-vision-card {
+        min-width: 280px;
+        max-width: 280px;
+        flex-shrink: 0;
+        scroll-snap-align: start;
     }
     
     .chart-label span {

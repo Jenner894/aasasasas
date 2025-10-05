@@ -86,6 +86,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 // ============================================
+// PERFORMANCE CARDS CAROUSEL (MOBILE)
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    const perfCardsContainer = document.getElementById('perfCardsContainer');
+    const perfCardsWrapper = document.getElementById('perfCardsWrapper');
+
+    if (perfCardsContainer && perfCardsWrapper && window.innerWidth <= 767) {
+        const cards = perfCardsWrapper.children;
+        const cardsArray = Array.from(cards);
+
+        cardsArray.forEach(card => {
+            const clone = card.cloneNode(true);
+            perfCardsWrapper.appendChild(clone);
+        });
+
+        perfCardsContainer.addEventListener('touchstart', () => {
+            perfCardsWrapper.classList.add('paused');
+        });
+
+        perfCardsContainer.addEventListener('touchend', () => {
+            perfCardsWrapper.classList.remove('paused');
+        });
+    }
+
+    window.addEventListener('resize', () => {
+        const wrapper = document.getElementById('perfCardsWrapper');
+        if (wrapper && window.innerWidth > 767) {
+            const cards = wrapper.querySelectorAll('.perf-brand-card, .perf-vision-card');
+            if (cards.length > 4) {
+                cards.forEach((card, index) => {
+                    if (index >= 4) {
+                        card.remove();
+                    }
+                });
+            }
+        }
+    });
+});
+
+// ============================================
 // ANIMATED PERFORMANCE CHARTS CAROUSEL
 // ============================================
 
