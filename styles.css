@@ -257,49 +257,118 @@ section {
 .logo {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-white);
+    gap: 1rem;
     text-decoration: none;
     z-index: 1001;
     position: relative;
     transition: transform 0.3s ease;
 }
 
-/* Animation logo au hover */
 .logo:hover {
     transform: translateY(-2px);
 }
 
-.logo:hover .logo-bg {
-    animation: logoGlow 0.6s ease-in-out;
+.logo-main {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
 }
 
-.logo:hover .logo-lines {
-    animation: logoLines 0.6s ease-in-out;
+.logo-top {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
-@keyframes logoGlow {
-    0%, 100% {
-        filter: drop-shadow(0 0 0px rgba(91, 91, 214, 0));
-    }
-    50% {
-        filter: drop-shadow(0 0 8px rgba(91, 91, 214, 0.6));
-    }
-}
-
-@keyframes logoLines {
-    0%, 100% {
-        stroke-dashoffset: 0;
-    }
-    50% {
-        stroke-dashoffset: 10;
-    }
-}
-
-.logo svg {
+.arrows-icon {
+    width: 36px;
+    height: 36px;
+    position: relative;
     flex-shrink: 0;
+}
+
+.arrow-line {
+    position: absolute;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.9);
+    transform-origin: left;
+    animation: growArrow 2s ease-in-out infinite;
+    border-radius: 2px;
+}
+
+.arrow-line:nth-child(1) {
+    top: 10px;
+    animation-delay: 0s;
+}
+
+.arrow-line:nth-child(2) {
+    top: 16px;
+    animation-delay: 0.25s;
+}
+
+.arrow-line:nth-child(3) {
+    top: 22px;
+    animation-delay: 0.5s;
+}
+
+.arrow-line::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: -4px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid rgba(255, 255, 255, 0.9);
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+}
+
+@keyframes growArrow {
+    0%, 100% { width: 65%; }
+    50% { width: 100%; }
+}
+
+.shift-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(139, 124, 223, 0.9), rgba(255, 255, 255, 0.9));
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 3s ease-in-out infinite;
+    line-height: 1;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.agency-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.5rem;
+    letter-spacing: 0.35em;
+    font-weight: 700;
+    color: rgba(139, 124, 223, 0.8);
+    text-transform: uppercase;
+    padding-left: 44px;
+}
+
+.logo:hover .arrows-icon {
+    animation: logoHover 0.6s ease-in-out;
+}
+
+@keyframes logoHover {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(4px);
+    }
 }
 
 /* Desktop Navigation - Centré */
