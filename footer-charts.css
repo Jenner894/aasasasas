@@ -80,9 +80,12 @@
 /* Charts Grid */
 .footer .charts-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 2rem;
     margin-bottom: 60px;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .footer .chart-card {
@@ -419,12 +422,6 @@
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
-    .footer .charts-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
 @media (max-width: 768px) {
     .footer .charts-grid {
         grid-template-columns: 1fr;
