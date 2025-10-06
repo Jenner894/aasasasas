@@ -185,6 +185,55 @@ const pricingConfigSchema = new mongoose.Schema({
 
 const PricingConfig = mongoose.model('PricingConfig', pricingConfigSchema);
 
+const landingConfigSchema = new mongoose.Schema({
+    userId: String,
+    name: { type: String, required: true },
+    structure: {
+        sectionsCount: Number,
+        layout: String,
+        sections: [String]
+    },
+    design: {
+        style: String,
+        palette: String,
+        primaryColor: String,
+        secondaryColor: String,
+        accentColor: String,
+        background: String
+    },
+    typography: {
+        fontFamily: String,
+        h1Size: Number,
+        headingWeight: Number,
+        lineHeight: Number,
+        letterSpacing: Number
+    },
+    animations: {
+        types: [String],
+        speed: Number,
+        hoverEffects: [String],
+        parallax: Boolean
+    },
+    content: {
+        sector: String,
+        companyName: String,
+        tagline: String,
+        tone: String,
+        description: String
+    },
+    cta: {
+        objective: String,
+        text: String,
+        style: String,
+        size: String,
+        trustElements: [String]
+    },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+
+const LandingConfig = mongoose.model('LandingConfig', landingConfigSchema);
+
 // Configuration Anthropic Claude
 const Anthropic = require('@anthropic-ai/sdk');
 const anthropic = new Anthropic({
@@ -453,49 +502,22 @@ app.patch('/api/quotes/:id/status', async (req, res) => {
 // Route API pour générer la landing page avec Claude
 app.post('/api/generate-landing', async (req, res) => {
     try {
-        const { sector, objective, style, companyName, tagline } = req.body;
+        const { sector, objective, style, companyName, tagline, customPrompt } = req.body;
 
-        if (!sector || !objective || !style) {
-            return res.status(400).json({ 
-                error: 'Tous les champs obligatoires doivent être remplis' 
+        if (!sector || !companyName) {
+            return res.status(400).json({
+                error: 'Le secteur et le nom de l\'entreprise sont obligatoires'
             });
         }
 
-        console.log('Génération en cours pour:', { sector, objective, style, companyName });
+        console.log('Génération en cours pour:', { sector, companyName });
 
-        const sectorNames = {
-            restaurant: 'Restaurant / Café',
-            tech: 'Tech / SaaS',
-            ecommerce: 'E-commerce',
-            immobilier: 'Immobilier',
-            sante: 'Santé / Bien-être',
-            coaching: 'Coaching / Formation',
-            event: 'Événementiel',
-            autre: 'Autre'
-        };
+        const promptToUse = customPrompt || `Tu es un expert en design web et copywriting professionnel. Génère une landing page HTML complète et professionnelle avec ces caractéristiques:
 
-        const objectiveNames = {
-            leads: 'Capturer des leads',
-            vente: 'Vendre un produit/service',
-            inscription: 'Inscription événement',
-            info: 'Présentation entreprise',
-            portfolio: 'Portfolio / CV'
-        };
-
-        const styleNames = {
-            minimaliste: 'Minimaliste',
-            bold: 'Bold / Audacieux',
-            elegant: 'Élégant / Luxe',
-            moderne: 'Moderne / Tech',
-            fun: 'Fun / Créatif'
-        };
-
-        const prompt = `Tu es un expert en design web et copywriting professionnel. Génère une landing page HTML complète et professionnelle avec ces caractéristiques:
-
-**Secteur d'activité**: ${sectorNames[sector] || sector}
-**Objectif principal**: ${objectiveNames[objective] || objective}
-**Style visuel**: ${styleNames[style] || style}
-**Nom de l'entreprise**: ${companyName || 'Mon Entreprise'}
+**Secteur d'activité**: ${sector}
+**Objectif principal**: ${objective || 'Capturer des leads'}
+**Style visuel**: ${style || 'Moderne'}
+**Nom de l'entreprise**: ${companyName}
 **Slogan/Message clé**: ${tagline || 'Votre message clé'}
 
 **Exigences techniques**:
@@ -504,22 +526,22 @@ app.post('/api/generate-landing', async (req, res) => {
 3. Palette de couleurs cohérente adaptée au style demandé
 4. Typographie élégante (utiliser des polices system ou Google Fonts)
 5. Animations CSS subtiles au survol
-6. Structure claire: header, hero section, 3 features/avantages, CTA, footer simple
+6. Structure claire: header, hero section, 3-6 features/avantages, CTA, footer simple
 
 **Exigences contenu**:
 1. Titre accrocheur (H1) adapté au secteur
 2. Sous-titre engageant expliquant la proposition de valeur
 3. CTA (Call-to-Action) clair et incitatif adapté à l'objectif
-4. 3 features/avantages pertinents pour le secteur avec icônes émojis
+4. Features/avantages pertinents pour le secteur avec icônes émojis ou SVG
 5. Texte professionnel, persuasif et optimisé pour la conversion
-6. Ton adapté au style (luxueux pour élégant, dynamique pour bold, etc.)
+6. Ton adapté au style
 
 **Contraintes**:
 - Largeur max du contenu: 1200px centré
 - Pas de JavaScript
-- Pas de liens externes sauf polices
+- Pas de liens externes sauf polices et images Pexels
 - Code propre et bien structuré
-- Height minimum de 600px pour permettre l'aperçu
+- Responsive avec breakpoints modernes
 
 Retourne UNIQUEMENT le code HTML complet prêt à être affiché, sans balises markdown, sans explications avant ou après.`;
 
@@ -529,7 +551,7 @@ Retourne UNIQUEMENT le code HTML complet prêt à être affiché, sans balises m
             temperature: 0.7,
             messages: [{
                 role: "user",
-                content: prompt
+                content: promptToUse
             }]
         });
 
@@ -542,10 +564,10 @@ Retourne UNIQUEMENT le code HTML complet prêt à être affiché, sans balises m
             success: true,
             html: generatedHTML,
             metadata: {
-                sector: sectorNames[sector],
-                objective: objectiveNames[objective],
-                style: styleNames[style],
-                companyName: companyName || 'Mon Entreprise',
+                sector,
+                objective: objective || 'Capturer des leads',
+                style: style || 'Moderne',
+                companyName,
                 tagline: tagline || 'Votre message clé',
                 tokens: message.usage
             }
@@ -575,6 +597,70 @@ app.get('/api/health', (req, res) => {
 
 app.get('/devis', (req, res) => {
     res.sendFile(path.join(__dirname, 'devis.html'));
+});
+
+app.get('/configurator', (req, res) => {
+    res.sendFile(path.join(__dirname, 'configurator.html'));
+});
+
+app.post('/api/save-config', async (req, res) => {
+    try {
+        const { name, config, userId } = req.body;
+
+        if (!name || !config) {
+            return res.status(400).json({ error: 'Nom et configuration requis' });
+        }
+
+        const landingConfig = await LandingConfig.create({
+            userId: userId || 'anonymous',
+            name,
+            ...config,
+            updatedAt: Date.now()
+        });
+
+        res.json({
+            success: true,
+            configId: landingConfig._id,
+            message: 'Configuration sauvegardée avec succès'
+        });
+
+    } catch (error) {
+        console.error('Erreur sauvegarde config:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+app.get('/api/configs', async (req, res) => {
+    try {
+        const { userId, limit = 20 } = req.query;
+
+        const query = userId ? { userId } : {};
+        const configs = await LandingConfig.find(query)
+            .sort({ updatedAt: -1 })
+            .limit(limit * 1);
+
+        res.json({ success: true, configs });
+
+    } catch (error) {
+        console.error('Erreur récupération configs:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+app.get('/api/configs/:id', async (req, res) => {
+    try {
+        const config = await LandingConfig.findById(req.params.id);
+
+        if (!config) {
+            return res.status(404).json({ error: 'Configuration non trouvée' });
+        }
+
+        res.json({ success: true, config });
+
+    } catch (error) {
+        console.error('Erreur récupération config:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
 });
 
 app.use((req, res) => {
