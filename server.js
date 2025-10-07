@@ -239,16 +239,6 @@ const Anthropic = require('@anthropic-ai/sdk');
 const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
 });
-// Allow overriding the model via env; default to a widely available model
-const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-latest';
-// Ordered fallback list in case some models are not available on the account/region
-const ANTHROPIC_MODEL_FALLBACKS = [
-    ANTHROPIC_MODEL,
-    'claude-3-5-haiku-latest',
-    'claude-3-haiku-latest',
-    'claude-3-sonnet-20240229',
-    'claude-3-opus-20240229'
-];
 
 // Middleware
 app.use(compression());
@@ -555,45 +545,20 @@ app.post('/api/generate-landing', async (req, res) => {
 
 Retourne UNIQUEMENT le code HTML complet prêt à être affiché, sans balises markdown, sans explications avant ou après.`;
 
-        let message;
-        let usedModel = null;
-        let lastError = null;
-        for (const modelName of ANTHROPIC_MODEL_FALLBACKS) {
-            try {
-                message = await anthropic.messages.create({
-                    model: modelName,
-                    max_tokens: 4096,
-                    temperature: 0.7,
-                    messages: [{
-                        role: "user",
-                        content: promptToUse
-                    }]
-                });
-                usedModel = modelName;
-                break;
-            } catch (err) {
-                lastError = err;
-                const isNotFound = err && (err.status === 404 || (err.error && err.error.error && err.error.error.type === 'not_found_error'));
-                if (!isNotFound) {
-                    throw err; // other errors: stop trying
-                }
-                // continue to next fallback on 404 model
-                continue;
-            }
-        }
-        if (!message) {
-            throw lastError || new Error('Aucun modèle Anthropic disponible');
-        }
+        const message = await anthropic.messages.create({
+            model: "claude-3-5-sonnet-20241022",
+            max_tokens: 4096,
+            temperature: 0.7,
+            messages: [{
+                role: "user",
+                content: promptToUse
+            }]
+        });
 
         let generatedHTML = message.content[0].text;
-        // Strip potential markdown code fences and language hints robustly
-        generatedHTML = generatedHTML
-            .replace(/```\s*html\s*/gi, '')
-            .replace(/```\s*HTML\s*/g, '')
-            .replace(/```/g, '')
-            .trim();
+        generatedHTML = generatedHTML.replace(/```html\n?/g, '').replace(/```\n?/g, '');
 
-        console.log('Génération réussie avec le modèle:', usedModel);
+        console.log('Génération réussie');
 
         res.json({
             success: true,
@@ -604,21 +569,14 @@ Retourne UNIQUEMENT le code HTML complet prêt à être affiché, sans balises m
                 style: style || 'Moderne',
                 companyName,
                 tagline: tagline || 'Votre message clé',
-                tokens: message.usage,
-                model: usedModel
+                tokens: message.usage
             }
         });
 
     } catch (error) {
         console.error('Erreur lors de la génération:', error);
-        // Provide clearer message when model is not found or misconfigured
-        const isNotFoundModel = (error && (error.status === 404 || (error.error && error.error.error && error.error.error.type === 'not_found_error')));
-        const friendlyMessage = isNotFoundModel
-            ? `Modèles Anthropic indisponibles sur ce compte. Essayez d'autoriser un des modèles: ${ANTHROPIC_MODEL_FALLBACKS.join(', ')}. Variable actuelle ANTHROPIC_MODEL: ${process.env.ANTHROPIC_MODEL || 'non défini'}.`
-            : 'Erreur lors de la génération de la landing page';
-
         res.status(500).json({
-            error: friendlyMessage,
+            error: 'Erreur lors de la génération de la landing page',
             details: error.message,
             type: error.type || 'unknown'
         });
