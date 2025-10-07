@@ -234,11 +234,7 @@ const landingConfigSchema = new mongoose.Schema({
 
 const LandingConfig = mongoose.model('LandingConfig', landingConfigSchema);
 
-// Configuration Anthropic Claude
-const Anthropic = require('@anthropic-ai/sdk');
-const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Anthropic/IA generation removed
 
 // Middleware
 app.use(compression());
@@ -499,89 +495,7 @@ app.patch('/api/quotes/:id/status', async (req, res) => {
     }
 });
 
-// Route API pour générer la landing page avec Claude
-app.post('/api/generate-landing', async (req, res) => {
-    try {
-        const { sector, objective, style, companyName, tagline, customPrompt } = req.body;
-
-        if (!sector || !companyName) {
-            return res.status(400).json({
-                error: 'Le secteur et le nom de l\'entreprise sont obligatoires'
-            });
-        }
-
-        console.log('Génération en cours pour:', { sector, companyName });
-
-        const promptToUse = customPrompt || `Tu es un expert en design web et copywriting professionnel. Génère une landing page HTML complète et professionnelle avec ces caractéristiques:
-
-**Secteur d'activité**: ${sector}
-**Objectif principal**: ${objective || 'Capturer des leads'}
-**Style visuel**: ${style || 'Moderne'}
-**Nom de l'entreprise**: ${companyName}
-**Slogan/Message clé**: ${tagline || 'Votre message clé'}
-
-**Exigences techniques**:
-1. Code HTML5 valide avec CSS inline dans une balise <style> en début de document
-2. Design moderne, responsive (mobile-first) et professionnel
-3. Palette de couleurs cohérente adaptée au style demandé
-4. Typographie élégante (utiliser des polices system ou Google Fonts)
-5. Animations CSS subtiles au survol
-6. Structure claire: header, hero section, 3-6 features/avantages, CTA, footer simple
-
-**Exigences contenu**:
-1. Titre accrocheur (H1) adapté au secteur
-2. Sous-titre engageant expliquant la proposition de valeur
-3. CTA (Call-to-Action) clair et incitatif adapté à l'objectif
-4. Features/avantages pertinents pour le secteur avec icônes émojis ou SVG
-5. Texte professionnel, persuasif et optimisé pour la conversion
-6. Ton adapté au style
-
-**Contraintes**:
-- Largeur max du contenu: 1200px centré
-- Pas de JavaScript
-- Pas de liens externes sauf polices et images Pexels
-- Code propre et bien structuré
-- Responsive avec breakpoints modernes
-
-Retourne UNIQUEMENT le code HTML complet prêt à être affiché, sans balises markdown, sans explications avant ou après.`;
-
-        const message = await anthropic.messages.create({
-            model: "claude-3-5-sonnet-20241022",
-            max_tokens: 4096,
-            temperature: 0.7,
-            messages: [{
-                role: "user",
-                content: promptToUse
-            }]
-        });
-
-        let generatedHTML = message.content[0].text;
-        generatedHTML = generatedHTML.replace(/```html\n?/g, '').replace(/```\n?/g, '');
-
-        console.log('Génération réussie');
-
-        res.json({
-            success: true,
-            html: generatedHTML,
-            metadata: {
-                sector,
-                objective: objective || 'Capturer des leads',
-                style: style || 'Moderne',
-                companyName,
-                tagline: tagline || 'Votre message clé',
-                tokens: message.usage
-            }
-        });
-
-    } catch (error) {
-        console.error('Erreur lors de la génération:', error);
-        res.status(500).json({
-            error: 'Erreur lors de la génération de la landing page',
-            details: error.message,
-            type: error.type || 'unknown'
-        });
-    }
-});
+// IA generation route removed
 
 app.get('/api/health', (req, res) => {
     const apiConfigured = !!process.env.ANTHROPIC_API_KEY;
@@ -599,69 +513,7 @@ app.get('/devis', (req, res) => {
     res.sendFile(path.join(__dirname, 'devis.html'));
 });
 
-app.get('/configurator', (req, res) => {
-    res.sendFile(path.join(__dirname, 'configurator.html'));
-});
-
-app.post('/api/save-config', async (req, res) => {
-    try {
-        const { name, config, userId } = req.body;
-
-        if (!name || !config) {
-            return res.status(400).json({ error: 'Nom et configuration requis' });
-        }
-
-        const landingConfig = await LandingConfig.create({
-            userId: userId || 'anonymous',
-            name,
-            ...config,
-            updatedAt: Date.now()
-        });
-
-        res.json({
-            success: true,
-            configId: landingConfig._id,
-            message: 'Configuration sauvegardée avec succès'
-        });
-
-    } catch (error) {
-        console.error('Erreur sauvegarde config:', error);
-        res.status(500).json({ error: 'Erreur serveur' });
-    }
-});
-
-app.get('/api/configs', async (req, res) => {
-    try {
-        const { userId, limit = 20 } = req.query;
-
-        const query = userId ? { userId } : {};
-        const configs = await LandingConfig.find(query)
-            .sort({ updatedAt: -1 })
-            .limit(limit * 1);
-
-        res.json({ success: true, configs });
-
-    } catch (error) {
-        console.error('Erreur récupération configs:', error);
-        res.status(500).json({ error: 'Erreur serveur' });
-    }
-});
-
-app.get('/api/configs/:id', async (req, res) => {
-    try {
-        const config = await LandingConfig.findById(req.params.id);
-
-        if (!config) {
-            return res.status(404).json({ error: 'Configuration non trouvée' });
-        }
-
-        res.json({ success: true, config });
-
-    } catch (error) {
-        console.error('Erreur récupération config:', error);
-        res.status(500).json({ error: 'Erreur serveur' });
-    }
-});
+// Configurator routes removed
 
 app.use((req, res) => {
     res.status(404).sendFile(path.join(__dirname, 'index.html'));
