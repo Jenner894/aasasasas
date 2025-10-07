@@ -239,6 +239,8 @@ const Anthropic = require('@anthropic-ai/sdk');
 const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
 });
+// Allow overriding the model via env; default to a widely available model
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-latest';
 
 // Middleware
 app.use(compression());
@@ -546,7 +548,7 @@ app.post('/api/generate-landing', async (req, res) => {
 Retourne UNIQUEMENT le code HTML complet prêt à être affiché, sans balises markdown, sans explications avant ou après.`;
 
         const message = await anthropic.messages.create({
-            model: "claude-3-5-sonnet-20241022",
+            model: ANTHROPIC_MODEL,
             max_tokens: 4096,
             temperature: 0.7,
             messages: [{
@@ -556,7 +558,12 @@ Retourne UNIQUEMENT le code HTML complet prêt à être affiché, sans balises m
         });
 
         let generatedHTML = message.content[0].text;
-        generatedHTML = generatedHTML.replace(/```html\n?/g, '').replace(/```\n?/g, '');
+        // Strip potential markdown code fences and language hints robustly
+        generatedHTML = generatedHTML
+            .replace(/```\s*html\s*/gi, '')
+            .replace(/```\s*HTML\s*/g, '')
+            .replace(/```/g, '')
+            .trim();
 
         console.log('Génération réussie');
 
@@ -575,8 +582,14 @@ Retourne UNIQUEMENT le code HTML complet prêt à être affiché, sans balises m
 
     } catch (error) {
         console.error('Erreur lors de la génération:', error);
+        // Provide clearer message when model is not found or misconfigured
+        const isNotFoundModel = (error && (error.status === 404 || (error.error && error.error.error && error.error.error.type === 'not_found_error')));
+        const friendlyMessage = isNotFoundModel
+            ? `Modèle Anthropic introuvable. Vérifiez ANTHROPIC_MODEL (actuel: ${process.env.ANTHROPIC_MODEL || 'non défini'}) et utilisez un modèle valide comme "claude-3-5-sonnet-latest".`
+            : 'Erreur lors de la génération de la landing page';
+
         res.status(500).json({
-            error: 'Erreur lors de la génération de la landing page',
+            error: friendlyMessage,
             details: error.message,
             type: error.type || 'unknown'
         });
