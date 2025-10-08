@@ -1,0 +1,185 @@
+backend:
+  name: git-gateway
+  branch: main
+
+# Configuration pour Netlify
+local_backend: true
+
+media_folder: "static/images"
+public_folder: "/images"
+
+collections:
+  # Configuration générale du site
+  - name: "site_config"
+    label: "Configuration du Site"
+    files:
+      - file: "content/site-config.json"
+        label: "Configuration Générale"
+        name: "site_config"
+        fields:
+          - {label: "Nom du Site", name: "site_name", widget: "string"}
+          - {label: "Description", name: "description", widget: "text"}
+          - {label: "Mots-clés SEO", name: "keywords", widget: "string"}
+          - {label: "URL Canonique", name: "canonical_url", widget: "string"}
+          - {label: "Couleur Thème", name: "theme_color", widget: "color"}
+
+  # Page d'accueil - Hero Section
+  - name: "hero"
+    label: "Section Hero"
+    files:
+      - file: "content/hero.json"
+        label: "Contenu Hero"
+        name: "hero_content"
+        fields:
+          - {label: "Titre Principal", name: "main_title", widget: "string"}
+          - {label: "Texte en Surbrillance", name: "highlight_text", widget: "string"}
+          - {label: "Sous-titre", name: "subtitle", widget: "text"}
+          - {label: "Texte du Bouton CTA", name: "cta_text", widget: "string"}
+          - {label: "Lien du Bouton CTA", name: "cta_link", widget: "string"}
+          - label: "Badges de Confiance"
+            name: "trust_badges"
+            widget: "list"
+            fields:
+              - {label: "Icône", name: "icon", widget: "string"}
+              - {label: "Texte", name: "text", widget: "string"}
+          - label: "Statistiques"
+            name: "stats"
+            widget: "list"
+            fields:
+              - {label: "Valeur", name: "value", widget: "number"}
+              - {label: "Label", name: "label", widget: "string"}
+          - label: "Témoignages"
+            name: "testimonials"
+            widget: "list"
+            fields:
+              - {label: "Étoiles", name: "stars", widget: "string"}
+              - {label: "Texte", name: "text", widget: "text"}
+
+  # Section Performance
+  - name: "performance"
+    label: "Section Performance"
+    files:
+      - file: "content/performance.json"
+        label: "Contenu Performance"
+        name: "performance_content"
+        fields:
+          - {label: "Titre de Section", name: "section_title", widget: "string"}
+          - {label: "Titre du Graphique", name: "chart_title", widget: "string"}
+          - {label: "Description du Graphique", name: "chart_description", widget: "text"}
+          - {label: "Pourcentage d'Augmentation", name: "increase_percentage", widget: "string"}
+          - label: "Cartes de Performance"
+            name: "performance_cards"
+            widget: "list"
+            fields:
+              - {label: "Icône", name: "icon", widget: "string"}
+              - {label: "Titre", name: "title", widget: "string"}
+              - {label: "Description", name: "description", widget: "text"}
+          - label: "Statistiques de Performance"
+            name: "performance_stats"
+            widget: "list"
+            fields:
+              - {label: "Label", name: "label", widget: "string"}
+              - {label: "Valeur", name: "value", widget: "string"}
+
+  # Section Portfolio
+  - name: "portfolio"
+    label: "Portfolio"
+    files:
+      - file: "content/portfolio.json"
+        label: "Contenu Portfolio"
+        name: "portfolio_content"
+        fields:
+          - {label: "Titre de Section", name: "section_title", widget: "string"}
+          - {label: "Sous-titre", name: "section_subtitle", widget: "text"}
+          - label: "Projets"
+            name: "projects"
+            widget: "list"
+            fields:
+              - {label: "Titre du Projet", name: "title", widget: "string"}
+              - {label: "Description", name: "description", widget: "text"}
+              - {label: "Image", name: "image", widget: "image"}
+              - {label: "Lien", name: "link", widget: "string"}
+              - label: "Tags"
+                name: "tags"
+                widget: "list"
+                field: {label: "Tag", name: "tag", widget: "string"}
+              - label: "Témoignage"
+                name: "testimonial"
+                widget: "object"
+                fields:
+                  - {label: "Étoiles", name: "stars", widget: "string"}
+                  - {label: "Texte", name: "text", widget: "text"}
+                  - {label: "Auteur", name: "author", widget: "string"}
+          - {label: "Texte CTA", name: "cta_text", widget: "string"}
+          - {label: "Lien CTA", name: "cta_link", widget: "string"}
+
+  # Section Booking
+  - name: "booking"
+    label: "Réservation"
+    files:
+      - file: "content/booking.json"
+        label: "Contenu Réservation"
+        name: "booking_content"
+        fields:
+          - {label: "Titre de Section", name: "section_title", widget: "string"}
+          - {label: "Sous-titre", name: "section_subtitle", widget: "text"}
+          - label: "Avantages"
+            name: "benefits"
+            widget: "list"
+            fields:
+              - {label: "Icône", name: "icon", widget: "string"}
+              - {label: "Titre", name: "title", widget: "string"}
+              - {label: "Description", name: "description", widget: "text"}
+          - {label: "URL du Calendrier", name: "calendar_url", widget: "string"}
+
+  # Footer
+  - name: "footer"
+    label: "Footer"
+    files:
+      - file: "content/footer.json"
+        label: "Contenu Footer"
+        name: "footer_content"
+        fields:
+          - {label: "Copyright", name: "copyright", widget: "string"}
+          - label: "Graphiques"
+            name: "charts"
+            widget: "list"
+            fields:
+              - {label: "Titre du Graphique", name: "title", widget: "string"}
+              - {label: "Type de Graphique", name: "type", widget: "select", options: ["funnel", "radar"]}
+              - label: "Données"
+                name: "data"
+                widget: "list"
+                fields:
+                  - {label: "Label", name: "label", widget: "string"}
+                  - {label: "Valeur", name: "value", widget: "string"}
+
+  # Navigation
+  - name: "navigation"
+    label: "Navigation"
+    files:
+      - file: "content/navigation.json"
+        label: "Menu de Navigation"
+        name: "navigation_content"
+        fields:
+          - label: "Liens du Menu"
+            name: "menu_links"
+            widget: "list"
+            fields:
+              - {label: "Texte", name: "text", widget: "string"}
+              - {label: "Lien", name: "url", widget: "string"}
+          - {label: "Texte du Bouton Devis", name: "quote_button_text", widget: "string"}
+          - {label: "Lien du Bouton Devis", name: "quote_button_link", widget: "string"}
+
+  # Page Devis
+  - name: "quote_page"
+    label: "Page Devis"
+    files:
+      - file: "content/quote-page.json"
+        label: "Contenu Page Devis"
+        name: "quote_page_content"
+        fields:
+          - {label: "Titre de la Page", name: "page_title", widget: "string"}
+          - {label: "Description", name: "description", widget: "text"}
+          - {label: "Sous-titre", name: "subtitle", widget: "text"}
+          - {label: "Note sur le Tarif", name: "pricing_note", widget: "text"}
