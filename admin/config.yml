@@ -2,6 +2,9 @@ backend:
   name: git-gateway
   branch: main
 
+# Configuration pour Netlify
+local_backend: true
+
 media_folder: "static/images"
 public_folder: "/images"
 
