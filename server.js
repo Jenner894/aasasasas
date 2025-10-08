@@ -515,7 +515,7 @@ app.get('/devis', (req, res) => {
 
 // Route pour l'administration CMS
 app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin/index.html'));
+    res.sendFile(path.join(__dirname, 'admin/simple-cms.html'));
 });
 
 // Route pour servir les fichiers de contenu JSON
@@ -531,6 +531,30 @@ app.get('/content/:filename', (req, res) => {
             res.status(404).json({ error: 'Fichier de contenu non trouvé' });
         }
     });
+});
+
+// Route pour sauvegarder le contenu
+app.post('/api/save-content', (req, res) => {
+    try {
+        const { filename, data } = req.body;
+        
+        if (!filename || !data) {
+            return res.status(400).json({ error: 'Nom de fichier et données requis' });
+        }
+
+        const fs = require('fs');
+        const filePath = path.join(__dirname, 'content', `${filename}.json`);
+        
+        // Sauvegarder le fichier JSON
+        fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+        
+        console.log(`✅ Contenu sauvegardé: ${filename}.json`);
+        res.json({ success: true, message: 'Contenu sauvegardé avec succès' });
+        
+    } catch (error) {
+        console.error('Erreur lors de la sauvegarde:', error);
+        res.status(500).json({ error: 'Erreur lors de la sauvegarde' });
+    }
 });
 
 // Configurator routes removed
