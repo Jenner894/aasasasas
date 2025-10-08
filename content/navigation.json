@@ -1,0 +1,14 @@
+{
+  "menu_links": [
+    {
+      "text": "Nos Partenaires",
+      "url": "#portfolio"
+    },
+    {
+      "text": "Réserver un Appel",
+      "url": "#booking"
+    }
+  ],
+  "quote_button_text": "Simuler un devis",
+  "quote_button_link": "/devis"
+}

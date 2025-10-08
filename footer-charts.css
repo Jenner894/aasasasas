@@ -1,0 +1,449 @@
+/* Footer with Advanced Charts */
+
+.footer {
+    background: #0a0a0a;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 100px 0 40px;
+    position: relative;
+}
+
+.footer .footer-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px;
+    width: 100%;
+}
+
+/* Logo */
+.footer .footer-logo-section {
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.footer .footer-logo-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.footer .footer-logo-icon {
+    width: 50px;
+    height: 50px;
+    position: relative;
+}
+
+.footer .footer-arrow {
+    position: absolute;
+    height: 4px;
+    background: white;
+    animation: growArrow 2s ease-in-out infinite;
+    border-radius: 2px;
+}
+
+.footer .footer-arrow:nth-child(1) { top: 15px; animation-delay: 0s; }
+.footer .footer-arrow:nth-child(2) { top: 23px; animation-delay: 0.25s; }
+.footer .footer-arrow:nth-child(3) { top: 31px; animation-delay: 0.5s; }
+
+.footer .footer-arrow::after {
+    content: '';
+    position: absolute;
+    right: -8px;
+    top: -4px;
+    border-left: 8px solid white;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+}
+
+.footer .footer-logo-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(90deg, white, #8b7cdf, white);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 3s ease-in-out infinite;
+}
+
+.footer .footer-logo-agency {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: #5b5bd6;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+/* Charts Grid */
+.footer .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-bottom: 60px;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.footer .chart-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    padding: 2rem;
+    transition: all 0.4s ease;
+    min-height: 300px;
+}
+
+.footer .chart-card:hover {
+    border-color: rgba(91, 91, 214, 0.3);
+    background: rgba(91, 91, 214, 0.05);
+}
+
+.footer .chart-title {
+    font-size: 0.85rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+/* Chart 1: Funnel */
+.footer .funnel-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.footer .funnel-step {
+    background: linear-gradient(90deg, rgba(91, 91, 214, 0.3), rgba(91, 91, 214, 0.05));
+    height: 50px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    transition: all 0.3s ease;
+    animation: slideInLeft 0.8s ease-out backwards;
+}
+
+.footer .funnel-step:nth-child(1) { animation-delay: 0.1s; width: 100%; }
+.footer .funnel-step:nth-child(2) { animation-delay: 0.2s; width: 85%; }
+.footer .funnel-step:nth-child(3) { animation-delay: 0.3s; width: 65%; }
+.footer .funnel-step:nth-child(4) { animation-delay: 0.4s; width: 42%; background: linear-gradient(90deg, #5b5bd6, rgba(91, 91, 214, 0.5)); }
+
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-50px);
+        opacity: 0;
+    }
+}
+
+.footer .funnel-label {
+    font-size: 0.85rem;
+    color: white;
+    font-weight: 500;
+}
+
+.footer .funnel-value {
+    font-size: 0.9rem;
+    color: #5b5bd6;
+    font-weight: 600;
+}
+
+/* Chart 2: Radar */
+.footer .radar-chart {
+    width: 200px;
+    height: 200px;
+    margin: 1.5rem auto;
+    position: relative;
+}
+
+.footer .radar-svg {
+    width: 100%;
+    height: 100%;
+}
+
+.footer .radar-grid {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 1;
+}
+
+.footer .radar-shape {
+    fill: rgba(91, 91, 214, 0.2);
+    stroke: #5b5bd6;
+    stroke-width: 2;
+    animation: drawRadar 2s ease-out;
+}
+
+@keyframes drawRadar {
+    from { opacity: 0; transform: scale(0); }
+}
+
+.footer .radar-labels {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.footer .radar-label {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.footer .radar-label span {
+    display: block;
+    color: #5b5bd6;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+/* Chart 3: Heatmap */
+.footer .heatmap-chart {
+    margin-top: 1.5rem;
+}
+
+.footer .heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 4px;
+}
+
+.footer .heatmap-cell {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    animation: fadeInCell 0.5s ease-out backwards;
+}
+
+.footer .heatmap-cell.low { background: rgba(91, 91, 214, 0.2); }
+.footer .heatmap-cell.medium { background: rgba(91, 91, 214, 0.5); }
+.footer .heatmap-cell.high { background: rgba(91, 91, 214, 0.8); }
+.footer .heatmap-cell.max { background: #5b5bd6; }
+
+@keyframes fadeInCell {
+    from { opacity: 0; transform: scale(0); }
+}
+
+.footer .heatmap-cell:nth-child(1) { animation-delay: 0.05s; }
+.footer .heatmap-cell:nth-child(2) { animation-delay: 0.1s; }
+.footer .heatmap-cell:nth-child(3) { animation-delay: 0.15s; }
+.footer .heatmap-cell:nth-child(4) { animation-delay: 0.2s; }
+.footer .heatmap-cell:nth-child(5) { animation-delay: 0.25s; }
+.footer .heatmap-cell:nth-child(6) { animation-delay: 0.3s; }
+.footer .heatmap-cell:nth-child(7) { animation-delay: 0.35s; }
+.footer .heatmap-cell:nth-child(8) { animation-delay: 0.4s; }
+.footer .heatmap-cell:nth-child(9) { animation-delay: 0.45s; }
+.footer .heatmap-cell:nth-child(10) { animation-delay: 0.5s; }
+.footer .heatmap-cell:nth-child(11) { animation-delay: 0.55s; }
+.footer .heatmap-cell:nth-child(12) { animation-delay: 0.6s; }
+
+.footer .heatmap-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.footer .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.footer .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+/* Chart 4: Growth Curve */
+.footer .growth-chart {
+    margin-top: 1.5rem;
+}
+
+.footer .growth-svg {
+    width: 100%;
+    height: 120px;
+}
+
+.footer .growth-path {
+    fill: none;
+    stroke: #5b5bd6;
+    stroke-width: 3;
+    stroke-dasharray: 500;
+    stroke-dashoffset: 500;
+    animation: drawPath 2s ease-out forwards;
+}
+
+@keyframes drawPath {
+    to { stroke-dashoffset: 0; }
+}
+
+.footer .growth-area {
+    fill: url(#growthGradient);
+    opacity: 0;
+    animation: fadeIn 1s ease-out 1s forwards;
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+.footer .growth-dots {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+}
+
+.footer .growth-dot {
+    text-align: center;
+    font-size: 0.7rem;
+    color: #666;
+}
+
+.footer .growth-dot span {
+    display: block;
+    color: white;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+/* Chart 5: Donut */
+.footer .donut-chart {
+    width: 180px;
+    height: 180px;
+    margin: 1.5rem auto;
+    position: relative;
+}
+
+.footer .donut-svg {
+    transform: rotate(-90deg);
+}
+
+.footer .donut-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.05);
+    stroke-width: 30;
+}
+
+.footer .donut-segment {
+    fill: none;
+    stroke-width: 30;
+    stroke-linecap: round;
+    animation: fillDonut 2s ease-out forwards;
+}
+
+.footer .donut-segment.seg1 {
+    stroke: #5b5bd6;
+    stroke-dasharray: 220 440;
+    stroke-dashoffset: 440;
+}
+
+.footer .donut-segment.seg2 {
+    stroke: #8b7cdf;
+    stroke-dasharray: 165 440;
+    stroke-dashoffset: 605;
+}
+
+@keyframes fillDonut {
+    to { stroke-dashoffset: 0; }
+}
+
+.footer .donut-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.footer .donut-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+}
+
+.footer .donut-label {
+    font-size: 0.7rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* Chart 6: Stacked Area */
+.footer .stacked-chart {
+    margin-top: 1.5rem;
+    height: 100px;
+    position: relative;
+}
+
+.footer .stacked-area {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(180deg, rgba(91, 91, 214, 0.3) 0%, rgba(91, 91, 214, 0.1) 100%);
+    clip-path: polygon(0 100%, 0 60%, 20% 55%, 40% 50%, 60% 45%, 80% 40%, 100% 35%, 100% 100%);
+    animation: slideUp 1.5s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+}
+
+.footer .stacked-overlay {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 60%;
+    background: linear-gradient(180deg, #5b5bd6 0%, rgba(91, 91, 214, 0.5) 100%);
+    clip-path: polygon(0 100%, 0 80%, 20% 75%, 40% 70%, 60% 60%, 80% 50%, 100% 40%, 100% 100%);
+    animation: slideUp 1.5s ease-out 0.3s backwards;
+}
+
+/* Bottom */
+.footer .footer-bottom {
+    text-align: center;
+    padding-top: 40px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    color: #666;
+    font-size: 0.85rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .footer .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .footer {
+        padding: 60px 0 30px;
+    }
+
+    .footer .footer-container {
+        padding: 0 20px;
+    }
+
+    .footer .footer-logo-section {
+        margin-bottom: 50px;
+    }
+
+    .footer .footer-logo-text {
+        font-size: 2rem;
+    }
+
+    .footer .chart-card {
+        padding: 1.5rem;
+    }
+}

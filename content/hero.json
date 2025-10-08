@@ -1,0 +1,53 @@
+{
+  "main_title": "Transform Your Business With",
+  "highlight_text": "Shift Agency",
+  "subtitle": "We shift visitors into customers. Each project is 100% customized by our developers.",
+  "cta_text": "Réserver un Appel",
+  "cta_link": "#booking",
+  "trust_badges": [
+    {
+      "icon": "🛡️",
+      "text": "Paiement Sécurisé"
+    },
+    {
+      "icon": "⭐",
+      "text": "4.9/5 sur Sortlist"
+    },
+    {
+      "icon": "⚡",
+      "text": "Livraison sous 48h"
+    }
+  ],
+  "stats": [
+    {
+      "value": 390,
+      "label": "Pages Créées"
+    },
+    {
+      "value": 97,
+      "label": "Satisfaction Client"
+    },
+    {
+      "value": 48,
+      "label": "Livraison Moyenne"
+    }
+  ],
+  "testimonials": [
+    {
+      "stars": "★★★★★",
+      "text": "Le rendu est exactement comme attendu, voir meilleur. Ils sont très réactifs"
+    },
+    {
+      "stars": "★★★★★",
+      "text": "Une équipe professionnelle qui comprend rapidement nos besoins"
+    },
+    {
+      "stars": "★★★★★",
+      "text": "Résultat au-delà de mes attentes. Design moderne et fonctionnel"
+    },
+    {
+      "stars": "★★★★★",
+      "text": "Service impeccable, je recommande sans hésitation"
+    }
+  ]
+}
