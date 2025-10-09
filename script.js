@@ -18,6 +18,14 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 top: offsetTop,
                 behavior: 'smooth'
             });
+            
+            // Track navigation clicks in GA4
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'navigation_click', {
+                    'link_text': this.textContent.trim(),
+                    'link_url': this.getAttribute('href')
+                });
+            }
         }
     });
 });
