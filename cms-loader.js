@@ -266,7 +266,7 @@ class CMSLoader {
         
         const quotePage = this.getContent('quote-page');
         if (quotePage) {
-            this.replaceTextContent('.section-title', `Simulez Votre <span class="gradient-text">Devis</span>`);
+            this.replaceHTMLContent('.section-title', `Simulez Votre <span class="gradient-text">Devis</span>`);
             this.replaceTextContent('.section-subtitle', quotePage.subtitle);
             this.replaceTextContent('.summary-note', quotePage.pricing_note);
         }
