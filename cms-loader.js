@@ -104,7 +104,7 @@ class CMSLoader {
         // Section Hero
         const hero = this.getContent('hero');
         if (hero) {
-            this.replaceTextContent('.hero-title', `${hero.main_title} <span class="gradient-text">${hero.highlight_text}</span> The Future of Digital`);
+            this.replaceHTMLContent('.hero-title', `${hero.main_title} <span class="gradient-text">${hero.highlight_text}</span> The Future of Digital`);
             this.replaceTextContent('.hero-subtitle', hero.subtitle);
             this.replaceTextContent('.hero-cta .btn-primary', hero.cta_text);
             this.replaceAttribute('.hero-cta .btn-primary', 'href', hero.cta_link);
