@@ -1,13 +1,7 @@
 backend:
-  name: github
-  repo: Jenner894/aasasasas  # Remplacez par votre repository GitHub
-  branch: main
-  base_url: https://api.github.com
-  auth_endpoint: https://api.github.com/authorizations
-  auth_type: implicit
-  auth_scope: repo
+  name: git-gateway
 
-# Configuration pour Render
+# Configuration pour Netlify
 local_backend: true
 
 # Configuration de l'éditeur
