@@ -4,13 +4,6 @@ backend:
 # Configuration pour Netlify
 local_backend: true
 
-# Configuration de l'éditeur
-editor:
-  preview: true
-
-# Configuration de la publication
-publish_mode: editorial_workflow
-
 media_folder: "static/images"
 public_folder: "/images"
 
