@@ -1,25 +1,71 @@
 {
   "name": "shift-agency-website",
   "version": "1.0.0",
-  "description": "Shift Agency Website with CMS",
+  "description": "Shift Agency Website with CMS - Professional landing pages and quote simulator",
   "main": "index.html",
   "scripts": {
     "start": "npx serve -s . -l 10000",
-    "build": "echo 'No build step required'",
-    "dev": "npx serve -s . -l 3000"
+    "build": "echo 'No build step required for static site'",
+    "dev": "npx serve -s . -l 3000",
+    "serve": "npx serve -s . -l 8080",
+    "preview": "npx serve -s . -l 5000",
+    "deploy": "echo 'Deploy to Render'",
+    "test": "echo 'No tests specified'",
+    "lint": "echo 'No linting configured'",
+    "clean": "rm -rf node_modules package-lock.json"
   },
   "dependencies": {
-    "serve": "^14.2.1"
+    "serve": "^14.2.1",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "concurrently": "^8.2.2"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "keywords": [
     "website",
     "cms",
     "netlify-cms",
-    "static-site"
+    "static-site",
+    "landing-page",
+    "quote-simulator",
+    "digital-agency",
+    "render",
+    "github"
   ],
-  "author": "Shift Agency",
-  "license": "MIT"
+  "author": {
+    "name": "Shift Agency",
+    "email": "contact@shift-agency.com",
+    "url": "https://shift-agency.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jenner894/aasasasas.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jenner894/aasasasas/issues"
+  },
+  "homepage": "https://aasasasas.onrender.com",
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "render": {
+    "type": "web",
+    "buildCommand": "npm install",
+    "startCommand": "npm start",
+    "env": {
+      "NODE_ENV": "production"
+    }
+  }
 }
