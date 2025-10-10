@@ -105,17 +105,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <!-- Ton contenu de landing page -->
     
     <!-- ========== AJOUTE CES 2 LIGNES ========== -->
+    <!-- Netlify Identity Widget -->
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     <script>
-      if (window.netlifyIdentity) {
-        window.netlifyIdentity.on("init", user => {
-          if (!user) {
-            window.netlifyIdentity.on("login", () => {
-              document.location.href = "/admin/";
+        if (window.netlifyIdentity) {
+            window.netlifyIdentity.on("init", user => {
+                if (!user) {
+                    window.netlifyIdentity.on("login", () => {
+                        document.location.href = "/admin/";
+                    });
+                }
             });
-          }
-        });
-      }
+        }
     </script>
     <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WQ6D2R7D"
@@ -207,7 +208,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="container">
             <div class="hero-content">
                 <h1 class="hero-title">
-                    Transform Your Business With <span class="gradient-text" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Shift Agency</span> The Future of Digital
+                    Transform Your Business With <span class="gradient-text">Shift Agency</span> The Future of Digital
                 </h1>
                                 <div class="tags-carousel">
     <div class="tags-track">
