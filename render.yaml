@@ -10,7 +10,7 @@ services:
       - key: GITHUB_TOKEN
         sync: false  # À configurer manuellement dans Render
       - key: GITHUB_REPO
-        value: your-username/your-repo-name  # À remplacer par votre repo
+        value: Jenner894/aasasasas  # À remplacer par votre repo
       - key: GITHUB_BRANCH
         value: main
     healthCheckPath: /
