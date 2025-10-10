@@ -1,6 +1,6 @@
 backend:
   name: github
-  repo: https://github.com/Jenner894/aasasasas  # Remplacez par votre repository GitHub
+  repo: Jenner894/aasasasas  # Remplacez par votre repository GitHub
   branch: main
   base_url: https://api.github.com
   auth_endpoint: https://api.github.com/authorizations
