@@ -1,9 +1,21 @@
 backend:
-  name: git-gateway
+  name: github
+  repo: https://github.com/Jenner894/aasasasas  # Remplacez par votre repository GitHub
   branch: main
+  base_url: https://api.github.com
+  auth_endpoint: https://api.github.com/authorizations
+  auth_type: implicit
+  auth_scope: repo
 
-# Configuration pour Netlify
+# Configuration pour Render
 local_backend: true
+
+# Configuration de l'éditeur
+editor:
+  preview: true
+
+# Configuration de la publication
+publish_mode: editorial_workflow
 
 media_folder: "static/images"
 public_folder: "/images"
