@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Générateur de landing pages avec IA",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js",
-    "api": "node api-server.js",
     "dev": "nodemon server.js",
     "build": "echo 'Build successful - Static files ready'"
   },
@@ -15,9 +15,23 @@
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "mongoose": "^8.0.3"
+    "mongoose": "^8.0.3",
+    "serve": "^14.2.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
-  }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "website",
+    "cms",
+    "netlify-cms",
+    "static-site",
+    "landing-pages",
+    "ai"
+  ],
+  "author": "Shift Agency",
+  "license": "MIT"
 }
