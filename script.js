@@ -13,22 +13,59 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
         if (target) {
-            const offsetTop = target.offsetTop - 80;
+            const offsetTop = target.offsetTop - 100;
             window.scrollTo({
                 top: offsetTop,
                 behavior: 'smooth'
             });
-            
-            // Track navigation clicks in GA4
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'navigation_click', {
-                    'link_text': this.textContent.trim(),
-                    'link_url': this.getAttribute('href')
-                });
-            }
         }
     });
 });
+
+// ============================================
+// NAVBAR DROPDOWN FUNCTIONALITY
+// ============================================
+
+// Handle dropdown menus
+document.querySelectorAll('.nav-item.dropdown').forEach(item => {
+    const link = item.querySelector('.nav-link');
+    const dropdown = item.querySelector('.dropdown-menu');
+    
+    // Show dropdown on hover
+    item.addEventListener('mouseenter', () => {
+        dropdown.style.opacity = '1';
+        dropdown.style.visibility = 'visible';
+        dropdown.style.transform = 'translateY(0)';
+    });
+    
+    // Hide dropdown on mouse leave
+    item.addEventListener('mouseleave', () => {
+        dropdown.style.opacity = '0';
+        dropdown.style.visibility = 'hidden';
+        dropdown.style.transform = 'translateY(-10px)';
+    });
+});
+
+// Mobile menu toggle
+const menuToggle = document.getElementById('menuToggle');
+const mobileMenu = document.getElementById('mobileMenu');
+
+if (menuToggle && mobileMenu) {
+    menuToggle.addEventListener('click', () => {
+        mobileMenu.classList.toggle('active');
+        menuToggle.classList.toggle('active');
+        document.body.classList.toggle('menu-open');
+    });
+    
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!mobileMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+            mobileMenu.classList.remove('active');
+            menuToggle.classList.remove('active');
+            document.body.classList.remove('menu-open');
+        }
+    });
+}
 // ============================================
 // PERFORMANCE STATS ANIMATED COUNTERS
 // ============================================
@@ -100,35 +137,63 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
     const perfCardsContainer = document.getElementById('perfCardsContainer');
     const perfCardsWrapper = document.getElementById('perfCardsWrapper');
+    let isMobile = window.innerWidth <= 767;
+    let cardsDuplicated = false;
 
-    if (perfCardsContainer && perfCardsWrapper && window.innerWidth <= 767) {
-        const cards = perfCardsWrapper.children;
-        const cardsArray = Array.from(cards);
+    function initMobileCarousel() {
+        if (perfCardsContainer && perfCardsWrapper && isMobile && !cardsDuplicated) {
+            const cards = perfCardsWrapper.children;
+            const cardsArray = Array.from(cards);
 
-        cardsArray.forEach(card => {
-            const clone = card.cloneNode(true);
-            perfCardsWrapper.appendChild(clone);
-        });
+            // Dupliquer les cartes pour l'effet de boucle infinie
+            cardsArray.forEach(card => {
+                const clone = card.cloneNode(true);
+                perfCardsWrapper.appendChild(clone);
+            });
 
-        perfCardsContainer.addEventListener('touchstart', () => {
-            perfCardsWrapper.classList.add('paused');
-        });
+            cardsDuplicated = true;
 
-        perfCardsContainer.addEventListener('touchend', () => {
-            perfCardsWrapper.classList.remove('paused');
-        });
+            // Gestion des événements tactiles
+            perfCardsContainer.addEventListener('touchstart', () => {
+                perfCardsWrapper.classList.add('paused');
+            });
+
+            perfCardsContainer.addEventListener('touchend', () => {
+                perfCardsWrapper.classList.remove('paused');
+            });
+        }
     }
 
+    function cleanupMobileCarousel() {
+        if (perfCardsContainer && perfCardsWrapper && !isMobile && cardsDuplicated) {
+            const cards = perfCardsWrapper.querySelectorAll('.perf-brand-card, .perf-vision-card');
+            const originalCardsCount = 4; // Nombre de cartes originales
+            
+            if (cards.length > originalCardsCount) {
+                // Supprimer les cartes dupliquées
+                for (let i = originalCardsCount; i < cards.length; i++) {
+                    cards[i].remove();
+                }
+            }
+            
+            cardsDuplicated = false;
+            perfCardsWrapper.classList.remove('paused');
+        }
+    }
+
+    // Initialisation
+    initMobileCarousel();
+
+    // Gestion du redimensionnement
     window.addEventListener('resize', () => {
-        const wrapper = document.getElementById('perfCardsWrapper');
-        if (wrapper && window.innerWidth > 767) {
-            const cards = wrapper.querySelectorAll('.perf-brand-card, .perf-vision-card');
-            if (cards.length > 4) {
-                cards.forEach((card, index) => {
-                    if (index >= 4) {
-                        card.remove();
-                    }
-                });
+        const wasMobile = isMobile;
+        isMobile = window.innerWidth <= 767;
+        
+        if (wasMobile !== isMobile) {
+            if (isMobile) {
+                initMobileCarousel();
+            } else {
+                cleanupMobileCarousel();
             }
         }
     });
@@ -342,40 +407,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Gestion des dropdowns mobiles
-    const mobileMenuTriggers = document.querySelectorAll('.mobile-menu-trigger');
-    mobileMenuTriggers.forEach(trigger => {
-        trigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const menuItem = trigger.closest('.mobile-menu-item');
-            const isExpanded = menuItem.classList.contains('expanded');
-            
-            // Fermer tous les autres menus
-            document.querySelectorAll('.mobile-menu-item.expanded').forEach(item => {
-                if (item !== menuItem) {
-                    item.classList.remove('expanded');
-                }
-            });
-            
-            // Toggle le menu actuel
-            menuItem.classList.toggle('expanded');
-        });
-    });
-    
-    // Fermer le menu au clic sur un lien (sauf les triggers de dropdown)
+    // Fermer le menu au clic sur un lien
     mobileMenuItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            // Ne fermer que si ce n'est pas un trigger de dropdown
-            if (!item.closest('.mobile-menu-trigger')) {
-                closeMenu();
-            }
-        });
-    });
-    
-    // Fermer le menu au clic sur un lien de sous-menu
-    const submenuLinks = document.querySelectorAll('.mobile-submenu a');
-    submenuLinks.forEach(link => {
-        link.addEventListener('click', () => {
+        item.addEventListener('click', () => {
             closeMenu();
         });
     });
@@ -404,10 +438,6 @@ document.addEventListener('DOMContentLoaded', () => {
         menuToggle.classList.remove('active');
         mobileMenu.classList.remove('active');
         document.body.classList.remove('menu-open');
-        // Fermer tous les sous-menus
-        document.querySelectorAll('.mobile-menu-item.expanded').forEach(item => {
-            item.classList.remove('expanded');
-        });
     }
 });
 
@@ -997,5 +1027,1012 @@ scrollTopBtn.addEventListener('click', () => {
         behavior: 'smooth'
     });
 });
+
+// ============================================
+// GOOGLE TAG MANAGER
+// ============================================
+
+(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-WQ6D2R7D');
+
+// ============================================
+// GOOGLE ANALYTICS 4
+// ============================================
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-XXXXXXXXXX', {
+    page_title: document.title,
+    page_location: window.location.href
+});
+
+// ============================================
+// NETLIFY IDENTITY
+// ============================================
+
+if (window.netlifyIdentity) {
+    window.netlifyIdentity.on("init", user => {
+        if (!user) {
+            window.netlifyIdentity.on("login", () => {
+                document.location.href = "/admin/";
+            });
+        }
+    });
+}
+
+// ============================================
+// PROCESS ANIMATIONS (from process-animations.js)
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation pour la section Process
+    animateProcess();
+    
+    // Animation pour la section FAQ
+    animateFAQ();
+});
+
+function animateProcess() {
+    const steps = document.querySelectorAll('.step');
+    const stepsContainer = document.querySelector('.steps');
+    
+    if (!steps.length || !stepsContainer) return;
+    
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                animateProcessSteps();
+            }
+        });
+    }, observerOptions);
+    
+    observer.observe(stepsContainer);
+    
+    function animateProcessSteps() {
+        steps.forEach((step, index) => {
+            setTimeout(() => {
+                step.style.opacity = '1';
+                step.style.transform = 'translateY(0)';
+                step.classList.add('animate-in');
+            }, index * 200);
+        });
+    }
+}
+
+function animateFAQ() {
+    const faqItems = document.querySelectorAll('.faq-item');
+    
+    if (!faqItems.length) return;
+    
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                animateFAQItems();
+            }
+        });
+    }, observerOptions);
+    
+    const faqSection = document.querySelector('.faq');
+    if (faqSection) {
+        observer.observe(faqSection);
+    }
+    
+    function animateFAQItems() {
+        faqItems.forEach((item, index) => {
+            setTimeout(() => {
+                item.style.opacity = '1';
+                item.style.transform = 'translateY(0)';
+                item.classList.add('animate-in');
+            }, index * 150);
+        });
+    }
+}
+
+// Animation de pulsation pour les numéros
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    .step.animate-in {
+        animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .steps {
+        --progress-height: 0%;
+    }
+    
+    .steps::before {
+        height: var(--progress-height);
+        transition: height 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+`;
+document.head.appendChild(style);
+
+// ============================================
+// PERFORMANCE OPTIMIZER (from performance-optimizer.js)
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    if ('loading' in HTMLImageElement.prototype) {
+        const images = document.querySelectorAll('img[loading="lazy"]');
+        images.forEach(img => {
+            img.src = img.dataset.src || img.src;
+        });
+    } else {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js';
+        document.body.appendChild(script);
+    }
+
+    if ('IntersectionObserver' in window) {
+        const sections = document.querySelectorAll('section');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.willChange = 'auto';
+                }
+            });
+        }, { rootMargin: '50px' });
+
+        sections.forEach(section => observer.observe(section));
+    }
+
+    const deferredStyles = ['https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'];
+    deferredStyles.forEach(href => {
+        const link = document.createElement('script');
+        link.src = href;
+        link.defer = true;
+        document.body.appendChild(link);
+    });
+
+    window.addEventListener('load', () => {
+        document.body.classList.add('loaded');
+    });
+});
+
+// ============================================
+// ANIMATIONS (from animations.js)
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    const observerOptions = {
+        threshold: 0.15,
+        rootMargin: '0px 0px -100px 0px'
+    };
+
+    const fadeInElements = document.querySelectorAll('.hero-content, .section-title, .section-subtitle, .perf-vision-card, .performance-chart, .portfolio-screen-mockup, .generator-form, .booking-calendar');
+
+    fadeInElements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(40px)';
+        el.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+    });
+
+    const fadeInObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }, index * 100);
+                fadeInObserver.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    fadeInElements.forEach(el => fadeInObserver.observe(el));
+
+    const cards = document.querySelectorAll('.option-card, .perf-vision-card, .portfolio-badge');
+
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px) scale(1.02)';
+        });
+
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+
+    let lastScroll = 0;
+    const navbar = document.querySelector('.navbar');
+
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+
+        if (currentScroll > 100) {
+            navbar.style.background = 'rgba(10, 10, 10, 0.95)';
+            navbar.style.borderBottom = '1px solid rgba(255, 255, 255, 0.1)';
+        } else {
+            navbar.style.background = 'transparent';
+            navbar.style.borderBottom = 'none';
+        }
+
+        lastScroll = currentScroll;
+    });
+
+    const heroStats = document.querySelectorAll('.stat');
+    heroStats.forEach((stat, index) => {
+        stat.style.opacity = '0';
+        stat.style.transform = 'scale(0.8)';
+        stat.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+
+        setTimeout(() => {
+            stat.style.opacity = '1';
+            stat.style.transform = 'scale(1)';
+        }, 500 + (index * 150));
+    });
+
+    const parallaxElements = document.querySelectorAll('.hero-background');
+
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+
+        parallaxElements.forEach(el => {
+            const speed = el.dataset.speed || 0.5;
+            el.style.transform = `translateY(${scrolled * speed}px)`;
+        });
+    });
+
+    const buttons = document.querySelectorAll('.btn-primary, .btn-secondary');
+
+    buttons.forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+
+            if (this.classList.contains('btn-primary')) {
+                this.style.boxShadow = '0 12px 24px rgba(91, 91, 214, 0.4)';
+            }
+        });
+
+        btn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '';
+        });
+
+        btn.addEventListener('click', function(e) {
+            const ripple = document.createElement('span');
+            const rect = this.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
+
+            ripple.style.cssText = `
+                position: absolute;
+                width: ${size}px;
+                height: ${size}px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.3);
+                left: ${x}px;
+                top: ${y}px;
+                pointer-events: none;
+                animation: ripple 0.6s ease-out;
+            `;
+
+            this.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
+        });
+    });
+
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        .btn-primary, .btn-secondary {
+            position: relative;
+            overflow: hidden;
+        }
+    `;
+    document.head.appendChild(style);
+
+    const sections = document.querySelectorAll('section');
+    const progressBar = document.createElement('div');
+    progressBar.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--color-accent) 0%, #8b7cdf 100%);
+        z-index: 10000;
+        transition: width 0.3s ease;
+    `;
+    document.body.appendChild(progressBar);
+
+    window.addEventListener('scroll', () => {
+        const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (winScroll / height) * 100;
+        progressBar.style.width = scrolled + '%';
+    });
+
+    const perfCards = document.querySelectorAll('.perf-vision-card');
+    perfCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateX(-30px)';
+        card.style.transition = 'all 0.7s cubic-bezier(0.4, 0, 0.2, 1)';
+    });
+
+    const perfObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                const cards = entry.target.querySelectorAll('.perf-vision-card');
+                cards.forEach((card, index) => {
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateX(0)';
+                    }, index * 150);
+                });
+                perfObserver.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    const performanceCards = document.querySelector('.performance-cards');
+    if (performanceCards) {
+        perfObserver.observe(performanceCards);
+    }
+
+    const formInputs = document.querySelectorAll('input, select, textarea');
+
+    formInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.style.transform = 'scale(1.01)';
+            this.style.transition = 'all 0.3s ease';
+        });
+
+        input.addEventListener('blur', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+
+    const hoverCards = document.querySelectorAll('.portfolio-screen-mockup, .generator-preview, .booking-calendar');
+
+    hoverCards.forEach(card => {
+        card.addEventListener('mousemove', function(e) {
+            const rect = this.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            const rotateX = (y - centerY) / 20;
+            const rotateY = (centerX - x) / 20;
+
+            this.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+        });
+
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+        });
+
+        card.style.transition = 'transform 0.3s ease';
+    });
+
+    const perfChart = document.querySelector('.performance-chart');
+    if (perfChart) {
+        perfChart.style.transition = 'none';
+        perfChart.addEventListener('mouseenter', function(e) {
+            e.stopPropagation();
+        });
+    }
+});
+
+// ============================================
+// CMS LOADER (from cms-loader.js)
+// ============================================
+
+class CMSLoader {
+    constructor() {
+        this.content = {};
+        this.loaded = false;
+    }
+
+    async loadContent() {
+        if (this.loaded) return this.content;
+
+        try {
+            const contentFiles = [
+                'site-config',
+                'hero',
+                'performance',
+                'portfolio',
+                'booking',
+                'footer',
+                'navigation',
+                'quote-page'
+            ];
+
+            const loadPromises = contentFiles.map(async (file) => {
+                try {
+                    const response = await fetch(`/content/${file}.json`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        return { file, data };
+                    }
+                } catch (error) {
+                    console.warn(`Impossible de charger ${file}.json:`, error);
+                }
+                return null;
+            });
+
+            const results = await Promise.all(loadPromises);
+            
+            results.forEach(result => {
+                if (result) {
+                    this.content[result.file] = result.data;
+                }
+            });
+
+            this.loaded = true;
+            console.log('Contenu CMS chargé:', this.content);
+            return this.content;
+        } catch (error) {
+            console.error('Erreur lors du chargement du contenu CMS:', error);
+            return {};
+        }
+    }
+
+    getContent(section, key = null) {
+        if (!this.loaded) {
+            console.warn('Contenu CMS pas encore chargé');
+            return null;
+        }
+
+        if (key) {
+            return this.content[section]?.[key] || null;
+        }
+        return this.content[section] || null;
+    }
+
+    // Méthodes utilitaires pour remplacer le contenu
+    replaceTextContent(selector, text) {
+        const element = document.querySelector(selector);
+        if (element && text) {
+            element.textContent = text;
+        }
+    }
+
+    replaceHTMLContent(selector, html) {
+        const element = document.querySelector(selector);
+        if (element && html) {
+            element.innerHTML = html;
+        }
+    }
+
+    replaceAttribute(selector, attribute, value) {
+        const element = document.querySelector(selector);
+        if (element && value) {
+            element.setAttribute(attribute, value);
+        }
+    }
+
+    // Charger et appliquer le contenu de la page d'accueil
+    async loadHomePage() {
+        await this.loadContent();
+        
+        // Configuration générale
+        const siteConfig = this.getContent('site-config');
+        if (siteConfig) {
+            document.title = siteConfig.site_name + ' - ' + siteConfig.description;
+            this.replaceAttribute('meta[name="description"]', 'content', siteConfig.description);
+            this.replaceAttribute('meta[name="keywords"]', 'content', siteConfig.keywords);
+            this.replaceAttribute('meta[name="theme-color"]', 'content', siteConfig.theme_color);
+        }
+
+        // Section Hero
+        const hero = this.getContent('hero');
+        if (hero) {
+            this.replaceHTMLContent('.hero-title', `${hero.main_title} <span class="gradient-text">${hero.highlight_text}</span> The Future of Digital`);
+            this.replaceTextContent('.hero-subtitle', hero.subtitle);
+            this.replaceTextContent('.hero-cta .btn-primary', hero.cta_text);
+            this.replaceAttribute('.hero-cta .btn-primary', 'href', hero.cta_link);
+
+            // Statistiques
+            if (hero.stats) {
+                hero.stats.forEach((stat, index) => {
+                    const statElement = document.querySelectorAll('.stat')[index];
+                    if (statElement) {
+                        const numberElement = statElement.querySelector('.stat-number');
+                        const labelElement = statElement.querySelector('.stat-label');
+                        if (numberElement) numberElement.textContent = stat.value;
+                        if (labelElement) labelElement.textContent = stat.label;
+                    }
+                });
+            }
+
+            // Témoignages
+            if (hero.testimonials) {
+                const reviewItems = document.querySelectorAll('.review-item');
+                hero.testimonials.forEach((testimonial, index) => {
+                    if (reviewItems[index]) {
+                        const starsElement = reviewItems[index].querySelector('.review-stars');
+                        const textElement = reviewItems[index].querySelector('p');
+                        if (starsElement) starsElement.textContent = testimonial.stars;
+                        if (textElement) textElement.textContent = testimonial.text;
+                    }
+                });
+            }
+        }
+
+        // Section Performance
+        const performance = this.getContent('performance');
+        if (performance) {
+            this.replaceTextContent('#performance .section-title', performance.section_title);
+            this.replaceTextContent('#chartTitle', performance.chart_title);
+            this.replaceTextContent('#chartDesc', performance.chart_description);
+            this.replaceTextContent('#badgeText', performance.increase_percentage);
+
+            // Cartes de performance
+            if (performance.performance_cards) {
+                const cardElements = document.querySelectorAll('.perf-vision-card');
+                performance.performance_cards.forEach((card, index) => {
+                    if (cardElements[index]) {
+                        const titleElement = cardElements[index].querySelector('h4');
+                        const descElement = cardElements[index].querySelector('p');
+                        if (titleElement) titleElement.textContent = card.title;
+                        if (descElement) descElement.textContent = card.description;
+                    }
+                });
+            }
+
+            // Statistiques de performance
+            if (performance.performance_stats) {
+                const statElements = document.querySelectorAll('.perf-stat');
+                performance.performance_stats.forEach((stat, index) => {
+                    if (statElements[index]) {
+                        const labelElement = statElements[index].querySelector('h5');
+                        const valueElement = statElements[index].querySelector('.perf-stat-value');
+                        if (labelElement) labelElement.textContent = stat.label;
+                        if (valueElement) valueElement.textContent = stat.value;
+                    }
+                });
+            }
+        }
+
+        // Section Portfolio
+        const portfolio = this.getContent('portfolio');
+        if (portfolio) {
+            this.replaceTextContent('#portfolio .section-title', portfolio.section_title);
+            this.replaceTextContent('#portfolio .section-subtitle', portfolio.section_subtitle);
+
+            if (portfolio.projects && portfolio.projects.length > 0) {
+                const project = portfolio.projects[0];
+                this.replaceTextContent('#portfolioTitle', project.title);
+                this.replaceTextContent('#portfolioDescription', project.description);
+                this.replaceAttribute('#portfolioImage', 'src', project.image);
+                this.replaceAttribute('#portfolioLink', 'href', project.link);
+
+                // Tags
+                if (project.tags) {
+                    const tagsContainer = document.querySelector('#portfolioTags');
+                    if (tagsContainer) {
+                        tagsContainer.innerHTML = project.tags.map(tag => 
+                            `<span class="portfolio-badge">${tag}</span>`
+                        ).join('');
+                    }
+                }
+
+                // Témoignage
+                if (project.testimonial) {
+                    this.replaceTextContent('.testimonial-stars', project.testimonial.stars);
+                    this.replaceTextContent('.testimonial-text', project.testimonial.text);
+                    this.replaceTextContent('.testimonial-author', project.testimonial.author);
+                }
+            }
+
+            this.replaceTextContent('.portfolio-cta p', portfolio.cta_text);
+            this.replaceAttribute('.portfolio-cta .btn-primary', 'href', portfolio.cta_link);
+        }
+
+        // Section Booking
+        const booking = this.getContent('booking');
+        if (booking) {
+            this.replaceTextContent('#booking .section-title', booking.section_title);
+            this.replaceTextContent('#booking .section-subtitle', booking.section_subtitle);
+
+            // Avantages
+            if (booking.benefits) {
+                const benefitElements = document.querySelectorAll('.booking-benefit');
+                booking.benefits.forEach((benefit, index) => {
+                    if (benefitElements[index]) {
+                        const titleElement = benefitElements[index].querySelector('h4');
+                        const descElement = benefitElements[index].querySelector('p');
+                        if (titleElement) titleElement.textContent = benefit.title;
+                        if (descElement) descElement.textContent = benefit.description;
+                    }
+                });
+            }
+
+            // URL du calendrier
+            if (booking.calendar_url) {
+                const iframe = document.querySelector('#booking iframe');
+                if (iframe) {
+                    iframe.src = booking.calendar_url;
+                }
+            }
+        }
+
+        // Footer
+        const footer = this.getContent('footer');
+        if (footer) {
+            this.replaceTextContent('.footer-bottom', footer.copyright);
+        }
+
+        // Navigation
+        const navigation = this.getContent('navigation');
+        if (navigation) {
+            // Liens du menu
+            if (navigation.menu_links) {
+                const navLinks = document.querySelectorAll('.nav-links li a');
+                navigation.menu_links.forEach((link, index) => {
+                    if (navLinks[index]) {
+                        navLinks[index].textContent = link.text;
+                        navLinks[index].href = link.url;
+                    }
+                });
+            }
+
+            // Bouton devis
+            this.replaceTextContent('.btn-devis-nav', navigation.quote_button_text);
+            this.replaceAttribute('.btn-devis-nav', 'href', navigation.quote_button_link);
+        }
+    }
+
+    // Charger et appliquer le contenu de la page devis
+    async loadQuotePage() {
+        await this.loadContent();
+        
+        const quotePage = this.getContent('quote-page');
+        if (quotePage) {
+            this.replaceHTMLContent('.section-title', `Simulez Votre <span class="gradient-text">Devis</span>`);
+            this.replaceTextContent('.section-subtitle', quotePage.subtitle);
+            this.replaceTextContent('.summary-note', quotePage.pricing_note);
+        }
+    }
+}
+
+// Initialiser le CMS Loader
+const cmsLoader = new CMSLoader();
+
+// Charger le contenu selon la page
+document.addEventListener('DOMContentLoaded', async () => {
+    const currentPath = window.location.pathname;
+    
+    if (currentPath === '/devis' || currentPath.endsWith('/devis.html')) {
+        await cmsLoader.loadQuotePage();
+    } else {
+        await cmsLoader.loadHomePage();
+    }
+});
+
+// Exposer globalement pour debug
+window.cmsLoader = cmsLoader;
+
+// ============================================
+// ANALYTICS TRACKING (from analytics-tracking.js)
+// ============================================
+
+class AnalyticsTracker {
+    constructor() {
+        this.startTime = Date.now();
+        this.scrollDepth = 0;
+        this.maxScrollDepth = 0;
+        this.init();
+    }
+
+    init() {
+        this.trackPageView();
+        this.trackScrollDepth();
+        this.trackCTAClicks();
+        this.trackFormInteractions();
+        this.trackTimeOnPage();
+        this.trackErrors();
+        this.trackExternalLinks();
+        this.trackVideoInteractions();
+    }
+
+    // Suivi des vues de pages avec métadonnées
+    trackPageView() {
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'page_view', {
+                'page_title': document.title,
+                'page_location': window.location.href,
+                'page_path': window.location.pathname,
+                'content_group1': this.getPageCategory(),
+                'custom_parameter_1': this.getDeviceType(),
+                'custom_parameter_2': this.getConnectionSpeed()
+            });
+        }
+    }
+
+    // Suivi de la profondeur de scroll
+    trackScrollDepth() {
+        let scrollMilestones = [25, 50, 75, 90, 100];
+        let trackedMilestones = [];
+
+        window.addEventListener('scroll', () => {
+            let scrollTop = window.pageYOffset;
+            let docHeight = document.body.scrollHeight - window.innerHeight;
+            let scrollPercent = Math.round((scrollTop / docHeight) * 100);
+
+            scrollMilestones.forEach(milestone => {
+                if (scrollPercent >= milestone && !trackedMilestones.includes(milestone)) {
+                    trackedMilestones.push(milestone);
+                    this.trackEvent('scroll_depth', {
+                        'event_category': 'engagement',
+                        'value': milestone,
+                        'page_location': window.location.href
+                    });
+                }
+            });
+        });
+    }
+
+    // Suivi des clics sur les CTA
+    trackCTAClicks() {
+        const ctaSelectors = [
+            '.btn-primary',
+            '.btn-devis-nav',
+            '.mobile-devis-btn',
+            '.sortlist-hero-btn',
+            '.whatsapp-btn'
+        ];
+
+        ctaSelectors.forEach(selector => {
+            document.querySelectorAll(selector).forEach(element => {
+                element.addEventListener('click', (e) => {
+                    this.trackEvent('cta_click', {
+                        'event_category': 'engagement',
+                        'event_label': this.getElementText(element),
+                        'button_position': this.getElementPosition(element),
+                        'page_section': this.getElementSection(element)
+                    });
+                });
+            });
+        });
+    }
+
+    // Suivi des interactions avec les formulaires
+    trackFormInteractions() {
+        // Suivi de l'ouverture du formulaire de devis
+        const devisForm = document.getElementById('quoteForm');
+        if (devisForm) {
+            devisForm.addEventListener('submit', (e) => {
+                this.trackEvent('form_submit', {
+                    'event_category': 'conversion',
+                    'event_label': 'devis_request',
+                    'form_name': 'quote_form',
+                    'form_step': this.getCurrentFormStep()
+                });
+            });
+
+            // Suivi des étapes du formulaire
+            const formSteps = document.querySelectorAll('.form-step');
+            formSteps.forEach((step, index) => {
+                if (step.classList.contains('active')) {
+                    this.trackEvent('form_step_view', {
+                        'event_category': 'engagement',
+                        'event_label': `step_${index + 1}`,
+                        'step_number': index + 1
+                    });
+                }
+            });
+        }
+
+        // Suivi des champs de formulaire
+        document.querySelectorAll('input, select, textarea').forEach(field => {
+            field.addEventListener('focus', () => {
+                this.trackEvent('form_field_focus', {
+                    'event_category': 'engagement',
+                    'event_label': field.name || field.id,
+                    'field_type': field.type
+                });
+            });
+        });
+    }
+
+    // Suivi du temps passé sur la page
+    trackTimeOnPage() {
+        const timeIntervals = [30, 60, 120, 300, 600]; // secondes
+        let trackedIntervals = [];
+
+        timeIntervals.forEach(interval => {
+            setTimeout(() => {
+                if (!trackedIntervals.includes(interval)) {
+                    trackedIntervals.push(interval);
+                    this.trackEvent('time_on_page', {
+                        'event_category': 'engagement',
+                        'value': interval,
+                        'page_location': window.location.href
+                    });
+                }
+            }, interval * 1000);
+        });
+
+        // Suivi du temps total avant de quitter
+        window.addEventListener('beforeunload', () => {
+            let totalTime = Math.round((Date.now() - this.startTime) / 1000);
+            this.trackEvent('page_exit', {
+                'event_category': 'engagement',
+                'value': totalTime,
+                'scroll_depth': this.maxScrollDepth
+            });
+        });
+    }
+
+    // Suivi des erreurs JavaScript
+    trackErrors() {
+        window.addEventListener('error', (e) => {
+            this.trackEvent('javascript_error', {
+                'event_category': 'error',
+                'event_label': e.message,
+                'error_file': e.filename,
+                'error_line': e.lineno
+            });
+        });
+
+        // Suivi des erreurs de ressources
+        window.addEventListener('error', (e) => {
+            if (e.target !== window) {
+                this.trackEvent('resource_error', {
+                    'event_category': 'error',
+                    'event_label': e.target.src || e.target.href,
+                    'resource_type': e.target.tagName
+                });
+            }
+        }, true);
+    }
+
+    // Suivi des liens externes
+    trackExternalLinks() {
+        document.querySelectorAll('a[href^="http"]').forEach(link => {
+            if (!link.href.includes(window.location.hostname)) {
+                link.addEventListener('click', () => {
+                    this.trackEvent('external_link_click', {
+                        'event_category': 'outbound',
+                        'event_label': link.href,
+                        'link_text': link.textContent.trim()
+                    });
+                });
+            }
+        });
+    }
+
+    // Suivi des interactions vidéo (si présentes)
+    trackVideoInteractions() {
+        document.querySelectorAll('video').forEach(video => {
+            video.addEventListener('play', () => {
+                this.trackEvent('video_play', {
+                    'event_category': 'engagement',
+                    'event_label': video.src
+                });
+            });
+
+            video.addEventListener('pause', () => {
+                this.trackEvent('video_pause', {
+                    'event_category': 'engagement',
+                    'event_label': video.src
+                });
+            });
+        });
+    }
+
+    // Méthodes utilitaires
+    trackEvent(eventName, parameters = {}) {
+        if (typeof gtag !== 'undefined') {
+            gtag('event', eventName, parameters);
+        }
+    }
+
+    getPageCategory() {
+        const path = window.location.pathname;
+        if (path === '/') return 'homepage';
+        if (path === '/devis') return 'quote_page';
+        return 'other';
+    }
+
+    getDeviceType() {
+        return window.innerWidth < 768 ? 'mobile' : 
+               window.innerWidth < 1024 ? 'tablet' : 'desktop';
+    }
+
+    getConnectionSpeed() {
+        if ('connection' in navigator) {
+            return navigator.connection.effectiveType || 'unknown';
+        }
+        return 'unknown';
+    }
+
+    getElementText(element) {
+        return element.textContent.trim().substring(0, 50);
+    }
+
+    getElementPosition(element) {
+        const rect = element.getBoundingClientRect();
+        return rect.top < window.innerHeight / 2 ? 'above_fold' : 'below_fold';
+    }
+
+    getElementSection(element) {
+        const sections = ['hero', 'features', 'portfolio', 'booking', 'contact'];
+        for (let section of sections) {
+            if (element.closest(`#${section}, .${section}`)) {
+                return section;
+            }
+        }
+        return 'unknown';
+    }
+
+    getCurrentFormStep() {
+        const activeStep = document.querySelector('.form-step.active');
+        return activeStep ? activeStep.dataset.step : 'unknown';
+    }
+}
+
+// Initialisation du tracking
+document.addEventListener('DOMContentLoaded', () => {
+    new AnalyticsTracker();
+});
+
+// Suivi des performances
+if ('performance' in window) {
+    window.addEventListener('load', () => {
+        const perfData = performance.getEntriesByType('navigation')[0];
+        if (perfData && typeof gtag !== 'undefined') {
+            gtag('event', 'page_performance', {
+                'event_category': 'performance',
+                'value': Math.round(perfData.loadEventEnd - perfData.loadEventStart),
+                'custom_parameter_1': Math.round(perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart),
+                'custom_parameter_2': Math.round(perfData.responseEnd - perfData.responseStart)
+            });
+        }
+    });
+}
+
+// Suivi des erreurs de chargement d'images
+document.addEventListener('error', (e) => {
+    if (e.target.tagName === 'IMG') {
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'image_load_error', {
+                'event_category': 'error',
+                'event_label': e.target.src
+            });
+        }
+    }
+}, true);
 
 console.log('🚀 LandingIA chargé avec succès!');
