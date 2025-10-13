@@ -2,24 +2,10 @@
 <html lang="fr">
 <head>
     <!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-WQ6D2R7D');</script>
-<!-- End Google Tag Manager -->
+    <!-- End Google Tag Manager -->
 
     <!-- Google Analytics 4 -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-XXXXXXXXXX', {
-            page_title: document.title,
-            page_location: window.location.href
-        });
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
@@ -75,7 +61,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
     </script>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="footer-charts.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%235b5bd6'/></svg>">
@@ -107,17 +92,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <!-- ========== AJOUTE CES 2 LIGNES ========== -->
     <!-- Netlify Identity Widget -->
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-    <script>
-        if (window.netlifyIdentity) {
-            window.netlifyIdentity.on("init", user => {
-                if (!user) {
-                    window.netlifyIdentity.on("login", () => {
-                        document.location.href = "/admin/";
-                    });
-                }
-            });
-        }
-    </script>
     <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WQ6D2R7D"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -125,7 +99,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <nav class="navbar">
     <div class="container">
         <div class="nav-content">
-            <!-- Logo -->
             <a href="#" class="logo">
                 <div class="logo-main">
                     <div class="logo-top">
@@ -140,70 +113,63 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 </div>
             </a>
 
-            <!-- Navigation Links -->
             <ul class="nav-links">
-                <li class="nav-item has-dropdown">
+                <li class="nav-item dropdown">
                     <a href="#" class="nav-link">
-                        <span>Agence WordPress</span>
-                        <svg class="dropdown-icon" width="12" height="8" viewBox="0 0 12 8" fill="none">
-                            <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        Agence WordPress
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="dropdown-arrow">
+                            <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </a>
                     <div class="dropdown-menu">
-                        <a href="#" class="dropdown-item">Création de sites</a>
+                        <a href="#" class="dropdown-item">Développement WordPress</a>
                         <a href="#" class="dropdown-item">Maintenance WordPress</a>
-                        <a href="#" class="dropdown-item">Optimisation SEO</a>
-                        <a href="#" class="dropdown-item">Migration de site</a>
+                        <a href="#" class="dropdown-item">Optimisation WordPress</a>
+                        <a href="#" class="dropdown-item">Thèmes personnalisés</a>
                     </div>
                 </li>
-
-                <li class="nav-item has-dropdown">
+                
+                <li class="nav-item dropdown">
                     <a href="#" class="nav-link">
-                        <span>Expertises</span>
-                        <svg class="dropdown-icon" width="12" height="8" viewBox="0 0 12 8" fill="none">
-                            <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        Expertises
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="dropdown-arrow">
+                            <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </a>
                     <div class="dropdown-menu">
-                        <a href="#" class="dropdown-item">Design UX/UI</a>
-                        <a href="#" class="dropdown-item">Développement Web</a>
+                        <a href="#" class="dropdown-item">Landing Pages</a>
                         <a href="#" class="dropdown-item">E-commerce</a>
-                        <a href="#" class="dropdown-item">Stratégie Digitale</a>
+                        <a href="#" class="dropdown-item">SEO & Marketing</a>
+                        <a href="#" class="dropdown-item">Design UI/UX</a>
                     </div>
                 </li>
-
+                
                 <li class="nav-item">
-                    <a href="#portfolio" class="nav-link">
-                        <span>Réalisations</span>
-                    </a>
+                    <a href="#portfolio" class="nav-link">Réalisations</a>
                 </li>
-
+                
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <span>Tarifs</span>
-                    </a>
+                    <a href="#pricing" class="nav-link">Tarifs</a>
                 </li>
-
-                <li class="nav-item has-dropdown">
+                
+                <li class="nav-item dropdown">
                     <a href="#" class="nav-link">
-                        <span>Ressources</span>
-                        <svg class="dropdown-icon" width="12" height="8" viewBox="0 0 12 8" fill="none">
-                            <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        Ressources
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="dropdown-arrow">
+                            <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </a>
                     <div class="dropdown-menu">
                         <a href="#" class="dropdown-item">Blog</a>
                         <a href="#" class="dropdown-item">Guides</a>
-                        <a href="#" class="dropdown-item">Études de cas</a>
-                        <a href="#" class="dropdown-item">Documentation</a>
+                        <a href="#" class="dropdown-item">Templates</a>
+                        <a href="#" class="dropdown-item">Outils</a>
                     </div>
                 </li>
             </ul>
 
-            <!-- CTA Button -->
-            <a href="#booking" class="btn-primary-nav">Prendre un rendez-vous</a>
+            <a href="devis.html" class="btn-devis-nav">Questionnaire Qualitatif</a>
 
-            <!-- Mobile Menu Toggle -->
             <button class="menu-toggle" id="menuToggle" aria-label="Menu">
                 <span></span>
                 <span></span>
@@ -217,39 +183,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="mobile-menu-overlay" id="mobileMenu">
     <div class="mobile-menu-content">
         <div class="mobile-menu-items">
-            <div class="mobile-menu-item has-submenu">
-                <button class="mobile-menu-trigger">
-                    <span>Agence WordPress</span>
-                    <svg class="chevron" viewBox="0 0 12 8" fill="none">
-                        <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5"/>
-                    </svg>
-                </button>
-                <div class="mobile-submenu">
-                    <a href="#">Création de sites</a>
-                    <a href="#">Maintenance WordPress</a>
-                    <a href="#">Optimisation SEO</a>
-                    <a href="#">Migration de site</a>
-                </div>
-            </div>
-
-            <div class="mobile-menu-item has-submenu">
-                <button class="mobile-menu-trigger">
-                    <span>Expertises</span>
-                    <svg class="chevron" viewBox="0 0 12 8" fill="none">
-                        <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5"/>
-                    </svg>
-                </button>
-                <div class="mobile-submenu">
-                    <a href="#">Design UX/UI</a>
-                    <a href="#">Développement Web</a>
-                    <a href="#">E-commerce</a>
-                    <a href="#">Stratégie Digitale</a>
-                </div>
-            </div>
-
             <div class="mobile-menu-item">
                 <a href="#portfolio">
-                    <span>Réalisations</span>
+                    <span>Nos Partenaires</span>
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+            </div>
+
+            
+
+            <div class="mobile-menu-item">
+                <a href="#booking">
+                    <span>Réserver un Appel</span>
                     <svg viewBox="0 0 24 24" fill="none">
                         <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -257,34 +204,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
 
             <div class="mobile-menu-item">
-                <a href="#">
-                    <span>Tarifs</span>
+                <a href="#contact">
+                    <span>Contact</span>
                     <svg viewBox="0 0 24 24" fill="none">
                         <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </a>
-            </div>
-
-            <div class="mobile-menu-item has-submenu">
-                <button class="mobile-menu-trigger">
-                    <span>Ressources</span>
-                    <svg class="chevron" viewBox="0 0 12 8" fill="none">
-                        <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5"/>
-                    </svg>
-                </button>
-                <div class="mobile-submenu">
-                    <a href="#">Blog</a>
-                    <a href="#">Guides</a>
-                    <a href="#">Études de cas</a>
-                    <a href="#">Documentation</a>
-                </div>
             </div>
         </div>
 
         <div class="mobile-menu-cta">
-            <a href="#booking" class="btn btn-primary mobile-cta-btn">
-                Prendre un rendez-vous
+            <a href="/devis" class="btn btn-primary mobile-devis-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                </svg>
+                Simuler un Devis
             </a>
+            
         </div>
     </div>
 </div>
@@ -318,28 +254,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="trust-badges">
         <div class="trust-badge">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M9 12l2 2 4-4" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 12l4 4 12-12" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span>Paiement Sécurisé</span>
+            <span>Accompagnement 90 jours</span>
         </div>
         <div class="trust-badge">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="9" stroke="#f59e0b" stroke-width="2"/>
+                <path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18" stroke="#f59e0b" stroke-width="2"/>
             </svg>
-            <span>4.9/5 sur Sortlist</span>
+            <span>Stratégie sur mesure</span>
         </div>
         <div class="trust-badge">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="#10b981" stroke-width="2"/>
-                <path d="M12 6v6l4 2" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+                <path d="M3 3h18v14H3z" stroke="#10b981" stroke-width="2"/>
+                <path d="M7 10h10M7 14h6" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
             </svg>
-            <span>Livraison sous 48h</span>
+            <span>Transparence & reporting</span>
         </div>
     </div>
 
     <div class="hero-cta">
-        <a href="#booking" class="btn btn-primary">Réserver un Appel</a>
+        <a href="#booking" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px;">Réserver un Appel
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="arrow-icon">
+                <path d="M4 12L12 4M12 4H6M12 4V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
     </div>
     
     <!-- Reviews Carousel avec étoiles -->
@@ -390,8 +330,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="stat-label">Satisfaction Client</div>
     </div>
     <div class="stat">
-        <div class="stat-number" data-target="48">0</div>
-        <div class="stat-label">Livraison Moyenne</div>
+        <div class="stat-number" data-target="23">0</div>
+        <div class="stat-label">Taux de Conversion Moyen</div>
     </div>
 </div>
                 </div>
@@ -399,6 +339,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
         <div class="hero-background"></div>
     </section>
+
 
     <!-- Performance Section -->
 <section id="performance" class="performance">
@@ -430,6 +371,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <!-- Right: Cards -->
             <div class="performance-cards" id="perfCardsContainer">
                 <div class="performance-cards-wrapper" id="perfCardsWrapper">
+                    <!-- Original cards -->
                     <div class="perf-brand-card">
                         <div class="logo-main" style="transform: scale(0.8);">
                             <div class="logo-top">
@@ -474,25 +416,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <p>Suivi analytics intégré et tableaux de bord pour mesurer précisément l'impact de ta landing page.</p>
                         </div>
                     </div>
+                    
                 </div>
             </div>
         </div>
 
-        <!-- Stats Footer -->
-        <div class="performance-stats">
-            <div class="perf-stat">
-                <h5>Pages créées</h5>
-                <p class="perf-stat-value">+390</p>
-            </div>
-            <div class="perf-stat">
-                <h5>Augmentation conversion moyenne</h5>
-                <p class="perf-stat-value">≈ +25%</p>
-            </div>
-            <div class="perf-stat">
-                <h5>CA total généré pour nos clients</h5>
-                <p class="perf-stat-value">+25,000,000€</p>
-            </div>
-        </div>
     </div>
         <div class="section-bar-bottom"></div>
 </section>
@@ -602,7 +530,57 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="section-bar-bottom"></div>
     </section>
 
-    
+    <!-- Section Process (relocated) -->
+    <section id="process" class="process">
+        <div class="container">
+            <h2>Comment on travaille ensemble</h2>
+            <p class="subtitle">Un process simple et transparent</p>
+            
+            <div class="steps">
+                <div class="step">
+                    <span class="number">1</span>
+                    <h3>Appel Découverte</h3>
+                    <p>30 minutes pour comprendre ton projet, tes objectifs et voir si on peut t'aider.</p>
+                    <span class="time">Jour 0</span>
+                </div>
+                
+                <div class="step">
+                    <span class="number">2</span>
+                    <h3>Devis & Signature</h3>
+                    <p>Tu reçois un devis détaillé sous 48h. Si ça colle, on signe et c'est parti !</p>
+                    <span class="time">Jour 1-2</span>
+                </div>
+                
+                <div class="step">
+                    <span class="number">3</span>
+                    <h3>Brief & Conception</h3>
+                    <p>Questionnaire détaillé + call stratégique. On crée les maquettes design.</p>
+                    <span class="time">Semaine 1</span>
+                </div>
+                
+                <div class="step">
+                    <span class="number">4</span>
+                    <h3>Développement</h3>
+                    <p>On code ta landing page. Point d'étape mi-parcours pour validation.</p>
+                    <span class="time">Semaine 2-3</span>
+                </div>
+                
+                <div class="step">
+                    <span class="number">5</span>
+                    <h3>Livraison & Formation</h3>
+                    <p>Tests complets, mise en ligne, formation 1h pour être autonome.</p>
+                    <span class="time">Semaine 3-4</span>
+                </div>
+                
+                <div class="step">
+                    <span class="number">6</span>
+                    <h3>Suivi 90 Jours</h3>
+                    <p>On reste à tes côtés. 3 calls d'optimisation pour maximiser tes conversions.</p>
+                    <span class="time">J+30, J+60, J+90</span>
+                </div>
+            </div>
+        </div>
+    </section>
 
 <!-- Booking Section -->
 <section id="booking" class="booking">
@@ -663,6 +641,57 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <p>Aucune obligation d'achat, juste un échange constructif</p>
                         </div>
                     </div>
+                    
+                    <!-- Duplicate benefits for mobile infinite scroll only -->
+                    <div class="booking-benefit mobile-duplicate">
+                        <div class="benefit-icon">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4>Analyse Gratuite de Vos Besoins</h4>
+                            <p>Nous étudions votre projet et vous proposons la meilleure stratégie</p>
+                        </div>
+                    </div>
+
+                    <div class="booking-benefit mobile-duplicate">
+                        <div class="benefit-icon">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                                <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4>30 Minutes de Conseil Expert</h4>
+                            <p>Profitez de l'expertise de nos développeurs seniors</p>
+                        </div>
+                    </div>
+
+                    <div class="booking-benefit mobile-duplicate">
+                        <div class="benefit-icon">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4>Devis Personnalisé Immédiat</h4>
+                            <p>Recevez une proposition tarifaire adaptée à votre budget</p>
+                        </div>
+                    </div>
+
+                    <div class="booking-benefit mobile-duplicate">
+                        <div class="benefit-icon">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4>Sans Engagement</h4>
+                            <p>Aucune obligation d'achat, juste un échange constructif</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Slider Dots -->
@@ -690,6 +719,50 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
      <div class="section-bar-bottom"></div>
 </section>
 
+<!-- Section Process moved below portfolio -->
+
+<!-- Section FAQ -->
+<section id="faq" class="faq">
+    <div class="container">
+        <h2>Questions fréquentes</h2>
+        
+        <div class="faq-item">
+            <h3>Combien de temps pour créer ma landing page ?</h3>
+            <p>Entre 2 et 4 semaines selon la complexité. L'offre Starter : ~10 jours. L'offre Premium : ~3 semaines.</p>
+        </div>
+        
+        <div class="faq-item">
+            <h3>Je pourrai modifier ma landing page moi-même après ?</h3>
+            <p>Oui ! On te forme (1h) et tu reçois documentation complète + vidéos. Tu peux modifier textes, images, couleurs en toute autonomie.</p>
+        </div>
+        
+        <div class="faq-item">
+            <h3>Qu'est-ce qui est inclus dans le dashboard analytics ?</h3>
+            <p>Visiteurs en temps réel, taux de conversion, sources de trafic, heatmaps, leads générés. Dashboard personnalisé accessible 24/7.</p>
+        </div>
+        
+        <div class="faq-item">
+            <h3>Comment se passe le paiement ?</h3>
+            <p>50% à la signature du projet, 50% à la livraison. Paiement par virement bancaire.</p>
+        </div>
+        
+        <div class="faq-item">
+            <h3>Et si je ne suis pas satisfait ?</h3>
+            <p>On inclut 2-3 révisions selon l'offre. Si vraiment pas satisfait, on trouve une solution ensemble. Notre objectif : 100% de clients satisfaits.</p>
+        </div>
+        
+        <div class="faq-item">
+            <h3>Vous créez aussi des sites web complets ?</h3>
+            <p>On est spécialisés landing pages, mais oui, on peut créer des sites vitrines complets (offre Enterprise). Parlons-en !</p>
+        </div>
+        
+        <div class="faq-item">
+            <h3>Je suis en micro-entreprise, vous travaillez avec des "petits" clients ?</h3>
+            <p>Absolument ! La majorité de nos clients sont entrepreneurs solo, startups, TPE. On est là pour vous aider à scaler.</p>
+        </div>
+    </div>
+</section>
+
 <!-- Bouton WhatsApp fixe -->
 <a href="https://wa.me/33123456789" 
    target="_blank" 
@@ -700,6 +773,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" fill="currentColor"/>
     </svg>
 </a>
+
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-container">
@@ -716,62 +790,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="footer-logo-agency">AGENCY</div>
             </div>
 
-            <!-- Charts Grid -->
-            <div class="charts-grid">
-                <!-- Chart 1: Funnel -->
-                <div class="chart-card">
-                    <div class="chart-title">Parcours de Conversion</div>
-                    <div class="funnel-chart">
-                        <div class="funnel-step">
-                            <span class="funnel-label">Visiteurs</span>
-                            <span class="funnel-value">10K</span>
-                        </div>
-                        <div class="funnel-step">
-                            <span class="funnel-label">Engagés</span>
-                            <span class="funnel-value">8.5K</span>
-                        </div>
-                        <div class="funnel-step">
-                            <span class="funnel-label">Qualifiés</span>
-                            <span class="funnel-value">6.5K</span>
-                        </div>
-                        <div class="funnel-step">
-                            <span class="funnel-label">Convertis</span>
-                            <span class="funnel-value">4.2K</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Chart 2: Radar -->
-                <div class="chart-card">
-                    <div class="chart-title">Performance Globale</div>
-                    <div class="radar-chart">
-                        <svg class="radar-svg" viewBox="0 0 200 200">
-                            <polygon class="radar-grid" points="100,20 173,60 173,140 100,180 27,140 27,60"/>
-                            <polygon class="radar-grid" points="100,50 150,75 150,125 100,150 50,125 50,75"/>
-                            <polygon class="radar-shape" points="100,30 165,70 160,130 100,170 40,130 35,70"/>
-                        </svg>
-                    </div>
-                    <div class="radar-labels">
-                        <div class="radar-label">Design<span>95%</span></div>
-                        <div class="radar-label">UX<span>92%</span></div>
-                        <div class="radar-label">Speed<span>98%</span></div>
-                        <div class="radar-label">SEO<span>88%</span></div>
-                        <div class="radar-label">Convert<span>94%</span></div>
-                        <div class="radar-label">Support<span>96%</span></div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Bottom -->
             <div class="footer-bottom">
                 © 2025 Shift Agency. Data-driven digital transformation.
             </div>
         </div>
     </footer>
-    <script src="performance-optimizer.js" defer></script>
     <script src="script.js" defer></script>
-    <script src="animations.js" defer></script>
-    <script src="cms-loader.js" defer></script>
-    <script src="analytics-tracking.js" defer></script>
 </body>
 </html>
