@@ -342,9 +342,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Fermer le menu au clic sur un lien
+    // Gestion des dropdowns mobiles
+    const mobileMenuTriggers = document.querySelectorAll('.mobile-menu-trigger');
+    mobileMenuTriggers.forEach(trigger => {
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const menuItem = trigger.closest('.mobile-menu-item');
+            const isExpanded = menuItem.classList.contains('expanded');
+            
+            // Fermer tous les autres menus
+            document.querySelectorAll('.mobile-menu-item.expanded').forEach(item => {
+                if (item !== menuItem) {
+                    item.classList.remove('expanded');
+                }
+            });
+            
+            // Toggle le menu actuel
+            menuItem.classList.toggle('expanded');
+        });
+    });
+    
+    // Fermer le menu au clic sur un lien (sauf les triggers de dropdown)
     mobileMenuItems.forEach(item => {
-        item.addEventListener('click', () => {
+        item.addEventListener('click', (e) => {
+            // Ne fermer que si ce n'est pas un trigger de dropdown
+            if (!item.closest('.mobile-menu-trigger')) {
+                closeMenu();
+            }
+        });
+    });
+    
+    // Fermer le menu au clic sur un lien de sous-menu
+    const submenuLinks = document.querySelectorAll('.mobile-submenu a');
+    submenuLinks.forEach(link => {
+        link.addEventListener('click', () => {
             closeMenu();
         });
     });
@@ -373,6 +404,10 @@ document.addEventListener('DOMContentLoaded', () => {
         menuToggle.classList.remove('active');
         mobileMenu.classList.remove('active');
         document.body.classList.remove('menu-open');
+        // Fermer tous les sous-menus
+        document.querySelectorAll('.mobile-menu-item.expanded').forEach(item => {
+            item.classList.remove('expanded');
+        });
     }
 });
 
