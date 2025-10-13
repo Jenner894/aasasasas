@@ -200,16 +200,14 @@ section {
 
 .navbar {
     position: fixed;
-    top: 20px;
-    left: 20px;
-    right: 20px;
-    background: rgba(255, 255, 255, 0.1);
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(10, 10, 10, 0.8);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    padding: 1rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     z-index: 1000;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem 0;
 }
 /* Logo - Restauré au style original */
 .logo {
@@ -348,6 +346,8 @@ section {
     align-items: center;
     gap: 0.5rem;
     white-space: nowrap;
+    border: none;
+    cursor: pointer;
 }
 
 .btn-devis-nav:hover {
@@ -371,12 +371,23 @@ section {
     .btn-devis-nav {
         display: none;
     }
+    
+    .nav-links {
+        display: none;
+    }
+    
+    .menu-toggle {
+        display: flex;
+    }
 }
 .nav-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px;
 }
 
 .logo {
@@ -510,6 +521,7 @@ section {
     border-radius: 100px;
     padding: 0.5rem;
     margin: 0;
+    z-index: 1001;
 }
 
 .nav-links li {
@@ -2050,6 +2062,11 @@ body.menu-open {
     padding: 140px 0;
     background: var(--color-gray-950);
     position: relative;
+    margin-top: 80px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 
@@ -2081,11 +2098,13 @@ body.menu-open {
     display: flex;
     gap: 1.25rem;
     transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(30px);
 }
 
 /* Hide mobile duplicates on desktop */
 .mobile-duplicate {
-    display: none;
+    display: none !important;
 }
 
 /* Disable animation on desktop for perf cards */
@@ -2093,6 +2112,11 @@ body.menu-open {
     .performance-cards-wrapper {
         animation: none;
     }
+}
+
+.booking-benefit.animate-in {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .booking-benefit:hover {
@@ -3980,6 +4004,11 @@ body.menu-open {
     padding: 100px 0;
     background: #0f0f0f;
     position: relative;
+    margin-top: 80px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .process h2 {
@@ -4001,6 +4030,8 @@ body.menu-open {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .step {
@@ -4012,6 +4043,7 @@ body.menu-open {
     transition: all 0.3s ease;
     opacity: 0;
     transform: translateY(30px);
+    margin-bottom: 2rem;
 }
 
 .step.animate-in {
@@ -4089,6 +4121,11 @@ body.menu-open {
     padding: 140px 0;
     background: #0f0f0f;
     position: relative;
+    margin-top: 80px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .faq-item {
