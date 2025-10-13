@@ -1,10 +1,18 @@
-const express = require('express');
-const path = require('path');
-const compression = require('compression');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const mongoose = require('mongoose');
-require('dotenv').config();
+import express from 'express';
+import path from 'path';
+import compression from 'compression';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import fs from 'fs';
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -542,7 +550,7 @@ app.post('/api/save-content', (req, res) => {
             return res.status(400).json({ error: 'Nom de fichier et données requis' });
         }
 
-        const fs = require('fs');
+        // fs is already imported at the top
         const filePath = path.join(__dirname, 'content', `${filename}.json`);
         
         // Sauvegarder le fichier JSON
