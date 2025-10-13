@@ -125,30 +125,79 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <nav class="navbar">
     <div class="container">
         <div class="nav-content">
+            <!-- Logo Palmsquare -->
             <a href="#" class="logo">
-                <div class="logo-main">
-                    <div class="logo-top">
-                        <div class="arrows-icon">
-                            <div class="arrow-line"></div>
-                            <div class="arrow-line"></div>
-                            <div class="arrow-line"></div>
-                        </div>
-                        <div class="shift-text">SHIFT</div>
-                    </div>
-                    <div class="agency-text">AGENCY</div>
-                </div>
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 4L4 10V22L16 28L28 22V10L16 4Z" fill="#5b5bd6"/>
+                    <path d="M16 10L10 13V19L16 22L22 19V13L16 10Z" fill="#fff"/>
+                </svg>
+                <span class="logo-text">Palmsquare</span>
             </a>
 
+            <!-- Navigation Links -->
             <ul class="nav-links">
-                <li><a href="#portfolio">Nos Partenaires</a></li>
-                
-                
-                <li><a href="#booking">Réserver un Appel</a></li>
+                <li class="nav-item has-dropdown">
+                    <a href="#" class="nav-link">
+                        <span>Agence WordPress</span>
+                        <svg class="dropdown-icon" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                            <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="#" class="dropdown-item">Création de sites</a>
+                        <a href="#" class="dropdown-item">Maintenance WordPress</a>
+                        <a href="#" class="dropdown-item">Optimisation SEO</a>
+                        <a href="#" class="dropdown-item">Migration de site</a>
+                    </div>
+                </li>
+
+                <li class="nav-item has-dropdown">
+                    <a href="#" class="nav-link">
+                        <span>Expertises</span>
+                        <svg class="dropdown-icon" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                            <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="#" class="dropdown-item">Design UX/UI</a>
+                        <a href="#" class="dropdown-item">Développement Web</a>
+                        <a href="#" class="dropdown-item">E-commerce</a>
+                        <a href="#" class="dropdown-item">Stratégie Digitale</a>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#portfolio" class="nav-link">
+                        <span>Réalisations</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <span>Tarifs</span>
+                    </a>
+                </li>
+
+                <li class="nav-item has-dropdown">
+                    <a href="#" class="nav-link">
+                        <span>Ressources</span>
+                        <svg class="dropdown-icon" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                            <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="#" class="dropdown-item">Blog</a>
+                        <a href="#" class="dropdown-item">Guides</a>
+                        <a href="#" class="dropdown-item">Études de cas</a>
+                        <a href="#" class="dropdown-item">Documentation</a>
+                    </div>
+                </li>
             </ul>
 
-            <!-- NOUVEAU BOUTON DEVIS -->
-            <a href="/devis" class="btn-devis-nav">Simuler un devis</a>
+            <!-- CTA Button -->
+            <a href="#booking" class="btn-primary-nav">Prendre un rendez-vous</a>
 
+            <!-- Mobile Menu Toggle -->
             <button class="menu-toggle" id="menuToggle" aria-label="Menu">
                 <span></span>
                 <span></span>
@@ -162,20 +211,39 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="mobile-menu-overlay" id="mobileMenu">
     <div class="mobile-menu-content">
         <div class="mobile-menu-items">
+            <div class="mobile-menu-item has-submenu">
+                <button class="mobile-menu-trigger">
+                    <span>Agence WordPress</span>
+                    <svg class="chevron" viewBox="0 0 12 8" fill="none">
+                        <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+                </button>
+                <div class="mobile-submenu">
+                    <a href="#">Création de sites</a>
+                    <a href="#">Maintenance WordPress</a>
+                    <a href="#">Optimisation SEO</a>
+                    <a href="#">Migration de site</a>
+                </div>
+            </div>
+
+            <div class="mobile-menu-item has-submenu">
+                <button class="mobile-menu-trigger">
+                    <span>Expertises</span>
+                    <svg class="chevron" viewBox="0 0 12 8" fill="none">
+                        <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+                </button>
+                <div class="mobile-submenu">
+                    <a href="#">Design UX/UI</a>
+                    <a href="#">Développement Web</a>
+                    <a href="#">E-commerce</a>
+                    <a href="#">Stratégie Digitale</a>
+                </div>
+            </div>
+
             <div class="mobile-menu-item">
                 <a href="#portfolio">
-                    <span>Nos Partenaires</span>
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </a>
-            </div>
-
-            
-
-            <div class="mobile-menu-item">
-                <a href="#booking">
-                    <span>Réserver un Appel</span>
+                    <span>Réalisations</span>
                     <svg viewBox="0 0 24 24" fill="none">
                         <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -183,23 +251,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
 
             <div class="mobile-menu-item">
-                <a href="#contact">
-                    <span>Contact</span>
+                <a href="#">
+                    <span>Tarifs</span>
                     <svg viewBox="0 0 24 24" fill="none">
                         <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </a>
+            </div>
+
+            <div class="mobile-menu-item has-submenu">
+                <button class="mobile-menu-trigger">
+                    <span>Ressources</span>
+                    <svg class="chevron" viewBox="0 0 12 8" fill="none">
+                        <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+                </button>
+                <div class="mobile-submenu">
+                    <a href="#">Blog</a>
+                    <a href="#">Guides</a>
+                    <a href="#">Études de cas</a>
+                    <a href="#">Documentation</a>
+                </div>
             </div>
         </div>
 
         <div class="mobile-menu-cta">
-            <a href="/devis" class="btn btn-primary mobile-devis-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-                </svg>
-                Simuler un Devis
+            <a href="#booking" class="btn btn-primary mobile-cta-btn">
+                Prendre un rendez-vous
             </a>
-            
         </div>
     </div>
 </div>
