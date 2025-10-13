@@ -1074,6 +1074,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Animation pour la section FAQ
     animateFAQ();
+    
+    // Initialiser les animations des benefit cards
+    initBookingAnimations();
 });
 
 function animateProcess() {
@@ -1099,11 +1102,13 @@ function animateProcess() {
     
     function animateProcessSteps() {
         steps.forEach((step, index) => {
-            setTimeout(() => {
-                step.style.opacity = '1';
-                step.style.transform = 'translateY(0)';
-                step.classList.add('animate-in');
-            }, index * 200);
+            if (!step.classList.contains('animate-in')) {
+                setTimeout(() => {
+                    step.style.opacity = '1';
+                    step.style.transform = 'translateY(0)';
+                    step.classList.add('animate-in');
+                }, index * 200);
+            }
         });
     }
 }
@@ -1133,13 +1138,66 @@ function animateFAQ() {
     
     function animateFAQItems() {
         faqItems.forEach((item, index) => {
-            setTimeout(() => {
-                item.style.opacity = '1';
-                item.style.transform = 'translateY(0)';
-                item.classList.add('animate-in');
-            }, index * 150);
+            if (!item.classList.contains('animate-in')) {
+                setTimeout(() => {
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateY(0)';
+                    item.classList.add('animate-in');
+                }, index * 150);
+            }
         });
     }
+}
+
+// Initialiser les animations des benefit cards
+function initBookingAnimations() {
+    const benefitCards = document.querySelectorAll('.booking-benefit:not(.mobile-duplicate)');
+    
+    if (!benefitCards.length) return;
+    
+    // Masquer les cartes au début seulement si elles ne sont pas déjà animées
+    benefitCards.forEach(card => {
+        if (!card.classList.contains('animate-in')) {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+        }
+    });
+    
+    // Observer pour déclencher les animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                const cards = entry.target.querySelectorAll('.booking-benefit:not(.mobile-duplicate)');
+                cards.forEach((card, index) => {
+                    if (!card.classList.contains('animate-in')) {
+                        setTimeout(() => {
+                            card.style.opacity = '1';
+                            card.style.transform = 'translateY(0)';
+                            card.classList.add('animate-in');
+                        }, index * 150);
+                    }
+                });
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+    
+    const bookingSection = document.querySelector('.booking');
+    if (bookingSection) {
+        observer.observe(bookingSection);
+    }
+    
+    // S'assurer que les cartes dupliquées sont masquées
+    const duplicateCards = document.querySelectorAll('.mobile-duplicate');
+    duplicateCards.forEach(card => {
+        card.style.display = 'none';
+    });
 }
 
 // Animation de pulsation pour les numéros
@@ -1232,9 +1290,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const fadeInElements = document.querySelectorAll('.hero-content, .section-title, .section-subtitle, .perf-vision-card, .performance-chart, .portfolio-screen-mockup, .generator-form, .booking-calendar');
 
     fadeInElements.forEach((el, index) => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(40px)';
-        el.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        // Ne pas réinitialiser si déjà animé
+        if (!el.classList.contains('animate-in')) {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(40px)';
+            el.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        }
     });
 
     const fadeInObserver = new IntersectionObserver((entries) => {
@@ -1243,6 +1304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     entry.target.style.opacity = '1';
                     entry.target.style.transform = 'translateY(0)';
+                    entry.target.classList.add('animate-in');
                 }, index * 100);
                 fadeInObserver.unobserve(entry.target);
             }
@@ -2034,5 +2096,23 @@ document.addEventListener('error', (e) => {
         }
     }
 }, true);
+
+// ============================================
+// INITIALISATION GLOBALE
+// ============================================
+
+// Fonction d'initialisation globale simplifiée
+function initializeAllAnimations() {
+    // S'assurer que les cartes dupliquées sont masquées
+    const duplicateCards = document.querySelectorAll('.mobile-duplicate');
+    duplicateCards.forEach(card => {
+        card.style.display = 'none';
+    });
+}
+
+// Initialiser une seule fois au chargement
+window.addEventListener('load', () => {
+    initializeAllAnimations();
+});
 
 console.log('🚀 LandingIA chargé avec succès!');
