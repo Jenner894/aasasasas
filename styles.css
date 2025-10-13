@@ -200,14 +200,31 @@ section {
 
 .navbar {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    backdrop-filter: blur(10px);
-    padding: 1.5rem 0;
+    top: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 3rem);
+    max-width: 1400px;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 1rem 2rem;
     z-index: 1000;
-    /* Gardez un background fixe au lieu de le changer au scroll */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
 
+.navbar .container {
+    padding: 0;
+    max-width: 100%;
+}
+
+.navbar:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
 }
 /* Bouton Devis dans la Navbar */
 .btn-devis-nav {
@@ -453,7 +470,10 @@ section {
 
 @media (max-width: 767px) {
     .navbar {
-        padding: 1.25rem 0;
+        top: 1rem;
+        width: calc(100% - 2rem);
+        padding: 0.875rem 1.25rem;
+        border-radius: 16px;
     }
     
     .logo {
@@ -2920,7 +2940,10 @@ body.menu-open {
     
     /* Navigation */
     .navbar {
-        padding: 1.25rem 0;
+        top: 1rem;
+        width: calc(100% - 2rem);
+        padding: 1rem 1.5rem;
+        border-radius: 18px;
     }
     
     .logo {
