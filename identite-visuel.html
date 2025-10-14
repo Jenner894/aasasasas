@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identité Visuelle & Branding - Shift Agency</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="identite.css">
+</head>
+<body>
+    <!-- Navbar (gardée identique à l'index) -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <a href="index.html" class="logo">
+                    <div class="logo-main">
+                        <div class="logo-top">
+                            <div class="arrows-icon">
+                                <div class="arrow-line"></div>
+                                <div class="arrow-line"></div>
+                                <div class="arrow-line"></div>
+                            </div>
+                            <div class="shift-text">SHIFT</div>
+                        </div>
+                        <div class="agency-text">AGENCY</div>
+                    </div>
+                </a>
+
+                <ul class="nav-links">
+                    <li class="nav-item has-dropdown">
+                        <a href="#" class="nav-link">
+                            <span>Agence WordPress</span>
+                            <svg class="dropdown-icon" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a href="#" class="dropdown-item">Création de sites</a>
+                            <a href="#" class="dropdown-item">Maintenance WordPress</a>
+                            <a href="#" class="dropdown-item">Optimisation SEO</a>
+                        </div>
+                    </li>
+
+                    <li class="nav-item has-dropdown">
+                        <a href="#" class="nav-link">
+                            <span>Expertises</span>
+                            <svg class="dropdown-icon" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a href="identite-visuelle.html" class="dropdown-item">Identité Visuelle</a>
+                            <a href="#" class="dropdown-item">Développement Web</a>
+                            <a href="#" class="dropdown-item">E-commerce</a>
+                            <a href="#" class="dropdown-item">Stratégie Digitale</a>
+                        </div>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="#portfolio" class="nav-link">
+                            <span>Réalisations</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span>Tarifs</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item has-dropdown">
+                        <a href="#" class="nav-link">
+                            <span>Ressources</span>
+                            <svg class="dropdown-icon" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a href="#" class="dropdown-item">Blog</a>
+                            <a href="#" class="dropdown-item">Guides</a>
+                            <a href="#" class="dropdown-item">Études de cas</a>
+                        </div>
+                    </li>
+                </ul>
+
+                <a href="#booking" class="btn-primary-nav">Évalue ton projet</a>
+
+                <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-identite">
+        <div class="container">
+            <div class="hero-identite-content">
+                <h1>Créez une <span class="gradient-text">Identité Visuelle</span> Mémorable</h1>
+                <p>Profitez de notre expertise créative pour développer une identité visuelle unique incluant logo, charte graphique, et tout ce qui rendra votre marque inoubliable.</p>
+                <a href="#booking" class="btn btn-primary">Prendre rendez-vous</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Components Section -->
+    <section class="components-section">
+        <div class="container">
+            <h2 class="section-title fade-in-up">Les Éléments d'une Identité Visuelle</h2>
+            <p class="section-subtitle fade-in-up">Découvrez les composants essentiels qui forment une identité visuelle forte</p>
+            
+            <div class="components-grid">
+                <div class="component-item fade-in-up">
+                    <div class="component-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h4>Logo</h4>
+                    <p>Le symbole graphique central qui représente votre marque et doit être reconnaissable au premier coup d'œil.</p>
+                </div>
+
+                <div class="component-item fade-in-up">
+                    <div class="component-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <rect x="4" y="4" width="6" height="6" stroke="currentColor" stroke-width="2"/>
+                            <rect x="14" y="4" width="6" height="6" stroke="currentColor" stroke-width="2"/>
+                            <rect x="4" y="14" width="6" height="6" stroke="currentColor" stroke-width="2"/>
+                            <rect x="14" y="14" width="6" height="6" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h4>Palette de Couleurs</h4>
+                    <p>Les couleurs jouent un rôle essentiel dans la perception de votre marque et évoquent des émotions spécifiques.</p>
+                </div>
+
+                <div class="component-item fade-in-up">
+                    <div class="component-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M4 7H20M4 12H20M4 17H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h4>Typographie</h4>
+                    <p>Les polices de caractères utilisées sur tous vos supports doivent être cohérentes et refléter le ton de votre marque.</p>
+                </div>
+
+                <div class="component-item fade-in-up">
+                    <div class="component-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                            <path d="M21 15L16 10L5 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h4>Images & Photos</h4>
+                    <p>Les visuels doivent s'harmoniser avec votre identité et véhiculer le message de votre marque.</p>
+                </div>
+
+                <div class="component-item fade-in-up">
+                    <div class="component-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h4>Illustrations</h4>
+                    <p>Des éléments graphiques uniques qui ajoutent de la personnalité et transmettent des concepts de manière engageante.</p>
+                </div>
+
+                <div class="component-item fade-in-up">
+                    <div class="component-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h4>Charte Graphique</h4>
+                    <p>Le document regroupant tous les éléments et règles d'utilisation pour assurer la cohérence de votre marque.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="services-identite">
+        <div class="container">
+            <h2 class="section-title fade-in-up">Nos Services de Design</h2>
+            <p class="section-subtitle fade-in-up">Des solutions complètes pour construire une identité visuelle forte et cohérente</p>
+            
+            <div class="services-grid">
+                <div class="service-card fade-in-up">
+                    <div class="service-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>Création de Logo</h3>
+                    <p>Un logo unique et impactant qui reflète parfaitement l'identité et les valeurs de votre marque.</p>
+                    
+                    <div class="service-features">
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Analyse & Brief Créatif</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>2 pistes graphiques</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Affinage et révisions</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Livrable (AI, SVG, PNG, JPG)</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Déclinaisons multiples</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Guide d'utilisation</span>
+                        </div>
+                    </div>
+                    
+                    <div class="service-price">À partir de</div>
+                    <div class="service-amount">800€</div>
+                </div>
+
+                <div class="service-card fade-in-up">
+                    <div class="service-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                            <path d="M3 9H21" stroke="currentColor" stroke-width="2"/>
+                            <path d="M9 21V9" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h3>Charte Graphique</h3>
+                    <p>Un univers graphique cohérent et professionnel pour renforcer votre image de marque.</p>
+                    
+                    <div class="service-features">
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Analyse de l'existant</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Définition de la palette</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Typographies personnalisées</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Règles d'utilisation</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Exemples d'applications</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Documentation complète</span>
+                        </div>
+                    </div>
+                    
+                    <div class="service-price">À partir de</div>
+                    <div class="service-amount">1500€</div>
+                </div>
+
+                <div class="service-card fade-in-up">
+                    <div class="service-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18H19C20.1046 18 21 17.1046 21 16Z" stroke="currentColor" stroke-width="2"/>
+                            <path d="M3 10H21" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="7" cy="14" r="1" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h3>Illustrations sur Mesure</h3>
+                    <p>Des illustrations personnalisées pour donner du caractère unique à tous vos supports.</p>
+                    
+                    <div class="service-features">
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Brief créatif détaillé</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Concepts créatifs</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Illustrations vectorielles</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Déclinaisons multiples</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Fichiers sources (AI, SVG)</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Révisions illimitées</span>
+                        </div>
+                    </div>
+                    
+                    <div class="service-price">À partir de</div>
+                    <div class="service-amount">600€</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Process Section -->
+    <section class="process-section">
+        <div class="container">
+            <h2 class="section-title fade-in-up">Notre Processus de Création</h2>
+            <p class="section-subtitle fade-in-up">Une méthode éprouvée pour créer une identité visuelle qui vous ressemble</p>
+            
+            <div class="process-steps">
+                <div class="process-step fade-in-up">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Découverte & Brief</h3>
+                        <p>Nous commençons par comprendre votre marque, vos valeurs, votre vision et vos objectifs. Cette phase essentielle nous permet de cerner précisément vos besoins.</p>
+                    </div>
+                </div>
+
+                <div class="process-step fade-in-up">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Recherche & Inspiration</h3>
+                        <p>Analyse de votre marché, de vos concurrents et recherche de tendances graphiques pour créer quelque chose d'unique et pertinent.</p>
+                    </div>
+                </div>
+
+                <div class="process-step fade-in-up">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Concepts & Propositions</h3>
+                        <p>Création de plusieurs concepts visuels différents. Vous choisissez celui qui correspond le mieux à votre vision.</p>
+                    </div>
+                </div>
+
+                <div class="process-step fade-in-up">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Développement & Affinement</h3>
+                        <p>Développement complet du concept choisi avec des allers-retours pour affiner chaque détail jusqu'à la perfection.</p>
+                    </div>
+                </div>
+
+                <div class="process-step fade-in-up">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h3>Charte Graphique</h3>
+                        <p>Création de votre charte graphique complète avec toutes les règles d'utilisation de votre identité visuelle.</p>
+                    </div>
+                </div>
+
+                <div class="process-step fade-in-up">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <h3>Livraison & Support</h3>
+                        <p>Livraison de tous vos fichiers sources dans différents formats et accompagnement pour la mise en place de votre nouvelle identité.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section (réutilisation du portfolio) -->
+    <section class="portfolio" style="background: #0f0f0f;">
+        <div class="container">
+            <h2 class="section-title fade-in-up">Ils Nous Font Confiance</h2>
+            <p class="section-subtitle fade-in-up">Découvrez les retours de nos clients satisfaits</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 4rem;">
+                <div class="portfolio-testimonial fade-in-up">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">
+                        "L'équipe de Shift Agency a créé une identité visuelle qui dépasse toutes nos attentes. Notre marque est maintenant reconnaissable et mémorable."
+                    </p>
+                    <div class="testimonial-author">
+                        <strong>Sophie Martin</strong> - CEO, TechStart
+                    </div>
+                </div>
+
+                <div class="portfolio-testimonial fade-in-up">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">
+                        "Professionnels, créatifs et à l'écoute. Ils ont su comprendre notre vision et créer un logo unique qui reflète parfaitement nos valeurs."
+                    </p>
+                    <div class="testimonial-author">
+                        <strong>Marc Dubois</strong> - Fondateur, GreenLife
+                    </div>
+                </div>
+
+                <div class="portfolio-testimonial fade-in-up">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">
+                        "Un travail remarquable sur notre charte graphique. Tout est cohérent, professionnel et nous avons maintenant une vraie identité forte."
+                    </p>
+                    <div class="testimonial-author">
+                        <strong>Julie Rousseau</strong> - Directrice Marketing, Innovatech
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Final -->
+    <section class="cta-final">
+        <div class="container">
+            <h2 class="fade-in-up">Prêt à Créer Votre Identité Visuelle ?</h2>
+            <p class="fade-in-up">Prenez rendez-vous avec notre équipe pour discuter de votre projet et voir comment nous pouvons vous accompagner dans la création d'une marque mémorable.</p>
+            
+            <div style="display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap;" class="fade-in-up">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#f59e0b"/>
+                    </svg>
+                    <span style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem;">4.9/5 clients satisfaits</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#10b981" stroke-width="2"/>
+                        <path d="M9 12l2 2 4-4" stroke="#10b981" stroke-width="2"/>
+                    </svg>
+                    <span style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem;">Satisfait ou remboursé</span>
+                </div>
+            </div>
+            
+            <a href="#booking" class="btn btn-primary fade-in-up" style="font-size: 1.0625rem; padding: 18px 40px;">
+                Réserver un Appel Gratuit
+                <span class="btn-icon">→</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq">
+        <div class="container">
+            <div class="faq-badge fade-in-up">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>FAQ</span>
+            </div>
+            
+            <h2 class="fade-in-up">Questions Fréquentes</h2>
+            
+            <div class="faq-accordion">
+                <div class="faq-question fade-in-up">
+                    <h3>Qu'est-ce qu'une identité visuelle ?</h3>
+                    <span class="faq-toggle">+</span>
+                </div>
+                <div class="faq-answer">
+                    <p>Une identité visuelle est l'ensemble des éléments graphiques qui représentent et distinguent visuellement votre marque. Elle comprend le logo, la palette de couleurs, les typographies, la charte graphique et les illustrations. Ces éléments créent une image cohérente et reconnaissable qui renforce votre présence sur tous vos supports de communication.</p>
+                </div>
+                
+                <div class="faq-question fade-in-up">
+                    <h3>Pourquoi investir dans une identité visuelle ?</h3>
+                    <span class="faq-toggle">+</span>
+                </div>
+                <div class="faq-answer">
+                    <p>Une identité visuelle forte est cruciale pour se démarquer dans un marché concurrentiel. Elle véhicule vos valeurs, renforce votre crédibilité et crée une connexion émotionnelle avec votre public. Une identité cohérente et professionnelle améliore la mémorisation de votre marque et fidélise vos clients sur le long terme.</p>
+                </div>
+                
+                <div class="faq-question fade-in-up">
+                    <h3>Combien coûte une identité visuelle complète ?</h3>
+                    <span class="faq-toggle">+</span>
+                </div>
+                <div class="faq-answer">
+                    <p>Une identité visuelle complète (logo, palette de couleurs, charte graphique, illustrations) démarre à partir de 2500€. Le tarif peut varier en fonction de vos besoins spécifiques et de la complexité du projet. Nous nous adaptons pour offrir des solutions sur mesure parfaitement alignées avec vos attentes et votre budget.</p>
+                </div>
+                
+                <div class="faq-question fade-in-up">
+                    <h3>Quelle est la différence entre identité visuelle et charte graphique ?</h3>
+                    <span class="faq-toggle">+</span>
+                </div>
+                <div class="faq-answer">
+                    <p>L'identité visuelle englobe tous les éléments graphiques qui représentent votre marque (logo, couleurs, typographies). La charte graphique, quant à elle, est le document qui fixe les règles d'utilisation de ces éléments pour garantir une cohérence visuelle sur tous vos supports de communication.</p>
+                </div>
+                
+                <div class="faq-question fade-in-up">
+                    <h3>Combien de temps faut-il pour créer une identité visuelle ?</h3>
+                    <span class="faq-toggle">+</span>
+                </div>
+                <div class="faq-answer">
+                    <p>Le délai moyen est de 4 à 6 semaines selon la complexité du projet. Cette durée inclut la phase de découverte, la création de concepts, les allers-retours, et la livraison finale avec la charte graphique complète. Nous travaillons efficacement tout en garantissant une qualité optimale.</p>
+                </div>
+                
+                <div class="faq-question fade-in-up">
+                    <h3>Puis-je faire des modifications après la livraison ?</h3>
+                    <span class="faq-toggle">+</span>
+                </div>
+                <div class="faq-answer">
+                    <p>Pendant le processus de création, vous pouvez faire autant d'allers-retours que nécessaire. Nous continuons à améliorer votre identité visuelle jusqu'à ce que vous soyez entièrement satisfait. Une fois le projet validé et livré, des modifications supplémentaires peuvent être réalisées sur devis.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer (identique à l'index) -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-logo-section fade-in-up">
+                <div class="footer-logo-main">
+                    <div class="footer-logo-icon">
+                        <div class="footer-arrow"></div>
+                        <div class="footer-arrow"></div>
+                        <div class="footer-arrow"></div>
+                    </div>
+                    <div class="footer-logo-text">SHIFT</div>
+                </div>
+                <div class="footer-logo-agency">AGENCY</div>
+            </div>
+
+
+            <div class="footer-bottom fade-in-up">
+                © 2025 Shift Agency. Data-driven digital transformation.
+            </div>
+        </div>
+    </footer>
+
+    <script src="identite.js"></script>
+</body>
+</html>
