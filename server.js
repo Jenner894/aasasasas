@@ -520,7 +520,12 @@ app.get('/api/health', (req, res) => {
 app.get('/devis', (req, res) => {
     res.sendFile(path.join(__dirname, 'devis.html'));
 });
-
+app.get('/tunnel-conversion', (req, res) => {
+    res.sendFile(path.join(__dirname, 'tunnel-conversion.html'));
+});
+app.get('/identite-visuelle', (req, res) => {
+    res.sendFile(path.join(__dirname, 'identite-visuelle.html'));
+});
 // Route pour l'administration CMS
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin/simple-cms.html'));
