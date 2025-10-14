@@ -64,7 +64,8 @@ section {
    ============================================ */
 
 .tags-carousel {
-    width: 100%;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
     overflow: hidden;
     margin: 3rem 0;
     position: relative;
@@ -1099,30 +1100,6 @@ body.menu-open {
     margin-right: auto;
 }
 
-.hero-title-bg {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 800px;
-    height: 200px;
-    background: radial-gradient(ellipse at center, rgba(91, 91, 214, 0.15) 0%, transparent 70%);
-    filter: blur(40px);
-    z-index: 1;
-    animation: pulseGlow 4s ease-in-out infinite;
-    pointer-events: none;
-}
-
-@keyframes pulseGlow {
-    0%, 100% {
-        opacity: 0.6;
-        transform: translate(-50%, -50%) scale(1);
-    }
-    50% {
-        opacity: 0.9;
-        transform: translate(-50%, -50%) scale(1.1);
-    }
-}
 
 .hero-cta {
     display: flex;
