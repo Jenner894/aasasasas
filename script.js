@@ -46,26 +46,59 @@ document.querySelectorAll('.nav-item.dropdown').forEach(item => {
     });
 });
 
-// Mobile menu toggle
-const menuToggle = document.getElementById('menuToggle');
-const mobileMenu = document.getElementById('mobileMenu');
-
-if (menuToggle && mobileMenu) {
-    menuToggle.addEventListener('click', () => {
-        mobileMenu.classList.toggle('active');
-        menuToggle.classList.toggle('active');
-        document.body.classList.toggle('menu-open');
-    });
+// Mobile menu toggle - Version unifiée
+document.addEventListener('DOMContentLoaded', () => {
+    const menuToggle = document.getElementById('menuToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const mobileMenuItems = document.querySelectorAll('.mobile-menu-item a, .mobile-menu-cta a');
     
-    // Close mobile menu when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!mobileMenu.contains(e.target) && !menuToggle.contains(e.target)) {
-            mobileMenu.classList.remove('active');
-            menuToggle.classList.remove('active');
-            document.body.classList.remove('menu-open');
+    if (!menuToggle || !mobileMenu) return;
+    
+    // Toggle menu
+    menuToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isActive = menuToggle.classList.contains('active');
+        
+        if (isActive) {
+            closeMenu();
+        } else {
+            openMenu();
         }
     });
-}
+    
+    // Fermer le menu au clic sur un lien
+    mobileMenuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            closeMenu();
+        });
+    });
+    
+    // Fermer au clic en dehors
+    document.addEventListener('click', (e) => {
+        if (!mobileMenu.contains(e.target) && !menuToggle.contains(e.target) && mobileMenu.classList.contains('active')) {
+            closeMenu();
+        }
+    });
+    
+    // Fermer avec la touche Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && menuToggle.classList.contains('active')) {
+            closeMenu();
+        }
+    });
+    
+    function openMenu() {
+        menuToggle.classList.add('active');
+        mobileMenu.classList.add('active');
+        document.body.classList.add('menu-open');
+    }
+    
+    function closeMenu() {
+        menuToggle.classList.remove('active');
+        mobileMenu.classList.remove('active');
+        document.body.classList.remove('menu-open');
+    }
+});
 // ============================================
 // PERFORMANCE STATS ANIMATED COUNTERS
 // ============================================
@@ -385,60 +418,29 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(startChartCarousel, 4000);
 });
 
+
 // ============================================
-// MOBILE MENU TOGGLE
+// FAQ ACCORDION FUNCTIONALITY
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    const menuToggle = document.getElementById('menuToggle');
-    const mobileMenu = document.getElementById('mobileMenu');
-    const mobileMenuItems = document.querySelectorAll('.mobile-menu-item a, .mobile-menu-cta a');
+    const faqQuestions = document.querySelectorAll('.faq-question');
     
-    if (!menuToggle || !mobileMenu) return;
-    
-    // Toggle menu
-    menuToggle.addEventListener('click', () => {
-        const isActive = menuToggle.classList.contains('active');
-        
-        if (isActive) {
-            closeMenu();
-        } else {
-            openMenu();
-        }
-    });
-    
-    // Fermer le menu au clic sur un lien
-    mobileMenuItems.forEach(item => {
-        item.addEventListener('click', () => {
-            closeMenu();
+    faqQuestions.forEach(question => {
+        question.addEventListener('click', () => {
+            const isActive = question.classList.contains('active');
+            
+            // Fermer toutes les autres questions
+            faqQuestions.forEach(q => {
+                q.classList.remove('active');
+            });
+            
+            // Ouvrir/fermer la question cliquée
+            if (!isActive) {
+                question.classList.add('active');
+            }
         });
     });
-    
-    // Fermer au clic en dehors
-    mobileMenu.addEventListener('click', (e) => {
-        if (e.target === mobileMenu) {
-            closeMenu();
-        }
-    });
-    
-    // Fermer avec la touche Escape
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && menuToggle.classList.contains('active')) {
-            closeMenu();
-        }
-    });
-    
-    function openMenu() {
-        menuToggle.classList.add('active');
-        mobileMenu.classList.add('active');
-        document.body.classList.add('menu-open');
-    }
-    
-    function closeMenu() {
-        menuToggle.classList.remove('active');
-        mobileMenu.classList.remove('active');
-        document.body.classList.remove('menu-open');
-    }
 });
 
 // ============================================
@@ -1075,6 +1077,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Animation pour la section FAQ
     animateFAQ();
     
+    
     // Initialiser les animations des benefit cards
     initBookingAnimations();
 });
@@ -1114,9 +1117,16 @@ function animateProcess() {
 }
 
 function animateFAQ() {
-    const faqItems = document.querySelectorAll('.faq-item');
+    const faqItems = document.querySelectorAll('.faq-item, .faq-question');
     
     if (!faqItems.length) return;
+    
+    // Ajouter la classe fade-in-up aux éléments FAQ
+    faqItems.forEach(item => {
+        if (!item.classList.contains('fade-in-up')) {
+            item.classList.add('fade-in-up');
+        }
+    });
     
     const observerOptions = {
         threshold: 0.1,
@@ -1124,30 +1134,22 @@ function animateFAQ() {
     };
     
     const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
+        entries.forEach(entry => {
             if (entry.isIntersecting) {
-                animateFAQItems();
+                entry.target.classList.add('animate-in');
             }
         });
     }, observerOptions);
     
-    const faqSection = document.querySelector('.faq');
-    if (faqSection) {
-        observer.observe(faqSection);
-    }
-    
-    function animateFAQItems() {
-        faqItems.forEach((item, index) => {
-            if (!item.classList.contains('animate-in')) {
-                setTimeout(() => {
-                    item.style.opacity = '1';
-                    item.style.transform = 'translateY(0)';
-                    item.classList.add('animate-in');
-                }, index * 150);
-            }
-        });
-    }
+    // Observer chaque élément FAQ individuellement
+    faqItems.forEach((item, index) => {
+        // Délai progressif pour l'animation
+        setTimeout(() => {
+            observer.observe(item);
+        }, index * 50);
+    });
 }
+
 
 // Initialiser les animations des benefit cards
 function initBookingAnimations() {
@@ -1325,22 +1327,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    let lastScroll = 0;
-    const navbar = document.querySelector('.navbar');
-
-    window.addEventListener('scroll', () => {
-        const currentScroll = window.pageYOffset;
-
-        if (currentScroll > 100) {
-            navbar.style.background = 'rgba(10, 10, 10, 0.95)';
-            navbar.style.borderBottom = '1px solid rgba(255, 255, 255, 0.1)';
-        } else {
-            navbar.style.background = 'transparent';
-            navbar.style.borderBottom = 'none';
-        }
-
-        lastScroll = currentScroll;
-    });
 
     const heroStats = document.querySelectorAll('.stat');
     heroStats.forEach((stat, index) => {
