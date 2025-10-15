@@ -61,6 +61,7 @@
     }
     </script>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="navbar.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%235b5bd6'/></svg>">
@@ -96,124 +97,84 @@
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WQ6D2R7D"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
+    <!-- Navbar -->
 <nav class="navbar">
-    <div class="nav-content">
-        <!-- Logo -->
-        <a href="#" class="logo">
-            <div class="logo-main">
-                <div class="logo-top">
-                    <div class="arrows-icon">
-                        <div class="arrow-line"></div>
-                        <div class="arrow-line"></div>
-                        <div class="arrow-line"></div>
+        <div class="container">
+            <div class="nav-content">
+                <a href="index.html" class="logo">
+                    <div class="logo-main">
+                        <div class="logo-top">
+                            <div class="arrows-icon">
+                                <div class="arrow-line"></div>
+                                <div class="arrow-line"></div>
+                                <div class="arrow-line"></div>
+                            </div>
+                            <div class="shift-text">SHIFT</div>
+                        </div>
+                        <div class="agency-text">AGENCY</div>
                     </div>
-                    <div class="shift-text">SHIFT</div>
+                </a>
+
+                <ul class="nav-links">
+                    <li class="nav-item has-dropdown">
+                        <a href="#portfolio" class="nav-link">
+                            <span>Realisation</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item has-dropdown">
+                        <a href="#" class="nav-link">
+                            <span>Expertises</span>
+                            <svg class="dropdown-icon" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a href="identite-visuelle.html" class="dropdown-item">Identité Visuelle</a>
+                            <a href="tunnel-conversion.html" class="dropdown-item">Tunnel de Conversion</a>
+                            <a href="#" class="dropdown-item">Landing page</a>
+                        </div>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="#portfolio" class="nav-link">
+                            <span>tarifs</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="#faq" class="nav-link">
+                            <span>Faq</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item has-dropdown">
+                        <a href="#" class="nav-link">
+                            <span>Ressources</span>
+                            <svg class="dropdown-icon" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a href="#" class="dropdown-item">Blog</a>
+                            <a href="#" class="dropdown-item">Template</a>
+                            <a href="#" class="dropdown-item">Études de cas</a>
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="nav-right">
+                    <a href="#contact" class="btn-primary-nav">Prendre un rendez-vous</a>
+                    <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
                 </div>
-                <div class="agency-text">AGENCY</div>
-            </div>
-        </a>
-
-         <!-- Navigation Links -->
-         <ul class="nav-links">
-             <li><a href="#portfolio" class="nav-link">Réalisations</a></li>
-             <li class="nav-item dropdown">
-                 <a href="#expertises" class="nav-link">
-                     Expertises
-                     <span class="dropdown-arrow">▼</span>
-                 </a>
-                 <ul class="dropdown-menu">
-                     <li><a href="#identite-visuelle" class="dropdown-item">Identité visuelle</a></li>
-                     <li><a href="#landing-page" class="dropdown-item">Landing page</a></li>
-                     <li><a href="#tunnel-conversion" class="dropdown-item">Tunnel de conversion</a></li>
-                 </ul>
-             </li>
-             <li class="nav-item dropdown">
-                 <a href="#resources" class="nav-link">
-                     Ressources
-                     <span class="dropdown-arrow">▼</span>
-                 </a>
-                 <ul class="dropdown-menu">
-                     <li><a href="#blog" class="dropdown-item">Blog</a></li>
-                     <li><a href="#outils" class="dropdown-item">Outils</a></li>
-                     <li><a href="#formation" class="dropdown-item">Formation</a></li>
-                 </ul>
-             </li>
-             <li><a href="#faq" class="nav-link">FAQ</a></li>
-             <li><a href="#booking" class="nav-link">Réserver un appel</a></li>
-         </ul>
-
-        <!-- CTA Button -->
-        <a href="#booking" class="btn-devis-nav">Prendre un rendez-vous</a>
-
-        <!-- Menu Toggle (Mobile) -->
-        <button class="menu-toggle" id="menuToggle" aria-label="Menu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-    </div>
-</nav>
-<!-- Mobile Menu Overlay -->
-<div class="mobile-menu-overlay" id="mobileMenu">
-    <div class="mobile-menu-content">
-        <div class="mobile-menu-items">
-            <div class="mobile-menu-item">
-                <a href="#portfolio">
-                    <span>Réalisations</span>
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </a>
-            </div>
-
-            <div class="mobile-menu-item">
-                <a href="#expertises">
-                    <span>Expertises</span>
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </a>
-            </div>
-
-            <div class="mobile-menu-item">
-                <a href="#resources">
-                    <span>Ressources</span>
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </a>
-            </div>
-
-            <div class="mobile-menu-item">
-                <a href="#faq">
-                    <span>FAQ</span>
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </a>
-            </div>
-
-            <div class="mobile-menu-item">
-                <a href="#booking">
-                    <span>Réserver un appel</span>
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </a>
             </div>
         </div>
+    </nav>
 
-        <div class="mobile-menu-cta">
-            <a href="/devis" class="btn btn-primary mobile-devis-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-                </svg>
-                Simuler un Devis
-            </a>
-            
-        </div>
-    </div>
-</div>
     <!-- Hero Section -->
     <section class="hero">
         <div class="container">
@@ -766,5 +727,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
     </footer>
     <script src="script.js" defer></script>
+    <script src="navbar.js" defer></script>
 </body>
 </html>
