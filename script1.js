@@ -26,17 +26,6 @@
 
         // Charger la config au démarrage
         loadPricingConfig();
-        
-        // Helper function to get step name for GA4 tracking
-        function getStepName(stepNumber) {
-            const stepNames = {
-                1: 'Type de Landing Page',
-                2: 'Niveau de Personnalisation',
-                3: 'Options & Fonctionnalités',
-                4: 'Informations de Contact'
-            };
-            return stepNames[stepNumber] || 'Unknown Step';
-        }
 
         // Navigation entre les étapes
         document.getElementById('nextBtn').addEventListener('click', () => {
@@ -44,15 +33,6 @@
                 if (currentStep < totalSteps) {
                     currentStep++;
                     showStep(currentStep);
-                    
-                    // Track step progression in GA4
-                    if (typeof gtag !== 'undefined') {
-                        gtag('event', 'form_step_completed', {
-                            'step_number': currentStep - 1,
-                            'step_name': getStepName(currentStep - 1),
-                            'total_price': quoteData.totalPrice
-                        });
-                    }
                 }
             }
         });
@@ -118,15 +98,6 @@
                     card.classList.remove('selected');
                 });
                 this.closest('.option-card').classList.add('selected');
-                
-                // Track selection in GA4
-                if (typeof gtag !== 'undefined') {
-                    gtag('event', 'select_item', {
-                        'item_name': this.value,
-                        'item_category': this.name,
-                        'price': parseInt(this.dataset.price || 0)
-                    });
-                }
 
                 // Enregistrer la sélection
                 if (this.name === 'pageType') {
@@ -308,22 +279,6 @@ document.getElementById('quoteForm').addEventListener('submit', async function(e
         const result = await response.json();
 
         if (result.success) {
-            // Track conversion in GA4
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'generate_lead', {
-                    'currency': 'EUR',
-                    'value': quoteData.totalPrice,
-                    'page_type': quoteData.pageType,
-                    'design_level': quoteData.designLevel,
-                    'options_count': quoteData.options.length
-                });
-                
-                gtag('event', 'form_submit', {
-                    'form_name': 'quote_form',
-                    'total_value': quoteData.totalPrice
-                });
-            }
-            
             // Afficher la popup de succès
             showSuccessPopup();
             
