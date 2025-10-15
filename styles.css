@@ -544,7 +544,7 @@ section {
     }
     
     .nav-links {
-        display: none;
+        display: flex;
     }
     
     .btn-devis-nav {
@@ -3246,7 +3246,7 @@ body.menu-open {
     }
     
     .nav-links {
-        display: none;
+        display: flex;
     }
     
     .menu-toggle {
